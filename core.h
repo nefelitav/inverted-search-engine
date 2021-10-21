@@ -32,7 +32,6 @@
   *  - 1.0 (Feb 1, 2013)
   *    * Initial release
 */
-#include <math.h> 
 #ifndef __SIGMOD_CORE_H_
 #define __SIGMOD_CORE_H_
 #ifdef __cplusplus

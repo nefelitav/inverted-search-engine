@@ -1,5 +1,3 @@
-#include <iostream>
-#include "core.h"
 #include "match.hpp"
 
 bool exactMatch(const char* word1, const char* word2){
