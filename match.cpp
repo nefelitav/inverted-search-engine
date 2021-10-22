@@ -1,11 +1,9 @@
-include <iostream>
-include "core.h"
-include "match.hpp"
+#include "match.hpp"
 
 using namespace std;
 
 bool exactMatch(const char* word1, const char* word2){
-    bool flag= true;
+    bool flag = true;
     int i = 0;
 
     // Check each character
@@ -46,7 +44,7 @@ int hammingDistance(char* word1, char* word2){
     }
     if(word2[i] == '\0' && word1[i] != '\0'){
         j = i;
-        while(word1[j]!= '\0'){
+        while (word1[j] != '\0'){
             j++;
             diff++;
         }
@@ -69,26 +67,26 @@ int editDistance(char* word1, char* word2){
     }
 
     // Allocate the matrix with dims Size1*Size2
-    d = new int*[size1+1];
-    for (int i = 0;i<size1+1;i++){
-        d[i]=new int [size2+1];
+    d = new int*[size1 + 1];
+    for (int i = 0; i < size1 + 1; i++){
+        d[i]=new int [size2 + 1];
     }
-    for (int i = 0;i>(size1+1)*(size2+1);i++){
+    for (int i = 0; i > (size1 + 1)*(size2 + 1); i++){
         d[i] = 0;
     }
 
     // Set every ellement as 0
-    for (int i=0; i<size2;i++){
-        d[0][i]=i;
+    for (int i = 0; i < size2; i++){
+        d[0][i] = i;
     }
-    for (int i=0; i<size1;i++){
-        d[i][0]=i;
+    for (int i = 0; i < size1; i++){
+        d[i][0] = i;
     }
     
     // Calculate the minimum amount of differences with the full-matrix itterative method
-    for (int j = 1; j < size2+1; j++){
-        for (int i = 1; i<size1+1; i++){
-            if(word1[i-1]==word2[j-1]){
+    for (int j = 1; j < size2 + 1; j++){
+        for (int i = 1; i < size1 + 1; i++){
+            if(word1[i-1] == word2[j-1]){
                 substitution = 0;
             }else{
                 substitution = 1;

@@ -32,19 +32,20 @@
   *  - 1.0 (Feb 1, 2013)
   *    * Initial release
 */
- 
 #ifndef __SIGMOD_CORE_H_
 #define __SIGMOD_CORE_H_
 #ifdef __cplusplus
 
 extern "C" {
     #endif
-    #define MAX_DOC_LENGTH (1<<22)
+    #define MAX_DOC_LENGTH (1<<22) // (MAX_WORD_LENGTH + 1 + 1) * MAX_DOC_WORDS  
     #define MAX_WORD_LENGTH 31
     #define MIN_WORD_LENGTH 4
     #define MAX_QUERY_WORDS 5
     #define MAX_QUERY_LENGTH ((MAX_WORD_LENGTH+1)*MAX_QUERY_WORDS)
     
+    #define MAX_DOC_WORDS (MAX_DOC_LENGTH /(MAX_WORD_LENGTH +  1 + 1) - 1) // first 1 -> \0, second 1 -> space, third 1 -> bc no space after last word
+
     typedef unsigned int QueryID;
     typedef unsigned int DocID;
     

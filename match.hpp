@@ -1,3 +1,8 @@
+#include <iostream>
+#include <algorithm>
+#include "core.h"
+using namespace std;
+
 #ifndef MATCH
 #define MATCH
 
