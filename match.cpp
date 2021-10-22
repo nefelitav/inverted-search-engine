@@ -2,6 +2,8 @@ include <iostream>
 include "core.h"
 include "match.hpp"
 
+using namespace std;
+
 bool exactMatch(const char* word1, const char* word2){
     bool flag= true;
     int i = 0;
