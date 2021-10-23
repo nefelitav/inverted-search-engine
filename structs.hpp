@@ -1,6 +1,8 @@
 #include <iostream>
-#include <string.h>
+#include <cstring>
 #include "core.h"
+
+
 using namespace std;
 
 #ifndef STRUCTS
@@ -8,42 +10,52 @@ using namespace std;
 
 class Query {
     private:
-        char* query_words;                   
-        int actualSize;
+        char* words;                   
         QueryID id;
     public:
         Query(char * words, int id)
         {
-            this->actualSize = 0;
-            this->query_words = new char[MAX_QUERY_LENGTH];
-            for (int i = 0; i < MAX_QUERY_LENGTH - 1; i++)
-            {   
-                if (words[i] + words[i+1] == 0)                                      // end of text
+            this->words = new char[MAX_QUERY_LENGTH];
+            memset(this->words, 0, MAX_QUERY_LENGTH);
+            char * ptr = words;
+            for (int i = 0; i < MAX_QUERY_WORDS; i++)
+            {
+                memcpy(this->words + (MAX_WORD_LENGTH + 1)*i, ptr, strlen(ptr) + 1);
+                ptr += (strlen(ptr) + 1);
+                if (*(ptr - 1) == '\0' && *ptr == '\0')
                 {
-                    this->actualSize ++;
-                    memcpy(this->query_words, words, this->actualSize);             // allocate memory and copy words 
                     break;
                 }
-                this->actualSize ++;                                                // find length of text
-
             }
             this->id = id;
             cout << "Query with id = " << this->id << " is created!" << endl;
         }
         void printQuery()                                                           // for debuggind reasons
         {
-            for (int j = 0; j < this->actualSize; j++)
+            char * ptr = this->words;
+            cout << "-------------------" << endl;
+            cout << "Print query words :" << endl;
+            for (int i = 0; i < MAX_QUERY_WORDS; i++)
             {
-                cout << this->query_words[j] << endl;
+                cout << ptr << endl;
+                ptr += (MAX_WORD_LENGTH + 1);
+                if (i != MAX_QUERY_WORDS - 1)
+                {
+                    if (*(ptr - 1) == '\0' && *(ptr) == '\0')
+                    {
+                        break;
+                    }
+                }
+                
             }
         }
-        int getQuerySize()
+        char* getText()
         {
-            return this->actualSize;
+            return this->words;
         }
         ~Query()
         {
-            delete[] this->query_words;
+            delete[] this->words;
             cout << "Query with id = " << this->id << " is deleted!" << endl;
         }    
 };
@@ -51,25 +63,21 @@ class Query {
 class Document {
     private:
         char* text;          
-        int actualSize;
         DocID id;
     public:
-        Document(char * words, int id, int size)
+        Document(char * words, int id)
         {
-            this->actualSize = size - 1;
-            this->text = new char[size - 1 - 1];                                    // dont need the two last \0 's
-            for (int i = 0; i < size - 1; i++)
-            {   
-                if (words[i] + words[i+1] == 0)                                     // end of text
+            this->text = new char[MAX_DOC_LENGTH];                                    // dont need the two last \0 's
+            memset(this->text, 0, MAX_DOC_LENGTH);
+            char * ptr = words;
+            for (int i = 0; i < MAX_DOC_WORDS; i++)
+            {
+                memcpy(this->text + (MAX_WORD_LENGTH + 1)*i, ptr, strlen(ptr) + 1);
+                ptr += (strlen(ptr) + 1 + 1);
+                if (*(ptr - 1) == '\0' && *(ptr - 2) == '\0')
                 {
                     break;
                 }
-                if (words[i] == 0)
-                {
-                    this->text[i] = '\0';                                           // instead of spaces i save \0 in my array
-                    continue;
-                }
-                this->text[i] = words[i];
             }
             this->id = id;
             cout << "Document with id = " << this->id << " is created!" << endl;
@@ -77,21 +85,29 @@ class Document {
         }
         void printDocument()
         {
-            for (int j = 0; j < this->actualSize - 1; j++)                          // for debugging reasons
+            char * ptr = this->text;
+            cout << "-------------------" << endl;
+            cout << "Print text words :" << endl;
+            for (int i = 0; i < MAX_DOC_WORDS; i++)
             {
-                cout << this->text[j] << endl;
+                cout << ptr << endl;
+                ptr += (MAX_WORD_LENGTH + 1);
+                if (*(ptr - 1) == '\0' && *(ptr) == '\0')
+                {
+                    break;
+                }
             }
+            cout << "-------------------" << endl;
         }
-        int getDocumentSize()
+        char* getText()
         {
-            return this->actualSize;
+            return this->text;
         }
         ~Document()
         {
             delete[] this->text;
             cout << "Document with id = " << this->id << " is deleted!" << endl;
         }
-
 };
 
 #endif
