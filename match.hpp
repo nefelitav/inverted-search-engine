@@ -6,8 +6,8 @@ using namespace std;
 #ifndef MATCH
 #define MATCH
 
-bool exactMatch(char* word1, char* word2);
-int hammingDistance(char* word1, char* word2);
-int editDistance(char* word1, char* word2);
+bool exactMatch(const char* word1,const char* word2);
+int hammingDistance(const char* word1,const char* word2);
+int editDistance(const char* word1,const char* word2);
 
 #endif

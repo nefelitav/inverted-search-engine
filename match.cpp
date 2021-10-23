@@ -22,7 +22,7 @@ bool exactMatch(const char* word1, const char* word2){
     return flag;
 }
 
-int hammingDistance(char* word1, char* word2){
+int hammingDistance(const char* word1, const char* word2){
     int i = 0, j;
     int diff = 0;
 
@@ -53,7 +53,8 @@ int hammingDistance(char* word1, char* word2){
     return diff;
 }
 
-int editDistance(char* word1, char* word2){
+int editDistance(const char* word1,const char* word2){
+    int final_distance;
     int size1 = 0;
     int size2 = 0;
     int substitution;
@@ -75,7 +76,7 @@ int editDistance(char* word1, char* word2){
         d[i] = 0;
     }
 
-    // Set every ellement as 0
+    // Initialize border elements
     for (int i = 0; i < size2; i++){
         d[0][i] = i;
     }
@@ -83,7 +84,7 @@ int editDistance(char* word1, char* word2){
         d[i][0] = i;
     }
     
-    // Calculate the minimum amount of differences with the full-matrix itterative method
+    // Calculate the minimum number of differences with the full-matrix itterative method
     for (int j = 1; j < size2 + 1; j++){
         for (int i = 1; i < size1 + 1; i++){
             if(word1[i-1] == word2[j-1]){
@@ -94,7 +95,14 @@ int editDistance(char* word1, char* word2){
             d[i][j] = min(min(d[i-1][j] + 1, d[i][j-1] + 1), d[i-1][j-1] + substitution);
         }
     }
+    final_distance=d[size1][size2];
 
+    // Delete the matrix
+    for (int i = 0; i < size1 + 1; i++){
+        delete d[i];
+    }
+    delete d;
+   
     // Return the Edit Distance
-    return d[size1][size2];
+    return final_distance;
 }
