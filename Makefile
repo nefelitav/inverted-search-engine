@@ -3,7 +3,7 @@ SOURCE	= main.cpp match.cpp
 HEADER	= structs.hpp match.hpp core.h
 OUT	= main
 CC	 = g++
-FLAGS	 = -g -c -Wall
+FLAGS = -g -c -Wall
 
 all: $(OBJS)
 	$(CC) -g $(OBJS) -o $(OUT) 
@@ -21,5 +21,5 @@ run: $(OUT)
 	./$(OUT) $(ARGS)
 
 valgrind: $(OUT)
-	valgrind --leak-check=full --show-leak-kinds=all ./$(OUT) $(ARGS)
+	valgrind --leak-check=full --show-leak-kinds=all  --track-origins=yes ./$(OUT) $(ARGS)
 	

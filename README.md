@@ -7,10 +7,10 @@ $ make && ./main
 
 ## Debug
 ```
-make valgrind
+$ make valgrind
 ```
 
 ## Clean
 ```
-make clean
+$ make clean
 ```

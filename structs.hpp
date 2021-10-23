@@ -8,26 +8,29 @@ using namespace std;
 
 class Query {
     private:
-        char query_words[MAX_QUERY_LENGTH];                   
+        char* query_words;                   
         int actualSize;
         QueryID id;
     public:
-        Query(const char * words, int id)
+        Query(char * words, int id)
         {
             this->actualSize = 0;
-            for (int i = 0; i < MAX_QUERY_LENGTH; i++)
+            this->query_words = new char[MAX_QUERY_LENGTH];
+            for (int i = 0; i < MAX_QUERY_LENGTH - 1; i++)
             {   
-                if (words[i-1] + words[i] == 0) 
+                if (words[i] + words[i+1] == 0)                                      // end of text
                 {
-                    memcpy(this->query_words, words,this->actualSize);
+                    this->actualSize ++;
+                    memcpy(this->query_words, words, this->actualSize);             // allocate memory and copy words 
                     break;
                 }
-                this->actualSize ++;
+                this->actualSize ++;                                                // find length of text
+
             }
             this->id = id;
             cout << "Query with id = " << this->id << " is created!" << endl;
         }
-        void printQuery()
+        void printQuery()                                                           // for debuggind reasons
         {
             for (int j = 0; j < this->actualSize; j++)
             {
@@ -40,29 +43,30 @@ class Query {
         }
         ~Query()
         {
+            delete[] this->query_words;
             cout << "Query with id = " << this->id << " is deleted!" << endl;
         }    
 };
 
 class Document {
     private:
-        char text[MAX_DOC_LENGTH - MAX_DOC_WORDS];          // this struct wont be saving the spaces obviously , so i remove them
+        char* text;          
         int actualSize;
         DocID id;
     public:
-        Document(const char * words, int id)
+        Document(char * words, int id, int size)
         {
-            this->actualSize = 0;
-            for (int i = 0; i < MAX_DOC_LENGTH; i++)
+            this->actualSize = size - 1;
+            this->text = new char[size - 1 - 1];                                    // dont need the two last \0 's
+            for (int i = 0; i < size - 1; i++)
             {   
-                if (words[i-1] + words[i] == 0) 
+                if (words[i] + words[i+1] == 0)                                     // end of text
                 {
                     break;
                 }
-                this->actualSize ++;
                 if (words[i] == 0)
                 {
-                    this->text[i] = '\0';                   // instead of spaces i save \0 in my array
+                    this->text[i] = '\0';                                           // instead of spaces i save \0 in my array
                     continue;
                 }
                 this->text[i] = words[i];
@@ -73,7 +77,7 @@ class Document {
         }
         void printDocument()
         {
-            for (int j = 0; j < this->actualSize; j++)
+            for (int j = 0; j < this->actualSize - 1; j++)                          // for debugging reasons
             {
                 cout << this->text[j] << endl;
             }
@@ -84,8 +88,8 @@ class Document {
         }
         ~Document()
         {
+            delete[] this->text;
             cout << "Document with id = " << this->id << " is deleted!" << endl;
-
         }
 
 };
