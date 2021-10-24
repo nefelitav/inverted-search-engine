@@ -2,7 +2,7 @@
 
 ## Compile and Run
 ```
-$ make && ./main
+$ make && make run
 ```
 
 ## Debug

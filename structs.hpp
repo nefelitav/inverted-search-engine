@@ -2,7 +2,6 @@
 #include <cstring>
 #include "core.h"
 
-
 using namespace std;
 
 #ifndef STRUCTS
@@ -140,5 +139,64 @@ class Document {
             cout << "Document with id = " << this->id << " is deleted!" << endl;
         }
 };
+
+class entry{
+    private:
+        char* word;
+        void* payload;
+        entry* next;
+        int id;
+    public:
+        entry(char * word, int id)
+        {
+            this->word = new char[MAX_WORD_LENGTH];
+            strcpy(this->word, word);
+            this->payload = NULL;
+            this->id = id;
+            this->next = NULL;
+            cout << "Entry with id = " << this->id << " is created!" << endl;
+        }
+        char* getWord()
+        {
+            return this->word;
+        }
+        void* getPayload()
+        {
+            return this->payload;
+        }
+        entry* getNext(entry* e)
+        {
+            return e->next;
+        }
+        ~entry()
+        {
+            delete[] this->word;
+            cout << "Entry with id = " << this->id << " is deleted!" << endl;
+        }
+        
+};
+
+class entry_list
+{
+    private:
+        entry ** entries;
+        int entryNum;
+};
+
+typedef char* word;
+
+ErrorCode create_entry(const word* w, entry** e);
+ErrorCode destroy_entry(entry **e);
+/*
+ErrorCode create_entry_list(entry_list* el);
+unsigned int get_number_entries(const entry_list* el);
+ErrorCode add_entry(entry_list* el, const entry* e);
+entry* get_first(const entry_list* el);
+entry* get_next(const entry_list* el);
+ErrorCode destroy_entry_list(entry_list* el);
+ErrorCode build_entry_index(const entry_list* el, MatchType type, index* ix);
+ErrorCode lookup_entry_index(const word* w, index* ix, int threshold, entry_list* result);
+ErrorCode destroy_entry_index(index* ix);
+*/
 
 #endif
