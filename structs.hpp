@@ -140,21 +140,19 @@ class Document {
         }
 };
 
-class entry{
+class entry {
     private:
         char* word;
         void* payload;
         entry* next;
-        int id;
     public:
-        entry(char * word, int id)
+        entry(char * word)
         {
             this->word = new char[MAX_WORD_LENGTH];
             strcpy(this->word, word);
             this->payload = NULL;
-            this->id = id;
             this->next = NULL;
-            cout << "Entry with id = " << this->id << " is created!" << endl;
+            cout << "Entry is created!" << endl;
         }
         char* getWord()
         {
@@ -164,36 +162,93 @@ class entry{
         {
             return this->payload;
         }
-        entry* getNext(entry* e)
+        entry* getNext()
         {
-            return e->next;
+            if (this->next != NULL)
+            {
+                return this->next;
+            }
+            return NULL;
+        }
+        void setNext(entry* e)
+        {
+            if (this->next == NULL)
+            {
+                this->next = e;
+            }
         }
         ~entry()
         {
             delete[] this->word;
-            cout << "Entry with id = " << this->id << " is deleted!" << endl;
+            cout << "Entry is deleted!" << endl;
         }
         
 };
 
-class entry_list
-{
+class entry_list {
     private:
-        entry ** entries;
+        entry * head;
         int entryNum;
+    public:
+        entry_list()
+        {
+            this->head = NULL;
+            this->entryNum = 0;
+            cout << "Entry list is created!" << endl;
+        }
+        unsigned int getEntryNum()
+        {
+            return this->entryNum;
+        }
+        entry* getHead()
+        {
+            return this->head;
+        }
+        void addEntry(entry * new_entry)
+        {
+            if (this->head == NULL)
+            {
+                this->head = new_entry;
+                //cout << this->head->getWord() << endl;
+            }
+            else
+            {
+                new_entry->setNext(this->head);
+                this->head = new_entry;
+                //cout << this->head->getWord() << endl;
+                //cout << this->head->getNext()->getWord() << endl;
+            }
+        }
+        ~entry_list()
+        {
+            // entry * ptr = this->head;
+            // entry * next = NULL;
+            // if (ptr->getWord() != NULL)
+            // {
+            //     cout << "Not yet deleted" << endl;
+            // }
+            // while (ptr != NULL)
+            // {
+            //     next = ptr->getNext();
+            //     ptr->~entry();
+            //     ptr = next;
+            // }
+            cout << "Entry list is deleted!" << endl;
+        }
 };
 
 typedef char* word;
 
 ErrorCode create_entry(const word* w, entry** e);
-ErrorCode destroy_entry(entry **e);
-/*
-ErrorCode create_entry_list(entry_list* el);
-unsigned int get_number_entries(const entry_list* el);
-ErrorCode add_entry(entry_list* el, const entry* e);
-entry* get_first(const entry_list* el);
-entry* get_next(const entry_list* el);
+ErrorCode destroy_entry(entry *e);
+ErrorCode create_entry_list(entry_list** el);
 ErrorCode destroy_entry_list(entry_list* el);
+unsigned int get_number_entries(entry_list* el);
+ErrorCode add_entry(entry_list* el, entry* e);
+entry* get_first(entry_list* el);
+entry* get_next(entry_list* el);
+
+/*
 ErrorCode build_entry_index(const entry_list* el, MatchType type, index* ix);
 ErrorCode lookup_entry_index(const word* w, index* ix, int threshold, entry_list* result);
 ErrorCode destroy_entry_index(index* ix);
