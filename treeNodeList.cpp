@@ -15,7 +15,7 @@ treeNodeList::treeNodeList(entry* content, int distance, MatchType matchingMetri
 }
 
 treeNodeList::~treeNodeList() {
-    if (this->next ) {
+    if (this->next) {
         delete this->next;
     }
     delete this->node;
@@ -29,13 +29,13 @@ int treeNodeList::addToList(entry* content,int distance) {
     treeNodeList* ptrToNextNode = this->next;
     if (distance == this->distanceFromParrent) { // If we have the same distance as this node, push lower in the tree
         this->node->addEntry(content);
-    }else if (this->next ) {  // If we are not the last node:
+    } else if (this->next ) {  // If we are not the last node:
         if (distance > this->next->getDistanceFromParent()) {   // If the next node has distance lower than the input, pass input allong
             this->next->addToList(content, distance);
-        }else {  // Else if the next node has higher distance, create a new list node between us
+        } else {  // Else if the next node has higher distance, create a new list node between us
             this->next = new treeNodeList(content, distance, this->node->getMatchingType() ,ptrToNextNode);
         }
-    }else {  // If there is no next node, create a new node after me
+    } else {  // If there is no next node, create a new node after me
         this->next = new treeNodeList(content, distance, this->node->getMatchingType(), ptrToNextNode);
     }
     return 0;

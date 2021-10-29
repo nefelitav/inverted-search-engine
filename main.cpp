@@ -1,4 +1,6 @@
 #include "structs.hpp"
+#include "match.hpp"
+
 
 int main()
 {
@@ -9,7 +11,6 @@ int main()
     cout << q.getText() << endl;
     cout << q.getWord(3) << endl;
     delete[] words;
-
 
     const char* s = "hello\0 world\0 how\0 are\0 you\0";
     int i = 0, count = 0;

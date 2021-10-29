@@ -1,6 +1,8 @@
 #include <iostream>
 #include <algorithm>
 #include "core.h"
+#include "structs.hpp"
+
 using namespace std;
 
 #ifndef MATCH
