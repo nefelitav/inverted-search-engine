@@ -7,16 +7,18 @@ using namespace std;
 #ifndef STRUCTS
 #define STRUCTS
 
+typedef char* word;
+
 class Query {
     private:
         char* words;     // saving words in a 1d array instead of a 2d to save time (contiguous allocation)            
         QueryID id;
     public:
-        Query(char * words, int id)
+        Query(const char * words, int id)
         {
             this->words = new char[MAX_QUERY_LENGTH];                                 // allocate memory
             memset(this->words, 0, MAX_QUERY_LENGTH);                                 // set to zero, to avoid junk
-            char * ptr = words;                                                       // pointer to input 
+            const char * ptr = words;                                                 // pointer to input 
             for (int i = 0; i < MAX_QUERY_WORDS; i++)                                 
             {
                 memcpy(this->words + (MAX_WORD_LENGTH + 1)*i, ptr, strlen(ptr) + 1);  // copy from input to struct
@@ -29,7 +31,7 @@ class Query {
             this->id = id;
             cout << "Query with id = " << this->id << " is created!" << endl;
         }
-        void printQuery()                                                            // for debuggind reasons
+        void printQuery()                                                            // for debugging reasons
         {
             char * ptr = this->words;
             cout << "-------------------" << endl;
@@ -47,15 +49,16 @@ class Query {
                 }
                 
             }
+            cout << "-------------------" << endl;
         }
-        char * getWord(int word)                    // array[i][j] --> arrary[i*(MAX_WORD_LENGTH + 1)]                                      
+        const word getWord(int word_num)                    // array[i][j] --> arrary[i*(MAX_WORD_LENGTH + 1)]                                      
         {
-            if (word >= MAX_QUERY_WORDS)                                            // out of range   
+            if (word_num >= MAX_QUERY_WORDS)                                         // out of range   
             {
                 cout << "Sorry, index out of range." << endl;
                 return NULL;
             }
-            char * ptr = (this->words + word * (MAX_WORD_LENGTH + 1));              // find the word
+            const word ptr = (this->words + word_num * (MAX_WORD_LENGTH + 1));      // find the word
             if (*ptr == '\0')                                                       // no more words
             {
                 cout << "Sorry, index out of range." << endl;
@@ -80,11 +83,11 @@ class Document {
         char* text;                 // saving words in a 1d array instead of a 2d to save time (contiguous allocation)   
         DocID id;
     public:
-        Document(char * words, int id)  
+        Document(const char * words, int id)  
         {
             this->text = new char[MAX_DOC_LENGTH];                                    // allocate memory
             memset(this->text, 0, MAX_DOC_LENGTH);                                    // set to zero, to avoid junk
-            char * ptr = words;
+            const char * ptr = words;
             for (int i = 0; i < MAX_DOC_WORDS; i++)
             {
                 memcpy(this->text + (MAX_WORD_LENGTH + 1)*i, ptr, strlen(ptr) + 1);   // copy from input to struct
@@ -114,14 +117,14 @@ class Document {
             }
             cout << "-------------------" << endl;
         }
-        char * getWord(int word)                    // array[i][j] --> arrary[i*(MAX_WORD_LENGTH + 1)]    
+        const word getWord(int word_num)                    // array[i][j] --> arrary[i*(MAX_WORD_LENGTH + 1)]    
         {
-            if (word >= MAX_DOC_WORDS)                                                // out of range
+            if (word_num >= MAX_DOC_WORDS)                                                // out of range
             {
                 cout << "Sorry, index out of range." << endl;
                 return NULL;
             }
-            char * ptr = (this->text + word * (MAX_WORD_LENGTH + 1));                 // find the word          
+            const word ptr = (this->text + word_num * (MAX_WORD_LENGTH + 1));            // find the word          
             if (*ptr == '\0')
             {
                 cout << "Sorry, index out of range." << endl;
@@ -142,21 +145,21 @@ class Document {
 
 class entry {
     private:
-        char* word;
+        word keyword;
         void* payload;
         entry* next;
     public:
-        entry(char * word)
+        entry(const word keyword)
         {
-            this->word = new char[MAX_WORD_LENGTH];
-            strcpy(this->word, word);
+            this->keyword = new char[MAX_WORD_LENGTH];
+            strcpy(this->keyword, keyword);
             this->payload = NULL;
             this->next = NULL;
             cout << "Entry is created!" << endl;
         }
-        char* getWord()
+        const word getWord()
         {
-            return this->word;
+            return this->keyword;
         }
         void* getPayload()
         {
@@ -164,11 +167,7 @@ class entry {
         }
         entry* getNext()
         {
-            if (this->next != NULL)
-            {
-                return this->next;
-            }
-            return NULL;
+            return this->next;
         }
         void setNext(entry* e)
         {
@@ -179,7 +178,7 @@ class entry {
         }
         ~entry()
         {
-            delete[] this->word;
+            delete[] this->keyword;
             cout << "Entry is deleted!" << endl;
         }
         
@@ -218,26 +217,19 @@ class entry_list {
                 //cout << this->head->getWord() << endl;
                 //cout << this->head->getNext()->getWord() << endl;
             }
+            this->entryNum++;
+
+        }
+        entry* getNext(entry* e)
+        {
+            return e->getNext();
         }
         ~entry_list()
         {
-            // entry * ptr = this->head;
-            // entry * next = NULL;
-            // if (ptr->getWord() != NULL)
-            // {
-            //     cout << "Not yet deleted" << endl;
-            // }
-            // while (ptr != NULL)
-            // {
-            //     next = ptr->getNext();
-            //     ptr->~entry();
-            //     ptr = next;
-            // }
             cout << "Entry list is deleted!" << endl;
         }
 };
 
-typedef char* word;
 
 ErrorCode create_entry(const word* w, entry** e);
 ErrorCode destroy_entry(entry *e);
@@ -246,7 +238,7 @@ ErrorCode destroy_entry_list(entry_list* el);
 unsigned int get_number_entries(entry_list* el);
 ErrorCode add_entry(entry_list* el, entry* e);
 entry* get_first(entry_list* el);
-entry* get_next(entry_list* el);
+entry* get_next(entry_list* el, entry* e);
 
 /*
 ErrorCode build_entry_index(const entry_list* el, MatchType type, index* ix);
