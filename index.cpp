@@ -80,8 +80,8 @@ ErrorCode lookup_entry_index(const word* w,class index* ix, int threshold, entry
         entry* tempEntry;
 
         // Nodes to be examined next
-        childQueue* toExamine = NULL;
-        childQueue* tempPointer = NULL;
+        queueHandler* queue = new queueHandler();
+        class index* toEnqueue;
 
         // Get distance for selected Metric
         int distance;
@@ -106,14 +106,8 @@ ErrorCode lookup_entry_index(const word* w,class index* ix, int threshold, entry
             currChild = currNode->getChildren();
             while (currChild){
                 if (currChild->getDistanceFromParent() >= distance-threshold && currChild->getDistanceFromParent() <= distance+threshold){
-                    if (toExamine){
-                        toExamine = new childQueue(currChild->getNode(), tempPointer);
-                        tempPointer = toExamine;
-
-                    }else{
-                        toExamine = new childQueue(currChild->getNode());
-                        tempPointer = toExamine;
-                    }
+                    toEnqueue = currChild->getNode();
+                    queue->enqueue(&toEnqueue);
                 }else{
                     break;
                 }
@@ -121,12 +115,7 @@ ErrorCode lookup_entry_index(const word* w,class index* ix, int threshold, entry
             }
 
             // Get the next item to be examined
-            if (toExamine){
-                toExamine->pop(&currNode, &tempPointer);
-                toExamine = tempPointer;
-            }else{
-                currNode = NULL;
-            }
+            queue->dequeue(&currNode);
             
         }
         return EC_SUCCESS;
@@ -137,7 +126,7 @@ ErrorCode lookup_entry_index(const word* w,class index* ix, int threshold, entry
 
     
 
-ErrorCode buildEntryIndex(const entry_list* el, MatchType type,class index** ix){
+ErrorCode buildEntryIndex(entry_list* el, MatchType type,class index** ix){
     try{
         entry* currEntry = el->getHead();
         *ix = new class index(currEntry, type);

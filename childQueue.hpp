@@ -12,4 +12,14 @@ class childQueue{
         void pop(class index** content, childQueue** newHead);
 };
 
+class queueHandler{
+    private:
+        childQueue* headPTR;
+        childQueue* tempPTR;
+    public:
+        queueHandler();
+        int enqueue(class index** input);
+        int dequeue(class index** nodeToReturn);
+};
+
 #endif // CHILD_QUEUE

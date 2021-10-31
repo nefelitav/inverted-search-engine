@@ -20,7 +20,7 @@ class index{
         MatchType getMatchingType();
 };
 
-ErrorCode buildEntryIndex(const entry_list* el, MatchType type, class index** ix);
+ErrorCode buildEntryIndex(entry_list* el, MatchType type, class index** ix);
 ErrorCode destroy_entry_index(class index* ix);
 ErrorCode lookup_entry_index(const word* w,class index* ix, int threshold, entry_list** result);
 #endif  //INDEX
