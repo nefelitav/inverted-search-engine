@@ -29,6 +29,8 @@ int index::addEntry(entry* input){
         distance = hammingDistance(this->content->getWord(), input->getWord());
     }else if(this->getMatchingType() == MT_EDIT_DIST){
         distance = editDistance(this->content->getWord(), input->getWord());
+    }else if(this->getMatchingType() == MT_EXACT_MATCH){
+        distance = exactMatch(this->content->getWord(), input->getWord());
     }
 
     if (this->children == NULL){
@@ -92,6 +94,8 @@ ErrorCode lookup_entry_index(const word* w,class index* ix, int threshold, entry
                 distance = hammingDistance(currNode->getEntry()->getWord(), *w);
             }else if(currNode->getMatchingType() == MT_EDIT_DIST){
                 distance = editDistance(currNode->getEntry()->getWord(), *w);
+            }else if(currNode->getMatchingType() == MT_EXACT_MATCH){
+                distance = exactMatch(currNode->getEntry()->getWord(), *w);
             }
 
             // Add to results if within threshold
