@@ -17,33 +17,29 @@ index::~index(){
     delete this->children;
 }
 
-
-
 MatchType index::getMatchingType(){
     return this->indexMatchingType;
 }
 
 int index::addEntry(entry* input){
     int distance;
+
     // Get distance for given metric
     if (this->getMatchingType() == MT_HAMMING_DIST){
-        //cout<<"Selected HAMMING\n";
         distance = hammingDistance(this->content->getWord(), input->getWord());
     }else if(this->getMatchingType() == MT_EDIT_DIST){
-        //cout<<"Selected EDIT\n";
         distance = editDistance(this->content->getWord(), input->getWord());
     }
 
-    //cout<<"Distance : "<<distance<<'\n';
-    if (this->children == NULL){            //If there are no children
-        //cout<<"No children list found, making new list\n";
+    if (this->children == NULL){
+        //If there are no children
         this->children = new treeNodeList(input, distance,this->getMatchingType());
-    }else if (this->children->getDistanceFromParent() > distance){      // Children list exists, first child has bigger dist
-        //cout<<"Putting in front\n";
+    }else if (this->children->getDistanceFromParent() > distance){
+        // Children list exists, first child has bigger dist
         treeNodeList* oldFirstChild = this->children;
         this->children = new treeNodeList(input, distance, this->getMatchingType(), oldFirstChild);
-    }else{          // Children list exists, new entry has equal or greater dist than first child
-        //cout<<"Sending in to list\n";
+    }else{
+        // Children list exists, new entry has equal or greater dist than first child          
         this->children->addToList(input, distance);
     }
     return 0;
@@ -69,6 +65,8 @@ class treeNodeList* index::getChildren(){
 
 
 ErrorCode lookup_entry_index(const word* w,class index* ix, int threshold, entry_list** result){
+    int distance;
+
     try {
         // List to store results
         *result = new entry_list();
@@ -83,12 +81,12 @@ ErrorCode lookup_entry_index(const word* w,class index* ix, int threshold, entry
         queueHandler* queue = new queueHandler();
         class index* toEnqueue;
 
-        // Get distance for selected Metric
-        int distance;
+        // Start the search with the root of the tree
         class index* currNode = ix;
 
         // Main loop
         while (currNode){
+
             // Calculate distance from target word
             if (currNode->getMatchingType() == MT_HAMMING_DIST){
                 distance = hammingDistance(currNode->getEntry()->getWord(), *w);
@@ -96,7 +94,7 @@ ErrorCode lookup_entry_index(const word* w,class index* ix, int threshold, entry
                 distance = editDistance(currNode->getEntry()->getWord(), *w);
             }
 
-            // Add to results if close enough
+            // Add to results if within threshold
             if  (distance <= threshold){
                 tempEntry = new entry (currNode->getEntry()->getWord());
                 (*result)->addEntry (tempEntry);
@@ -109,6 +107,7 @@ ErrorCode lookup_entry_index(const word* w,class index* ix, int threshold, entry
                     toEnqueue = currChild->getNode();
                     queue->enqueue(&toEnqueue);
                 }else{
+                    // Children are ordered by distance, if one in not acceptable we can skip the rest
                     break;
                 }
                 currChild = currChild->getNext();
@@ -118,13 +117,12 @@ ErrorCode lookup_entry_index(const word* w,class index* ix, int threshold, entry
             queue->dequeue(&currNode);
             
         }
+        delete queue;
         return EC_SUCCESS;
     } catch (const exception& _) {
         return EC_FAIL;
     }
 }
-
-    
 
 ErrorCode buildEntryIndex(entry_list* el, MatchType type,class index** ix){
     try{
