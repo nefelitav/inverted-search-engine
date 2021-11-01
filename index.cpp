@@ -1,5 +1,5 @@
 #include <iostream>
-#include "match.hpp"
+#include "functions.hpp"
 #include "index.hpp"
 #include "structs.hpp"
 

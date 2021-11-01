@@ -1,6 +1,7 @@
 #include "childQueue.hpp"
 #include "index.hpp"
 using namespace std;
+
 childQueue::childQueue(class index* input,childQueue* ptrToNext){
     this->entry = input;
     this->next = ptrToNext;

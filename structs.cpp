@@ -106,13 +106,13 @@ const word Document :: getWord(int word_num)                    // array[i][j] -
 {
     if (word_num >= MAX_DOC_WORDS)                                                // out of range
     {
-        cout << "Sorry, index out of range." << endl;
+        //cout << "Sorry, index out of range." << endl;
         return NULL;
     }
     const word ptr = (this->text + word_num * (MAX_WORD_LENGTH + 1));            // find the word          
     if (*ptr == '\0')
     {
-        cout << "Sorry, index out of range." << endl;
+        //cout << "Sorry, index out of range." << endl;
         return NULL;
     }
     return ptr;
