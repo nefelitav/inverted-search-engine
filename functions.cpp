@@ -120,13 +120,13 @@ int binarySearch(word* words, int left, int right, const word w)
         
         if (cmp == 0)
         {
-            return left;//-1;                          // word already in array -> continue
+            return -1;                                                      // word already in array -> continue
         }
-        else if (cmp > 0)                       // word should go after mid
+        else if (cmp > 0)                                                   // word should go after mid
         {
             left = mid + 1;
         }
-        else if (cmp < 0)                       // word should go before mid
+        else if (cmp < 0)                                                   // word should go before mid
         {
             right = mid - 1;
         }
@@ -140,49 +140,61 @@ int binarySearch(word* words, int left, int right, const word w)
     {
         return left;
     }
-    return left;
-    //return -1;
+    return -1;                                                              // word already in array -> continue
 }
 
 HashTable :: HashTable()
 {
-    this->buckets = new word*[MAX_BUCKETS]();                              // pointers to buckets
-    //for (int bucket = 0; bucket < MAX_BUCKETS; bucket++) 
-    //{
-    //    this->buckets[bucket] = NULL;
-    //}
-    this->wordsPerBucket = new int[MAX_BUCKETS]();
-    cout << "Hash Table is created" << endl;
+    this->buckets = new word*[MAX_BUCKETS]();                               // pointers to buckets
+    this->wordsPerBucket = new int[MAX_BUCKETS]();                         
+    cout << "Hash Table is created!" << endl;
 }
 
 void HashTable :: addToBucket(int hash, word w)
 {
-    cout << "hash " << hash << endl;
+    //cout << "hash = " << hash << endl;
     if (this->buckets[hash] == NULL)
     {
-        this->buckets[hash] = new word[5]();                  // create bucket
-        for (int i = 0; i < 5; i++)
+        this->buckets[hash] = new char*[100]();                            // create bucket
+        for (int i = 0; i < 100; i++)
         {
             this->buckets[hash][i] = new char[MAX_WORD_LENGTH];
         }
-        this->buckets[hash][0] = w;
-        this->wordsPerBucket[hash]++;     
+        strcpy(this->buckets[hash][0], w);                                 // first word in bucket
+        this->wordsPerBucket[hash]++;    
         //cout << "Bucket no " << hash << " is created" << endl;
         return;
     }
-    if (this->wordsPerBucket[hash] % 5 == 5 || this->wordsPerBucket[hash] == 5)
+    if (this->wordsPerBucket[hash] % 100 == 0)                             // have reached limit of bucket
     {
-        word* resized = new char*[MAX_WORD_LENGTH * (5 + this->wordsPerBucket[hash])]();  
-        resized = this->buckets[hash];
-        if (this->buckets[hash] != NULL)
+        word* resized = new char*[this->wordsPerBucket[hash] + 100]();     // create bigger bucket
+        for (int i = 0; i <  this->wordsPerBucket[hash] + 100; i++)
         {
-            delete [] this->buckets[hash];
-            this->buckets[hash] = NULL;
+            resized[i] = new char[MAX_WORD_LENGTH];
+            if (i < this->wordsPerBucket[hash])
+            {
+                strcpy(resized[i], this->buckets[hash][i]);                // copy words accumulated until now
+            }
         }
-        this->buckets[hash] = resized;
+
+        if (this->buckets[hash] != NULL)                                   // delete old bucket
+        {
+            int wordsNum = 100 + (this->wordsPerBucket[hash] / 100) * 100;
+            if (this->wordsPerBucket[hash] % 100 == 0)
+            {
+                wordsNum = (this->wordsPerBucket[hash] / 100) * 100;
+            }
+            for (int w = 0; w < wordsNum; w++)
+            {
+                delete [] this->buckets[hash][w];
+            }
+            delete [] this->buckets[hash];
+        }
+
+        this->buckets[hash] = resized;                                    // pointer to the new bigger bucket 
     }
+
     int pos = binarySearch(this->buckets[hash], 0, this->wordsPerBucket[hash] - 1, w);
-    //cout << pos << endl;
     
     if (pos == -1)
     {
@@ -198,25 +210,22 @@ void HashTable :: addToBucket(int hash, word w)
         }
     }
     strcpy(this->buckets[hash][pos], w);                              // new node in array
-    this->wordsPerBucket[hash]++;     
-    cout << this->wordsPerBucket[hash] << endl;
-    cout << this->buckets[hash][pos] << endl;
-
-    
-
+    this->wordsPerBucket[hash]++;  
 }
 void HashTable :: printTable() 
 {
     for (int bucket = 0; bucket < MAX_BUCKETS; bucket++)
     {
-        cout << "Bucket no " << bucket << endl;
-        for (int word = 0; word < this->wordsPerBucket[bucket]; word++) 
+        if (this->wordsPerBucket[bucket] > 0)
         {
-            cout << this->buckets[bucket][word] << endl;
+            cout << "Bucket no " << bucket << endl;
+            for (int word = 0; word < this->wordsPerBucket[bucket]; word++) 
+            {
+                cout << this->buckets[bucket][word] << endl;
+            }
+            cout << "######################" << endl;
         }
-        cout << "######################" << endl;
     }
-    
 }
 HashTable :: ~HashTable()
 {
@@ -224,19 +233,22 @@ HashTable :: ~HashTable()
     {
         if (this->buckets[bucket] != NULL)
         {
-            for (int w = 0; w < this->wordsPerBucket[bucket]; w++)
+            int wordsNum = 100 + (this->wordsPerBucket[bucket] / 100) * 100; // figure out how many words should be deleted
+            if (this->wordsPerBucket[bucket] % 100 == 0)
             {
-                cout << this->wordsPerBucket[bucket] << endl;
-                //if (this->buckets[bucket][w] != NULL)
-                delete [] this->buckets[bucket][w];
+                wordsNum = (this->wordsPerBucket[bucket] / 100) * 100;
             }
-            delete [] this->buckets[bucket];
+            for (int w = 0; w < wordsNum; w++)
+            {
+                delete [] this->buckets[bucket][w];                         // delete words
+            }
+            delete [] this->buckets[bucket];                                // delete buckets
         }
         //cout << "Bucket no " << bucket << " is deleted !" << endl;
     }
     delete[] this->wordsPerBucket;
-    delete[] this->buckets;
-    cout << "Hash Table is deleted" << endl;
+    delete[] this->buckets;                                                 // delete hash table
+    cout << "Hash Table is deleted!" << endl;
 }
 
 unsigned long hashFunction(char *str)
@@ -249,7 +261,7 @@ unsigned long hashFunction(char *str)
         hash = ((hash << 5) + hash) + c; 
     }
 
-    return hash % (int)(ceil (sqrt(MAX_DOC_WORDS / (80.0/100)) ) );
+    return hash % MAX_BUCKETS;
 }
 
 void Deduplication(Document* d)
@@ -257,14 +269,13 @@ void Deduplication(Document* d)
     HashTable HT;
     for (int i = 0; i < MAX_DOC_WORDS; i ++)
     {
-        char* w = d->getWord(i);
+        word w = d->getWord(i);
         //cout << w << endl;
         if ( w == NULL)
         {
             break;
         }
-        //HT.addToBucket(hashFunction(w), w);
-        //HT.printTable();
+        HT.addToBucket(hashFunction(w), w);
     }
-    
+    HT.printTable();
 }
