@@ -1,10 +1,10 @@
 #ifndef INDEX
 #define INDEX
+
 #include "structs.hpp"
 #include "core.h"
 #include "treeNodeList.hpp"
-
-
+#include "childQueue.hpp"
 class index{
     private:
         MatchType indexMatchingType;
@@ -15,9 +15,12 @@ class index{
         ~index();
         int addEntry(entry* input);
         int printTree();
-        ErrorCode buildEntryIndex(const entry_list* el, MatchType type, index* ix);
-        ErrorCode destroy_entry_index(index* ix);
-        int search(char* word,int threshold);
+        class entry* getEntry();
+        class treeNodeList* getChildren();
         MatchType getMatchingType();
 };
+
+ErrorCode buildEntryIndex(entry_list* el, MatchType type, class index** ix);
+ErrorCode destroy_entry_index(class index* ix);
+ErrorCode lookup_entry_index(const word* w,class index* ix, int threshold, entry_list** result);
 #endif  //INDEX

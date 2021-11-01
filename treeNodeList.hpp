@@ -1,5 +1,6 @@
 #ifndef TREE_NODE_LIST
 #define TREE_NODE_LIST
+
 #include "structs.hpp"
 #include "index.hpp"
 #include "core.h"
@@ -15,6 +16,8 @@ class treeNodeList{
         int addToList(entry* content,int distance);
         int getDistanceFromParent();
         int printList();
+        class index* getNode();
+        treeNodeList* getNext();
 };
 
 #endif //TREE_NODE_LIST
