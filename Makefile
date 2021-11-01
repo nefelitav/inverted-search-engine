@@ -1,6 +1,6 @@
-OBJS	= main.o match.o structs.o
-SOURCE	= main.cpp structs.cpp match.cpp
-HEADER	= structs.hpp match.hpp core.h
+OBJS	= main.o functions.o structs.o
+SOURCE	= main.cpp structs.cpp functions.cpp
+HEADER	= structs.hpp functions.hpp core.h
 OUT	= main
 CC	 = g++
 FLAGS = -g -c -Wall
@@ -11,14 +11,14 @@ all: $(OBJS)
 main.o: main.cpp
 	$(CC) $(FLAGS) main.cpp 
 
-match.o: match.cpp
-	$(CC) $(FLAGS) match.cpp
+functions.o: functions.cpp
+	$(CC) $(FLAGS) functions.cpp
 
 structs.o: structs.cpp
 	$(CC) $(FLAGS) structs.cpp
 
 clean:
-	rm -f $(OBJS) $(OUT) match structs *.o
+	rm -f $(OBJS) $(OUT) functions structs *.o
 
 run: $(OUT)
 	./$(OUT)

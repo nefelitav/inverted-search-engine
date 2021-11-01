@@ -1,7 +1,7 @@
 #include "core.h"
 #include <iostream>
 #include "structs.hpp"
-#include "match.hpp"
+#include "functions.hpp"
 #include "index.hpp"
 #include "treeNodeList.hpp"
 
