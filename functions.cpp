@@ -3,24 +3,12 @@
 #include <cmath>
 
 
-bool exactMatch(const char* word1, const char* word2) {
-    bool flag = true;
-    int i = 0;
-
-    // Check each character
-    while (word1[i] != '\0' && word2[i] != '\0'  && flag) {
-        if (word1[i] != word2[i]) {
-            flag = false;
-        }
-        i++;
+int exactMatch(const char* word1, const char* word2) {
+    if (strcmp(word1,word2) == 0){
+        return 0;
+    }else{
+        return MAX_WORD_LENGTH + 1;
     }
-
-    // Check if one word is larger than the other
-    if (word1[i] != word2[i]) {
-            flag = false;
-    }
-
-    return flag;
 }
 
 int hammingDistance(const char* word1, const char* word2) {
@@ -61,17 +49,13 @@ int editDistance(const char* word1,const char* word2) {
     int substitution;
     int **d;
     // Get the size of each word to create the matrix
-    while (word1[size1] != '\0') {
-        size1++;
-    }
-    while (word2[size2] != '\0') {
-        size2++;
-    }
+    size1 = strlen(word1);
+    size2 = strlen(word2);
 
     // Allocate the matrix with dims Size1*Size2
     d = new int*[size1 + 1];
     for (int i = 0; i < size1 + 1; i++) {
-        d[i]=new int [size2 + 1];
+        d[i]=new int [size2 + 1]();
     }
     for (int i = 0; i > (size1 + 1)*(size2 + 1); i++) {
         d[i] = 0;
@@ -100,9 +84,9 @@ int editDistance(const char* word1,const char* word2) {
 
     // Delete the matrix
     for (int i = 0; i < size1 + 1; i++) {
-        delete d[i];
+        delete[] d[i];
     }
-    delete d;
+    delete[] d;
    
     // Return the Edit Distance
     return final_distance;

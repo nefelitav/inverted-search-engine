@@ -23,6 +23,7 @@ MatchType index::getMatchingType() {
 
 int index::addEntry(entry* input) {
     int distance;
+
     // Get distance for given metric
     if (this->getMatchingType() == MT_HAMMING_DIST) {
         //cout<<"Selected HAMMING\n";
@@ -30,6 +31,8 @@ int index::addEntry(entry* input) {
     }else if(this->getMatchingType() == MT_EDIT_DIST) {
         //cout<<"Selected EDIT\n";
         distance = editDistance(this->content->getWord(), input->getWord());
+    }else if(this->getMatchingType() == MT_EXACT_MATCH){
+        distance = exactMatch(this->content->getWord(), input->getWord());
     }
 
     //cout<<"Distance : "<<distance<<'\n';
@@ -66,7 +69,9 @@ class treeNodeList* index::getChildren() {
 }
 
 
-ErrorCode lookup_entry_index(const word* w,class index* ix, int threshold, entry_list** result) {
+ErrorCode lookup_entry_index(const word* w,class index* ix, int threshold, entry_list** result){
+    int distance;
+
     try {
         // List to store results
         *result = new entry_list();
@@ -81,8 +86,7 @@ ErrorCode lookup_entry_index(const word* w,class index* ix, int threshold, entry
         queueHandler* queue = new queueHandler();
         class index* toEnqueue;
 
-        // Get distance for selected Metric
-        int distance;
+        // Start the search with the root of the tree
         class index* currNode = ix;
 
         // Main loop
@@ -92,6 +96,8 @@ ErrorCode lookup_entry_index(const word* w,class index* ix, int threshold, entry
                 distance = hammingDistance(currNode->getEntry()->getWord(), *w);
             }else if(currNode->getMatchingType() == MT_EDIT_DIST) {
                 distance = editDistance(currNode->getEntry()->getWord(), *w);
+            }else if(currNode->getMatchingType() == MT_EXACT_MATCH){
+                distance = exactMatch(currNode->getEntry()->getWord(), *w);
             }
 
             // Add to results if close enough
@@ -106,7 +112,8 @@ ErrorCode lookup_entry_index(const word* w,class index* ix, int threshold, entry
                 if (currChild->getDistanceFromParent() >= distance-threshold && currChild->getDistanceFromParent() <= distance+threshold){
                     toEnqueue = currChild->getNode();
                     queue->enqueue(&toEnqueue);
-                }else {
+                }else{
+                    // Children are ordered by distance, if one in not acceptable we can skip the rest
                     break;
                 }
                 currChild = currChild->getNext();
@@ -116,6 +123,7 @@ ErrorCode lookup_entry_index(const word* w,class index* ix, int threshold, entry
             queue->dequeue(&currNode);
             
         }
+        delete queue;
         return EC_SUCCESS;
     } catch (const exception& _) {
         return EC_FAIL;
