@@ -6,50 +6,48 @@
 
 using namespace std;
 
-index::index(entry* input, MatchType matchingMetric){
+index::index(entry* input, MatchType matchingMetric) {
     cout<<"Creating new node\n";
     this->indexMatchingType=matchingMetric;
     this->content = input;
     this->children = NULL;
 }
-index::~index(){
+index::~index() {
     delete this->content;
     delete this->children;
 }
 
-
-
-MatchType index::getMatchingType(){
+MatchType index::getMatchingType() {
     return this->indexMatchingType;
 }
 
-int index::addEntry(entry* input){
+int index::addEntry(entry* input) {
     int distance;
     // Get distance for given metric
-    if (this->getMatchingType() == MT_HAMMING_DIST){
+    if (this->getMatchingType() == MT_HAMMING_DIST) {
         //cout<<"Selected HAMMING\n";
         distance = hammingDistance(this->content->getWord(), input->getWord());
-    }else if(this->getMatchingType() == MT_EDIT_DIST){
+    }else if(this->getMatchingType() == MT_EDIT_DIST) {
         //cout<<"Selected EDIT\n";
         distance = editDistance(this->content->getWord(), input->getWord());
     }
 
     //cout<<"Distance : "<<distance<<'\n';
-    if (this->children == NULL){            //If there are no children
+    if (this->children == NULL) {            //If there are no children
         //cout<<"No children list found, making new list\n";
         this->children = new treeNodeList(input, distance,this->getMatchingType());
-    }else if (this->children->getDistanceFromParent() > distance){      // Children list exists, first child has bigger dist
+    }else if (this->children->getDistanceFromParent() > distance) {      // Children list exists, first child has bigger dist
         //cout<<"Putting in front\n";
         treeNodeList* oldFirstChild = this->children;
         this->children = new treeNodeList(input, distance, this->getMatchingType(), oldFirstChild);
-    }else{          // Children list exists, new entry has equal or greater dist than first child
+    }else {          // Children list exists, new entry has equal or greater dist than first child
         //cout<<"Sending in to list\n";
         this->children->addToList(input, distance);
     }
     return 0;
 }
 
-int index::printTree(){
+int index::printTree() {
     cout<<"Word: "<<this->content->getWord();
     if (this->children ){
         cout<<" HAS CHILDREN: \n";
@@ -59,16 +57,16 @@ int index::printTree(){
     cout<<"\n";
     return 0;
 }
-class entry* index::getEntry(){
+class entry* index::getEntry() {
     return this->content;
 }
 
-class treeNodeList* index::getChildren(){
+class treeNodeList* index::getChildren() {
     return this->children;
 }
 
 
-ErrorCode lookup_entry_index(const word* w,class index* ix, int threshold, entry_list** result){
+ErrorCode lookup_entry_index(const word* w,class index* ix, int threshold, entry_list** result) {
     try {
         // List to store results
         *result = new entry_list();
@@ -88,27 +86,27 @@ ErrorCode lookup_entry_index(const word* w,class index* ix, int threshold, entry
         class index* currNode = ix;
 
         // Main loop
-        while (currNode){
+        while (currNode) {
             // Calculate distance from target word
-            if (currNode->getMatchingType() == MT_HAMMING_DIST){
+            if (currNode->getMatchingType() == MT_HAMMING_DIST) {
                 distance = hammingDistance(currNode->getEntry()->getWord(), *w);
-            }else if(currNode->getMatchingType() == MT_EDIT_DIST){
+            }else if(currNode->getMatchingType() == MT_EDIT_DIST) {
                 distance = editDistance(currNode->getEntry()->getWord(), *w);
             }
 
             // Add to results if close enough
-            if  (distance <= threshold){
+            if  (distance <= threshold) {
                 tempEntry = new entry (currNode->getEntry()->getWord());
                 (*result)->addEntry (tempEntry);
             }
 
             // Add any applicable chilren to examine later
             currChild = currNode->getChildren();
-            while (currChild){
+            while (currChild) {
                 if (currChild->getDistanceFromParent() >= distance-threshold && currChild->getDistanceFromParent() <= distance+threshold){
                     toEnqueue = currChild->getNode();
                     queue->enqueue(&toEnqueue);
-                }else{
+                }else {
                     break;
                 }
                 currChild = currChild->getNext();
@@ -126,8 +124,8 @@ ErrorCode lookup_entry_index(const word* w,class index* ix, int threshold, entry
 
     
 
-ErrorCode buildEntryIndex(entry_list* el, MatchType type,class index** ix){
-    try{
+ErrorCode buildEntryIndex(entry_list* el, MatchType type,class index** ix) {
+    try {
         entry* currEntry = el->getHead();
         *ix = new class index(currEntry, type);
         while (currEntry->getNext() ){
@@ -140,7 +138,7 @@ ErrorCode buildEntryIndex(entry_list* el, MatchType type,class index** ix){
     }
 }
 
-ErrorCode destroy_entry_index(class index* ix){
+ErrorCode destroy_entry_index(class index* ix) {
     try{
         delete ix;
         return EC_SUCCESS;

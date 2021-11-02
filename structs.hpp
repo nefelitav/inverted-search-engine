@@ -15,9 +15,9 @@ class Query {
         QueryID id;
     public:
         Query(const char * words, int id);
-        void printQuery();                                                            
-        const word getWord(int word_num);                                                         
-        char* getText();
+        void printQuery() const;                                                            
+        const word getWord(int word_num) const;                                                         
+        char* getText() const;
         ~Query();
           
 };
@@ -28,9 +28,9 @@ class Document {
         DocID id;
     public:
         Document(const char * words, int id); 
-        void printDocument();
-        const word getWord(int word_num);                      
-        char* getText();
+        void printDocument() const;
+        const word getWord(int word_num) const;                      
+        char* getText() const;
         ~Document();
 };
 
@@ -41,9 +41,9 @@ class entry {
         entry* next;
     public:
         entry(const word keyword);
-        const word getWord();
-        void* getPayload();
-        entry* getNext();
+        const word getWord() const;
+        void* getPayload() const;
+        entry* getNext() const;
         void setNext(entry* e);
         ~entry();
 };
@@ -54,10 +54,10 @@ class entry_list {
         int entryNum;
     public:
         entry_list();
-        unsigned int getEntryNum();
-        entry* getHead();
+        unsigned int getEntryNum() const;
+        entry* getHead() const;
         void addEntry(entry * new_entry);
-        entry* getNext(entry* e);
+        entry* getNext(entry* e) const;
         ~entry_list();
 };
 
@@ -66,10 +66,10 @@ ErrorCode create_entry(const word* w, entry** e);
 ErrorCode destroy_entry(entry *e);
 ErrorCode create_entry_list(entry_list** el);
 ErrorCode destroy_entry_list(entry_list* el);
-unsigned int get_number_entries(entry_list* el);
+unsigned int get_number_entries(const entry_list* el);
 ErrorCode add_entry(entry_list* el, entry* e);
-entry* get_first(entry_list* el);
-entry* get_next(entry_list* el, entry* e);
+entry* get_first(const entry_list* el);
+entry* get_next(const entry_list* el, entry* e);
 
 /*
 ErrorCode build_entry_index(const entry_list* el, MatchType type, index* ix);

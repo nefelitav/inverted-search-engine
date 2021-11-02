@@ -1,15 +1,17 @@
 # Software Development for Information Systems
 
-## Compile and Run
+## Compile 
 ```
-$ make && make run
+$ make 
 ```
-
+## Run
+```
+$ make run
+```
 ## Debug
 ```
 $ make valgrind
 ```
-
 ## Clean
 ```
 $ make clean

@@ -150,13 +150,14 @@ HashTable :: HashTable()
     cout << "Hash Table is created!" << endl;
 }
 
-void HashTable :: addToBucket(int hash, word w)
+void HashTable :: addToBucket(int hash, const word w)
 {
     //cout << "hash = " << hash << endl;
+    int i;
     if (this->buckets[hash] == NULL)
     {
         this->buckets[hash] = new char*[100]();                            // create bucket
-        for (int i = 0; i < 100; i++)
+        for (i = 0; i < 100; i++)
         {
             this->buckets[hash][i] = new char[MAX_WORD_LENGTH];
         }
@@ -168,7 +169,7 @@ void HashTable :: addToBucket(int hash, word w)
     if (this->wordsPerBucket[hash] % 100 == 0)                             // have reached limit of bucket
     {
         word* resized = new char*[this->wordsPerBucket[hash] + 100]();     // create bigger bucket
-        for (int i = 0; i <  this->wordsPerBucket[hash] + 100; i++)
+        for (i = 0; i <  this->wordsPerBucket[hash] + 100; i++)
         {
             resized[i] = new char[MAX_WORD_LENGTH];
             if (i < this->wordsPerBucket[hash])
@@ -184,9 +185,9 @@ void HashTable :: addToBucket(int hash, word w)
             {
                 wordsNum = (this->wordsPerBucket[hash] / 100) * 100;
             }
-            for (int w = 0; w < wordsNum; w++)
+            for (i = 0; i < wordsNum; i++)
             {
-                delete [] this->buckets[hash][w];
+                delete [] this->buckets[hash][i];
             }
             delete [] this->buckets[hash];
         }
@@ -204,7 +205,7 @@ void HashTable :: addToBucket(int hash, word w)
 
     if (this->wordsPerBucket[hash] >= pos)                             // in the middle of the array
     {
-        for (int i = this->wordsPerBucket[hash]; i > pos; i--)
+        for (i = this->wordsPerBucket[hash]; i > pos; i--)
         {
             strcpy(this->buckets[hash][i], this->buckets[hash][i-1]); 
         }
@@ -251,14 +252,14 @@ HashTable :: ~HashTable()
     cout << "Hash Table is deleted!" << endl;
 }
 
-unsigned long hashFunction(char *str)
+unsigned long hashFunction(word str)
 {
     unsigned long hash = 5381;
-    int c;
+    int character;
 
-    while ((c = *str++))
+    while ((character = *str++))
     {
-        hash = ((hash << 5) + hash) + c; 
+        hash = ((hash << 5) + hash) + character; 
     }
 
     return hash % MAX_BUCKETS;
@@ -269,7 +270,7 @@ void Deduplication(Document* d)
     HashTable HT;
     for (int i = 0; i < MAX_DOC_WORDS; i ++)
     {
-        word w = d->getWord(i);
+        const word w = d->getWord(i);
         //cout << w << endl;
         if ( w == NULL)
         {

@@ -17,7 +17,7 @@ Query :: Query(const char * words, int id)
     this->id = id;
     cout << "Query with id = " << this->id << " is created!" << endl;
 }
-void Query :: printQuery()                                                    // for debugging reasons
+void Query :: printQuery() const                                               // for debugging reasons
 {
     char * ptr = this->words;
     cout << "-------------------" << endl;
@@ -37,7 +37,7 @@ void Query :: printQuery()                                                    //
     }
     cout << "-------------------" << endl;
 }
-const word Query :: getWord(int word_num)                    // array[i][j] --> arrary[i*(MAX_WORD_LENGTH + 1)]                                      
+const word Query :: getWord(int word_num) const                  // array[i][j] --> arrary[i*(MAX_WORD_LENGTH + 1)]                                      
 {
     if (word_num >= MAX_QUERY_WORDS)                                         // out of range   
     {
@@ -53,7 +53,7 @@ const word Query :: getWord(int word_num)                    // array[i][j] --> 
     return ptr;
 }
 
-char* Query :: getText()
+char* Query :: getText() const
 {
     return this->words;
 }
@@ -86,7 +86,7 @@ Document :: Document(const char * words, int id)
     cout << "Document with id = " << this->id << " is created!" << endl;
 
 }
-void Document :: printDocument()
+void Document :: printDocument() const
 {
     char * ptr = this->text;
     cout << "-------------------" << endl;
@@ -102,7 +102,7 @@ void Document :: printDocument()
     }
     cout << "-------------------" << endl;
 }
-const word Document :: getWord(int word_num)                    // array[i][j] --> arrary[i*(MAX_WORD_LENGTH + 1)]    
+const word Document :: getWord(int word_num) const                 // array[i][j] --> arrary[i*(MAX_WORD_LENGTH + 1)]    
 {
     if (word_num >= MAX_DOC_WORDS)                                                // out of range
     {
@@ -117,7 +117,7 @@ const word Document :: getWord(int word_num)                    // array[i][j] -
     }
     return ptr;
 }
-char* Document :: getText()
+char* Document :: getText() const
 {
     return this->text;
 }
@@ -140,15 +140,15 @@ entry :: entry(const word keyword)
     this->next = NULL;
     cout << "Entry is created!" << endl;
 }
-const word entry :: getWord()
+const word entry :: getWord() const
 {
     return this->keyword;
 }
-void* entry :: getPayload()
+void* entry :: getPayload() const
 {
     return this->payload;
 }
-entry* entry :: getNext()
+entry* entry :: getNext() const
 {
     return this->next;
 }
@@ -176,11 +176,11 @@ entry_list :: entry_list()
     this->entryNum = 0;
     cout << "Entry list is created!" << endl;
 }
-unsigned int entry_list :: getEntryNum()
+unsigned int entry_list :: getEntryNum() const
 {
     return this->entryNum;
 }
-entry* entry_list :: getHead()
+entry* entry_list :: getHead() const
 {
     return this->head;
 }
@@ -201,7 +201,7 @@ void entry_list :: addEntry(entry * new_entry)
     this->entryNum++;
 
 }
-entry* entry_list :: getNext(entry* e)
+entry* entry_list :: getNext(entry* e) const
 {
     return e->getNext();
 }
@@ -270,7 +270,7 @@ ErrorCode destroy_entry_list(entry_list* el) // first delete entries and then li
     return EC_NO_AVAIL_RES;
 }
 
-unsigned int get_number_entries(entry_list* el)
+unsigned int get_number_entries(const entry_list* el)
 {
     return el->getEntryNum();
 }
@@ -286,12 +286,12 @@ ErrorCode add_entry(entry_list* el, entry* e)
     return EC_NO_AVAIL_RES;
 }
 
-entry* get_first(entry_list* el)
+entry* get_first(const entry_list* el)
 {
     return el->getHead();
 }
 
-entry* get_next(entry_list* el, entry* e)
+entry* get_next(const entry_list* el, entry* e)
 {
     return el->getNext(e);
 }
