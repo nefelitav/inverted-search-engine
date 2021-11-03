@@ -41,11 +41,14 @@ int treeNodeList::addToList(entry* content,int distance) {
     return 0;
 }
 
-int treeNodeList::printList() {
-    cout<<"Difference from parent: "<<this->distanceFromParrent<<" ";
-    this->node->printTree();
+int treeNodeList::printList(int depth) {
+    for (int i=0; i <= depth*3 + 1; i++){
+        cout<<" ";
+    }
+    cout<<" |->Diff: "<<this->distanceFromParrent<<" ";
+    this->node->printTree( depth + 1);
     if (this->next ) {
-        this->next->printList();
+        this->next->printList(depth);
     }
     return 0;
 }

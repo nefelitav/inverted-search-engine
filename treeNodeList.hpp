@@ -15,7 +15,7 @@ class treeNodeList{
         ~treeNodeList();
         int addToList(entry* content,int distance);
         int getDistanceFromParent();
-        int printList();
+        int printList(int depth = 0);
         class index* getNode();
         treeNodeList* getNext();
 };
