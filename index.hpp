@@ -1,26 +1,64 @@
 #ifndef INDEX
 #define INDEX
 
+#include <iostream>
+#include "./include/core.h"
 #include "structs.hpp"
-#include "core.h"
-#include "treeNodeList.hpp"
-#include "childQueue.hpp"
-class index{
+
+class treeNodeList;
+
+class indexing {
     private:
-        MatchType indexMatchingType;
-        class entry* content;
-        class treeNodeList* children;
+        MatchType MatchingType;
+        entry* content;
+        treeNodeList* children;
     public:
-        index(entry* input, MatchType matchingMetric);
-        ~index();
+        indexing(entry* input, MatchType matchingMetric);
         int addEntry(entry* input);
         int printTree();
-        class entry* getEntry();
-        class treeNodeList* getChildren();
+        entry* getEntry();
+        treeNodeList* getChildren();
         MatchType getMatchingType();
+        ~indexing();
 };
 
-ErrorCode buildEntryIndex(entry_list* el, MatchType type, class index** ix);
-ErrorCode destroy_entry_index(class index* ix);
-ErrorCode lookup_entry_index(const word* w,class index* ix, int threshold, entry_list** result);
+
+//ErrorCode build_entry_index(const entry_list* el, MatchType type, indexing** ix);
+//ErrorCode lookup_entry_index(const word* w, indexing* ix, int threshold, entry_list* result);
+//ErrorCode destroy_entry_index(indexing* ix);
+
+class childQueue {
+    private:
+        indexing* entry;
+        childQueue* next;
+    public:
+        childQueue(indexing* input, childQueue* next = nullptr);
+        void pop(indexing** content, childQueue** newHead);
+};
+
+class Queue {
+    private:
+        childQueue* head;
+    public:
+        Queue();
+        int enqueue(indexing** input);
+        int dequeue(indexing** nodeToReturn);
+        childQueue* get_head() const;
+};
+
+class treeNodeList {
+    private:
+        int distanceFromParent;
+        indexing* node;
+        treeNodeList* next;
+    public:
+        treeNodeList(entry* content, int distance, MatchType matchingMetric, treeNodeList* next = nullptr);
+        void addToList(entry* content, int distance);
+        int getDistanceFromParent();
+        void printList();
+        indexing* getNode();
+        treeNodeList* getNext();
+        ~treeNodeList();
+};
+
 #endif  //INDEX

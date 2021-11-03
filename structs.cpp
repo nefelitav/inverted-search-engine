@@ -1,5 +1,6 @@
 #include "structs.hpp"
 
+
 Query :: Query(const char * words, int id)
 {
     this->words = new char[MAX_QUERY_LENGTH]();                                // allocate memory and set to zero
@@ -15,16 +16,16 @@ Query :: Query(const char * words, int id)
         }
     }
     this->id = id;
-    cout << "Query with id = " << this->id << " is created!" << endl;
+    std::cout << "Query with id = " << this->id << " is created!" << std::endl;
 }
 void Query :: printQuery() const                                               // for debugging reasons
 {
     char * ptr = this->words;
-    cout << "-------------------" << endl;
-    cout << "Print query words :" << endl;
+    std::cout << "-------------------" << std::endl;
+    std::cout << "Print query words :" << std::endl;
     for (int i = 0; i < MAX_QUERY_WORDS; i++)
     {
-        cout << ptr << endl;
+        std::cout << ptr << std::endl;
         ptr += (MAX_WORD_LENGTH + 1);                                       // go to next word
         if (i != MAX_QUERY_WORDS - 1)                                       // if last word, exit
         {
@@ -35,19 +36,19 @@ void Query :: printQuery() const                                               /
         }
         
     }
-    cout << "-------------------" << endl;
+    std::cout << "-------------------" << std::endl;
 }
 const word Query :: getWord(int word_num) const                  // array[i][j] --> arrary[i*(MAX_WORD_LENGTH + 1)]                                      
 {
     if (word_num >= MAX_QUERY_WORDS)                                         // out of range   
     {
-        cout << "Sorry, index out of range." << endl;
+        std::cout << "Sorry, index out of range." << std::endl;
         return NULL;
     }
     const word ptr = (this->words + word_num * (MAX_WORD_LENGTH + 1));      // find the word
     if (*ptr == '\0')                                                       // no more words
     {
-        cout << "Sorry, index out of range." << endl;
+        std::cout << "Sorry, index out of range." << std::endl;
         return NULL;
     }
     return ptr;
@@ -60,7 +61,7 @@ char* Query :: getText() const
 Query :: ~Query()
 {
     delete[] this->words;
-    cout << "Query with id = " << this->id << " is deleted!" << endl;
+    std::cout << "Query with id = " << this->id << " is deleted!" << std::endl;
 }    
 
 
@@ -83,24 +84,24 @@ Document :: Document(const char * words, int id)
         }
     }
     this->id = id;
-    cout << "Document with id = " << this->id << " is created!" << endl;
+    std::cout << "Document with id = " << this->id << " is created!" << std::endl;
 
 }
 void Document :: printDocument() const
 {
     char * ptr = this->text;
-    cout << "-------------------" << endl;
-    cout << "Print text words :" << endl;
+    std::cout << "-------------------" << std::endl;
+    std::cout << "Print text words :" << std::endl;
     for (int i = 0; i < MAX_DOC_WORDS; i++)                                 
     {
-        cout << ptr << endl;
+        std::cout << ptr << std::endl;
         ptr += (MAX_WORD_LENGTH + 1);                                         // move pointer
         if (*(ptr - 1) == '\0' && *(ptr) == '\0')                             // no more words
         {
             break;
         }
     }
-    cout << "-------------------" << endl;
+    std::cout << "-------------------" << std::endl;
 }
 const word Document :: getWord(int word_num) const                 // array[i][j] --> arrary[i*(MAX_WORD_LENGTH + 1)]    
 {
@@ -124,7 +125,7 @@ char* Document :: getText() const
 Document :: ~Document()
 {
     delete[] this->text;
-    cout << "Document with id = " << this->id << " is deleted!" << endl;
+    std::cout << "Document with id = " << this->id << " is deleted!" << std::endl;
 }
 
 
@@ -138,7 +139,7 @@ entry :: entry(const word keyword)
     strcpy(this->keyword, keyword);
     this->payload = NULL;
     this->next = NULL;
-    cout << "Entry is created!" << endl;
+    std::cout << "Entry is created!" << std::endl;
 }
 const word entry :: getWord() const
 {
@@ -162,7 +163,7 @@ void entry :: setNext(entry* e)
 entry :: ~entry()
 {
     delete[] this->keyword;
-    cout << "Entry is deleted!" << endl;
+    std::cout << "Entry is deleted!" << std::endl;
 }
 
 
@@ -174,7 +175,7 @@ entry_list :: entry_list()
 {
     this->head = NULL;
     this->entryNum = 0;
-    cout << "Entry list is created!" << endl;
+    std::cout << "Entry list is created!" << std::endl;
 }
 unsigned int entry_list :: getEntryNum() const
 {
@@ -207,7 +208,7 @@ entry* entry_list :: getNext(entry* e) const
 }
 entry_list :: ~entry_list()
 {
-    cout << "Entry list is deleted!" << endl;
+    std::cout << "Entry list is deleted!" << std::endl;
 }
 
 
@@ -222,7 +223,7 @@ ErrorCode create_entry(const word* w, entry** e)
         *e = new entry(*w);
         //cout << (**e).getWord() << endl;
         return EC_SUCCESS;
-    } catch (const exception& _) {
+    } catch (const std::exception& _) {
         return EC_FAIL;
     }
     return EC_NO_AVAIL_RES;
@@ -233,7 +234,7 @@ ErrorCode destroy_entry(entry *e)
     try {
         delete e;
         return EC_SUCCESS;
-    } catch (const exception& _) {
+    } catch (const std::exception& _) {
         return EC_FAIL;
     }
     return EC_NO_AVAIL_RES;
@@ -244,7 +245,7 @@ ErrorCode create_entry_list(entry_list** el)
     try {
         *el = new entry_list();
         return EC_SUCCESS;
-    } catch (const exception& _) {
+    } catch (const std::exception& _) {
         return EC_FAIL;
     }
     return EC_NO_AVAIL_RES;
@@ -264,7 +265,7 @@ ErrorCode destroy_entry_list(entry_list* el) // first delete entries and then li
         }
         delete el;                          // delete entrylist
         return EC_SUCCESS;
-    } catch (const exception& _) {
+    } catch (const std::exception& _) {
         return EC_FAIL;
     }
     return EC_NO_AVAIL_RES;
@@ -280,7 +281,7 @@ ErrorCode add_entry(entry_list* el, entry* e)
     try {
         el->addEntry(e);
         return EC_SUCCESS;
-    } catch (const exception& _) {
+    } catch (const std::exception& _) {
         return EC_FAIL;
     }
     return EC_NO_AVAIL_RES;
@@ -295,3 +296,4 @@ entry* get_next(const entry_list* el, entry* e)
 {
     return el->getNext(e);
 }
+

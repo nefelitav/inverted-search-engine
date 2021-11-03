@@ -1,14 +1,13 @@
-#include <iostream>
-#include <algorithm>
-#include "core.h"
-#include "structs.hpp"
-#include "cstring"
-
-
-using namespace std;
-
 #ifndef FUNCTIONS
 #define FUNCTIONS
+
+#include "./include/core.h"
+#include "structs.hpp"
+#include <iostream>
+#include "cstring"
+#include <algorithm>
+#include <cmath>
+#include <cstdlib>
 
 int exactMatch(const char* word1,const char* word2);
 int hammingDistance(const char* word1,const char* word2);

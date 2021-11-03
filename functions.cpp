@@ -1,43 +1,32 @@
 #include "functions.hpp"
-#include "structs.hpp"
-#include <cmath>
-
 
 int exactMatch(const char* word1, const char* word2) {
-    if (strcmp(word1,word2) == 0){
+    if (strcmp(word1, word2) == 0) {
         return 0;
-    }else{
+    } else {
         return MAX_WORD_LENGTH + 1;
     }
 }
 
 int hammingDistance(const char* word1, const char* word2) {
-    int i = 0, j;
-    int diff = 0;
+    int i = 0;
 
-    // Differences is the common part of the words
+    // if equal, just stop
+    if (strcmp(word1, word2) == 0) {
+        return 0;
+    }
+
+    // If one word is larger, consider each extra character a difference
+    int diff = abs((int)strlen(word1) - (int)strlen(word2));
+
+    // Difference in the common part of the words
     while (word1[i] != '\0' && word2[i] != '\0' ) {
-        if (word1[i] != word2[i]){
+        if (word1[i] != word2[i]) {
             diff++;
         }
         i++;
     }
 
-    // If one word is larger, concider each extra character a difference
-    if(word1[i] == '\0' && word2[i] != '\0') {
-        j = i;
-        while(word2[j]!= '\0'){
-            j++;
-            diff++;
-        }
-    }
-    if(word2[i] == '\0' && word1[i] != '\0') {
-        j = i;
-        while (word1[j] != '\0'){
-            j++;
-            diff++;
-        }
-    }
     // Return the Hamming Distance
     return diff;
 }
@@ -48,6 +37,12 @@ int editDistance(const char* word1,const char* word2) {
     int size2 = 0;
     int substitution;
     int **d;
+
+    // if equal, just stop
+    if (strcmp(word1, word2) == 0) {
+        return 0;
+    }
+    
     // Get the size of each word to create the matrix
     size1 = strlen(word1);
     size2 = strlen(word2);
@@ -55,10 +50,7 @@ int editDistance(const char* word1,const char* word2) {
     // Allocate the matrix with dims Size1*Size2
     d = new int*[size1 + 1];
     for (int i = 0; i < size1 + 1; i++) {
-        d[i]=new int [size2 + 1]();
-    }
-    for (int i = 0; i > (size1 + 1)*(size2 + 1); i++) {
-        d[i] = 0;
+        d[i] = new int [size2 + 1]();
     }
 
     // Initialize border elements
@@ -69,18 +61,18 @@ int editDistance(const char* word1,const char* word2) {
         d[i][0] = i;
     }
     
-    // Calculate the minimum number of differences with the full-matrix itterative method
+    // Calculate the minimum number of differences with the full-matrix iterative method
     for (int j = 1; j < size2 + 1; j++) {
         for (int i = 1; i < size1 + 1; i++) {
-            if(word1[i-1] == word2[j-1]) {
+            if (word1[i-1] == word2[j-1]) {
                 substitution = 0;
-            }else{
+            } else {
                 substitution = 1;
             }
-            d[i][j] = min(min(d[i-1][j] + 1, d[i][j-1] + 1), d[i-1][j-1] + substitution);
+            d[i][j] = std::min(std::min(d[i-1][j] + 1, d[i][j-1] + 1), d[i-1][j-1] + substitution);
         }
     }
-    final_distance=d[size1][size2];
+    final_distance = d[size1][size2];
 
     // Delete the matrix
     for (int i = 0; i < size1 + 1; i++) {
@@ -131,7 +123,7 @@ HashTable :: HashTable()
 {
     this->buckets = new word*[MAX_BUCKETS]();                               // pointers to buckets
     this->wordsPerBucket = new int[MAX_BUCKETS]();                         
-    cout << "Hash Table is created!" << endl;
+    std::cout << "Hash Table is created!" << std::endl;
 }
 
 void HashTable :: addToBucket(int hash, const word w)
@@ -203,12 +195,12 @@ void HashTable :: printTable()
     {
         if (this->wordsPerBucket[bucket] > 0)
         {
-            cout << "Bucket no " << bucket << endl;
+            std::cout << "Bucket no " << bucket << std::endl;
             for (int word = 0; word < this->wordsPerBucket[bucket]; word++) 
             {
-                cout << this->buckets[bucket][word] << endl;
+                std::cout << this->buckets[bucket][word] << std::endl;
             }
-            cout << "######################" << endl;
+            std::cout << "######################" << std::endl;
         }
     }
 }
@@ -233,7 +225,7 @@ HashTable :: ~HashTable()
     }
     delete[] this->wordsPerBucket;
     delete[] this->buckets;                                                 // delete hash table
-    cout << "Hash Table is deleted!" << endl;
+    std::cout << "Hash Table is deleted!" << std::endl;
 }
 
 unsigned long hashFunction(word str)

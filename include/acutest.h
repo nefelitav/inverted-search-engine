@@ -27,7 +27,6 @@
 #ifndef ACUTEST_H
 #define ACUTEST_H
 
-
 /************************
  *** Public interface ***
  ************************/

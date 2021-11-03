@@ -1,11 +1,9 @@
-#include <iostream>
-#include <cstring>
-#include "core.h"
-
-using namespace std;
-
 #ifndef STRUCTS
 #define STRUCTS
+
+#include <iostream>
+#include <cstring>
+#include "./include/core.h"
 
 typedef char* word;
 
@@ -71,10 +69,5 @@ ErrorCode add_entry(entry_list* el, entry* e);
 entry* get_first(const entry_list* el);
 entry* get_next(const entry_list* el, entry* e);
 
-/*
-ErrorCode build_entry_index(const entry_list* el, MatchType type, index* ix);
-ErrorCode lookup_entry_index(const word* w, index* ix, int threshold, entry_list* result);
-ErrorCode destroy_entry_index(index* ix);
-*/
 
 #endif
