@@ -2,7 +2,7 @@
 #define INDEX
 
 #include <iostream>
-#include "./include/core.h"
+#include "core.h"
 #include "structs.hpp"
 
 class treeNodeList;
@@ -15,17 +15,20 @@ class indexing {
     public:
         indexing(entry* input, MatchType matchingMetric);
         int addEntry(entry* input);
-        int printTree();
-        entry* getEntry();
-        treeNodeList* getChildren();
+        int printTree(int depth = 0);
+        class entry* getEntry();
+        class treeNodeList* getChildren();
         MatchType getMatchingType();
         ~indexing();
 };
 
+////////////////////////////////////////////////////////////////////////////////////
 
-//ErrorCode build_entry_index(const entry_list* el, MatchType type, indexing** ix);
-//ErrorCode lookup_entry_index(const word* w, indexing* ix, int threshold, entry_list* result);
-//ErrorCode destroy_entry_index(indexing* ix);
+ErrorCode build_entry_index(const entry_list* el, MatchType type, indexing** ix);
+ErrorCode lookup_entry_index(const word* w, indexing* ix, int threshold, entry_list* result);
+ErrorCode destroy_entry_index(indexing* ix);
+
+////////////////////////////////////////////////////////////////////////////////////
 
 class childQueue {
     private:
@@ -46,6 +49,8 @@ class Queue {
         childQueue* get_head() const;
 };
 
+////////////////////////////////////////////////////////////////////////////////////
+
 class treeNodeList {
     private:
         int distanceFromParent;
@@ -55,7 +60,7 @@ class treeNodeList {
         treeNodeList(entry* content, int distance, MatchType matchingMetric, treeNodeList* next = nullptr);
         void addToList(entry* content, int distance);
         int getDistanceFromParent();
-        void printList();
+        void printList(int depth = 0);
         indexing* getNode();
         treeNodeList* getNext();
         ~treeNodeList();

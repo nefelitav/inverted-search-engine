@@ -1,7 +1,7 @@
 #ifndef FUNCTIONS
 #define FUNCTIONS
 
-#include "./include/core.h"
+#include "core.h"
 #include "structs.hpp"
 #include <iostream>
 #include "cstring"
@@ -9,12 +9,12 @@
 #include <cmath>
 #include <cstdlib>
 
-int exactMatch(const char* word1,const char* word2);
-int hammingDistance(const char* word1,const char* word2);
-int editDistance(const char* word1,const char* word2);
+bool exactMatch(const word word1,const word word2);
+int hammingDistance(const word word1,const word word2);
+int editDistance(const word word1,const word word2);
 
 int binarySearch(word* words, int left, int right, const word w);
-unsigned long hashFunction(word str);
+unsigned long hashFunction(const word str);
 void Deduplication(Document* d);
  
 class HashTable {

@@ -1,20 +1,11 @@
-#include "functions.hpp"
+#include "../include/functions.hpp"
 
-int exactMatch(const char* word1, const char* word2) {
-    if (strcmp(word1, word2) == 0) {
-        return 0;
-    } else {
-        return MAX_WORD_LENGTH + 1;
-    }
+bool exactMatch(const word word1, const word word2) {
+    return (strcmp(word1,word2) == 0);
 }
 
-int hammingDistance(const char* word1, const char* word2) {
+int hammingDistance(const word word1, const word word2) {
     int i = 0;
-
-    // if equal, just stop
-    if (strcmp(word1, word2) == 0) {
-        return 0;
-    }
 
     // If one word is larger, consider each extra character a difference
     int diff = abs((int)strlen(word1) - (int)strlen(word2));
@@ -31,7 +22,7 @@ int hammingDistance(const char* word1, const char* word2) {
     return diff;
 }
 
-int editDistance(const char* word1,const char* word2) {
+int editDistance(const word word1,const word word2) {
     int final_distance;
     int size1 = 0;
     int size2 = 0;
@@ -84,7 +75,7 @@ int editDistance(const char* word1,const char* word2) {
     return final_distance;
 }
 
-/////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////
 
 int binarySearch(word* words, int left, int right, const word w)
 {
@@ -132,7 +123,7 @@ void HashTable :: addToBucket(int hash, const word w)
     int i;
     if (this->buckets[hash] == NULL)
     {
-        this->buckets[hash] = new char*[100]();                            // create bucket
+        this->buckets[hash] = new word[100]();                            // create bucket
         for (i = 0; i < 100; i++)
         {
             this->buckets[hash][i] = new char[MAX_WORD_LENGTH];
@@ -144,7 +135,7 @@ void HashTable :: addToBucket(int hash, const word w)
     }
     if (this->wordsPerBucket[hash] % 100 == 0)                             // have reached limit of bucket
     {
-        word* resized = new char*[this->wordsPerBucket[hash] + 100]();     // create bigger bucket
+        word* resized = new word[this->wordsPerBucket[hash] + 100]();     // create bigger bucket
         for (i = 0; i <  this->wordsPerBucket[hash] + 100; i++)
         {
             resized[i] = new char[MAX_WORD_LENGTH];
@@ -240,6 +231,8 @@ unsigned long hashFunction(word str)
 
     return hash % MAX_BUCKETS;
 }
+
+////////////////////////////////////////////////////////////////////////////////////
 
 void Deduplication(Document* d)
 {

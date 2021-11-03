@@ -3,7 +3,7 @@
 
 #include <iostream>
 #include <cstring>
-#include "./include/core.h"
+#include "core.h"
 
 typedef char* word;
 

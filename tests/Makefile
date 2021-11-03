@@ -1,5 +1,5 @@
-FILES = ../
-OBJS	= main.o $(FILES)functions.o $(FILES)structs.o $(FILES)index.o tests.o
+FILES = ../source/
+OBJS	= main.o tests.o $(FILES)functions.o $(FILES)structs.o $(FILES)index.o 
 OUT	= main
 CC	 = g++
 FLAGS = -g -c -Wall -std=c++11 

@@ -1,5 +1,5 @@
-#include "index.hpp"
-#include "functions.hpp"
+#include "../include/index.hpp"
+#include "../include/functions.hpp"
 
 indexing :: indexing(entry* input, MatchType matchingMetric) {
     std::cout<<"Creating new node\n";
@@ -26,33 +26,26 @@ int indexing :: addEntry(entry* input) {
     } else if(this->getMatchingType() == MT_EDIT_DIST) {
         //cout<<"Selected EDIT\n";
         distance = editDistance(this->content->getWord(), input->getWord());
-    } else if(this->getMatchingType() == MT_EXACT_MATCH) {
-        distance = exactMatch(this->content->getWord(), input->getWord());
+    }else {
+        return EC_FAIL;
     }
 
-    //cout<<"Distance : "<<distance<<'\n';
-    if (this->children == NULL) {            //If there are no children
-        //cout<<"No children list found, making new list\n";
+    if (this->children == NULL) {           //If there are no children
         this->children = new treeNodeList(input, distance,this->getMatchingType());
-    } else if (this->children->getDistanceFromParent() > distance) {      // Children list exists, first child has bigger dist
-        //cout<<"Putting in front\n";
+    }else if (this->children->getDistanceFromParent() > distance) {      // Children list exists, first child has bigger dist
         treeNodeList* oldFirstChild = this->children;
         this->children = new treeNodeList(input, distance, this->getMatchingType(), oldFirstChild);
-    } else {          // Children list exists, new entry has equal or greater dist than first child
-        //cout<<"Sending in to list\n";
+    }else {          // Children list exists, new entry has equal or greater dist than first child
         this->children->addToList(input, distance);
     }
     return 0;
 }
 
-int indexing :: printTree() {
-    std::cout<<"Word: "<<this->content->getWord();
+int indexing :: printTree(int depth) {
+    std::cout << "Word: " << this->content->getWord() << "\n";
     if (this->children ) {
-        std::cout<<" HAS CHILDREN: \n";
-        this->children->printList();
-        std::cout<<"Children over for: "<<this->content->getWord();
+        this->children->printList(depth);
     }
-    std::cout<<"\n";
     return 0;
 }
 entry* indexing :: getEntry() {
@@ -62,6 +55,8 @@ entry* indexing :: getEntry() {
 treeNodeList* indexing :: getChildren() {
     return this->children;
 }
+
+////////////////////////////////////////////////////////////////////////////////////
 
 ErrorCode buildEntryIndex(const entry_list* el, MatchType type, indexing** ix) {
     try {
@@ -105,10 +100,10 @@ ErrorCode lookup_entry_index(const word* w, indexing* ix, int threshold, entry_l
                 distance = hammingDistance(currNode->getEntry()->getWord(), *w);
             } else if (currNode->getMatchingType() == MT_EDIT_DIST) {
                 distance = editDistance(currNode->getEntry()->getWord(), *w);
-            } else if (currNode->getMatchingType() == MT_EXACT_MATCH) {
-                distance = exactMatch(currNode->getEntry()->getWord(), *w);
+            } else {
+                return EC_FAIL;
             }
-
+            
             // Add to results if close enough
             if  (distance <= threshold) {
                 tempEntry = new entry (currNode->getEntry()->getWord());
@@ -121,7 +116,7 @@ ErrorCode lookup_entry_index(const word* w, indexing* ix, int threshold, entry_l
                 if (currChild->getDistanceFromParent() >= distance-threshold && currChild->getDistanceFromParent() <= distance+threshold) {
                     toEnqueue = currChild->getNode();
                     queue->enqueue(&toEnqueue);
-                } else {
+                } else if (currChild->getDistanceFromParent() > distance + threshold){
                     // Children are ordered by distance, if one in not acceptable we can skip the rest
                     break;
                 }
@@ -148,6 +143,7 @@ ErrorCode destroy_entry_index(indexing* ix) {
     }
 }
 
+////////////////////////////////////////////////////////////////////////////////////
 
 
 childQueue :: childQueue(indexing* input, childQueue* oldHead) {
@@ -175,6 +171,7 @@ int Queue :: dequeue(indexing** nodeToReturn) {
     return 0;
 }
 
+////////////////////////////////////////////////////////////////////////////////////
 
 treeNodeList :: treeNodeList(entry* content, int distance, MatchType matchingMetric, treeNodeList* next) {
 
@@ -211,11 +208,14 @@ void treeNodeList :: addToList(entry* content,int distance) {
     }
 }
 
-void treeNodeList :: printList() {
-    std::cout << "Difference from parent: " << this->distanceFromParent << " ";
-    this->node->printTree();
-    if (this->next) {
-        this->next->printList();
+void treeNodeList::printList(int depth) {
+    for (int i = 0; i <= depth*3 + 1; i++ ){
+        std::cout << " ";
+    }
+    std::cout << " |->Diff: " << this->distanceFromParent << " ";
+    this->node->printTree( depth + 1);
+    if (this->next ) {
+        this->next->printList(depth);
     }
 }
 

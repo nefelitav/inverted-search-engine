@@ -1,17 +1,16 @@
-#include "structs.hpp"
-#include "functions.hpp"
-#include "index.hpp"
-
+#include "../include/structs.hpp"
+#include "../include/functions.hpp"
+#include "../include/index.hpp"
+#include "../include/core.h"
 #include <fstream>
 #include <string>
 #include <iostream>
-#include "./include/core.h"
 
 int main()
 {
     /*
     std::string line;
-    std::ifstream myfile ("input.txt");
+    std::ifstream myfile ("../data/input.txt");
     char *q_words;
     int count = 0;
     if (myfile.is_open())

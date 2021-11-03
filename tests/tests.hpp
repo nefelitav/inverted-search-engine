@@ -3,12 +3,9 @@
 
 #include "../include/acutest.h"
 #include "../include/core.h"
-#include "../functions.hpp"
-#include "../queuehandler.hpp"
-#include "../queuehandler.hpp"
-#include "../structs.hpp"
-#include "../index.hpp"
-#include "../treeNodeList.hpp"
+#include "../include/functions.hpp"
+#include "../include/structs.hpp"
+#include "../include/index.hpp"
 
 void test_exact_match(void);
 /*
