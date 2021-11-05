@@ -6,11 +6,9 @@
 #include "../include/functions.hpp"
 #include "../include/structs.hpp"
 #include "../include/index.hpp"
-
+/*
 void test_Query(void);
 void test_Document(void);
-
-/*
 void test_hamming_distance(void);
 void test_edit_distance(void);
 void test_binary_search(void);

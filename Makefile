@@ -1,9 +1,10 @@
 FILES = src/
-OBJS	= main.o functions.o structs.o index.o 
+TEST_FILES = tests/
+OBJS = main.o functions.o structs.o index.o 
+TEST_OBJ = tests.o functions.o structs.o index.o 
 OUT	= main
 CC	 = g++
 FLAGS = -g -c -Wall -std=c++11 
-TEST = functions.o structs.o index.o 
 
 all: $(OBJS)
 	$(CC) -g $(OBJS) -o $(OUT) 
@@ -20,14 +21,14 @@ structs.o: $(FILES)structs.cpp
 index.o: $(FILES)index.cpp
 	$(CC) $(FLAGS) $(FILES)index.cpp
 
-tests.o: tests/tests.cpp
-	$(CC) $(FLAGS) tests/tests.cpp
+tests.o: $(TEST_FILES)tests.cpp
+	$(CC) $(FLAGS) $(TEST_FILES)tests.cpp
 
-test: tests/tests.cpp
-	$(CC) -g $(TEST) tests/tests.cpp -o test
+test: $(TEST_OBJ)
+	$(CC) -g $(TEST_OBJ) -o test
 
 clean:
-	rm -f $(OBJS) $(OUT) test *.o
+	rm -f $(OBJS) $(OUT) tests.o test 
 
 run: $(OUT)
 	./$(OUT)

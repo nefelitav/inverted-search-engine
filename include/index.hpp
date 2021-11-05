@@ -13,7 +13,7 @@ class indexing {
         entry* content;
         treeNodeList* children;
     public:
-        indexing(entry* input, MatchType matchingMetric);
+        indexing(entry* input, MatchType matchingMetric = MT_EDIT_DIST);
         int addEntry(entry* input);
         int printTree(int depth = 0);
         class entry* getEntry();
@@ -30,23 +30,26 @@ ErrorCode destroy_entry_index(indexing* ix);
 
 ////////////////////////////////////////////////////////////////////////////////////
 
-class childQueue {
+class childQueueNode {
     private:
         indexing* entry;
-        childQueue* next;
+        childQueueNode* next;
     public:
-        childQueue(indexing* input, childQueue* next = nullptr);
-        void pop(indexing** content, childQueue** newHead);
+        // Create a new queueNode, given input and (optionaly, if this is not the first node) the previous head to set as next
+        childQueueNode(indexing* input, childQueueNode* next = nullptr);
+        // Return content of this node, and the head to it's next node, to be the new head
+        void pop(indexing** content, childQueueNode** newHead);
+        childQueueNode* getNext();
 };
 
 class Queue {
     private:
-        childQueue* head;
+        childQueueNode* head;
     public:
         Queue();
-        int enqueue(indexing** input);
-        int dequeue(indexing** nodeToReturn);
-        childQueue* get_head() const;
+        void enqueue(indexing** input);
+        indexing* dequeue();
+        int getSize();
 };
 
 ////////////////////////////////////////////////////////////////////////////////////

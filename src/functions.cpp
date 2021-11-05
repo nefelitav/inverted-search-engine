@@ -1,10 +1,16 @@
 #include "../include/functions.hpp"
 
 bool exactMatch(const word word1, const word word2) {
+    if (word1 == NULL || word2 == NULL){
+        throw std::invalid_argument( "Got NULL pointer");
+    }
     return (strcmp(word1,word2) == 0);
 }
 
 int hammingDistance(const word word1, const word word2) {
+    if (word1 == NULL || word2 == NULL){
+        throw std::invalid_argument( "Got NULL pointer");
+    }
     int i = 0;
 
     // If one word is larger, consider each extra character a difference
@@ -23,6 +29,9 @@ int hammingDistance(const word word1, const word word2) {
 }
 
 int editDistance(const word word1,const word word2) {
+    if (word1 == NULL || word2 == NULL){
+        throw std::invalid_argument( "Got NULL pointer");
+    }
     int final_distance;
     int size1 = 0;
     int size2 = 0;

@@ -15,11 +15,19 @@ jobs:
     - uses: actions/checkout@v2
     - name: clean
       run: make clean
-    - name: make
+    - name: compile
       run: make
-    - name: make check memory
+    - name: check memory
       run: |
         sudo apt-get install -y valgrind
         make valgrind
     - name: run
       run: make run
+    - name: compile test
+      run: make test
+    - name: run test
+      run: make run_test
+    - name: check memory while testing
+      run: make run_test
+    - name: clean again
+      run: make clean
