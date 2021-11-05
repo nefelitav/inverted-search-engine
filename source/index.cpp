@@ -2,7 +2,7 @@
 #include "../include/functions.hpp"
 
 indexing :: indexing(entry* input, MatchType matchingMetric) {
-    std::cout<<"Creating new node\n";
+    //std::cout<<"Creating new node\n";
     this->MatchingType = matchingMetric;
     this->content = input;
     this->children = NULL;
@@ -58,7 +58,7 @@ treeNodeList* indexing :: getChildren() {
 
 ////////////////////////////////////////////////////////////////////////////////////
 
-ErrorCode buildEntryIndex(const entry_list* el, MatchType type, indexing** ix) {
+ErrorCode build_entry_index(const entry_list* el, MatchType type, indexing** ix) {
     try {
         entry* currEntry = el->getHead();
         *ix = new indexing(currEntry, type);
@@ -73,13 +73,10 @@ ErrorCode buildEntryIndex(const entry_list* el, MatchType type, indexing** ix) {
 }
 
 
-ErrorCode lookup_entry_index(const word* w, indexing* ix, int threshold, entry_list** result) {
+ErrorCode lookup_entry_index(const word* w, indexing* ix, int threshold, entry_list* result) {
     int distance;
 
     try {
-        // List to store results
-        *result = new entry_list();
-
         // Store the children of current node, if any
         treeNodeList* currChild;
 
@@ -107,7 +104,7 @@ ErrorCode lookup_entry_index(const word* w, indexing* ix, int threshold, entry_l
             // Add to results if close enough
             if  (distance <= threshold) {
                 tempEntry = new entry (currNode->getEntry()->getWord());
-                (*result)->addEntry (tempEntry);
+                result->addEntry (tempEntry);
             }
 
             // Add any applicable children to examine later
@@ -124,7 +121,7 @@ ErrorCode lookup_entry_index(const word* w, indexing* ix, int threshold, entry_l
             }
 
             // Get the next item to be examined
-            queue->dequeue(&currNode);
+            currNode = queue->dequeue();
             
         }
         delete queue;
@@ -146,29 +143,57 @@ ErrorCode destroy_entry_index(indexing* ix) {
 ////////////////////////////////////////////////////////////////////////////////////
 
 
-childQueue :: childQueue(indexing* input, childQueue* oldHead) {
-    this->entry = input;
-    this->next = oldHead;
+childQueueNode :: childQueueNode(indexing* input, childQueueNode* oldHead) {
+    if (input == NULL){
+        throw std::invalid_argument( "Got NULL pointer");
+    }else{
+        this->entry = input;
+        this->next = oldHead;
+    }
 }
-void childQueue :: pop(indexing** content, childQueue** newHead) {
+void childQueueNode :: pop(indexing** content, childQueueNode** newHead) {
     *newHead = this->next;
     *content = this->entry;
     delete this;
 }
+
+childQueueNode* childQueueNode:: getNext(){
+    return this->next;
+}
+
+
 Queue :: Queue() {
     this->head = NULL;
 }
-int Queue :: enqueue(indexing** input) {
-    this->head = new childQueue(*input, this->head);
-    return 0;
-}
-int Queue :: dequeue(indexing** nodeToReturn) {
-    if (this->head) {
-        this->head->pop(nodeToReturn, &this->head);
-    } else {
-        *nodeToReturn = NULL;
+
+void Queue :: enqueue(indexing** input) {
+    if (input == NULL){
+        throw std::invalid_argument( "Got NULL pointer");
+    }else if (*input == NULL){
+        throw std::invalid_argument( "Got pointer to NULL pointer");
+    }else{
+        this->head = new childQueueNode(*input, this->head);
     }
-    return 0;
+    
+}
+indexing*  Queue :: dequeue() {
+    indexing* nodeToReturn;
+    if (this->head) {
+        this->head->pop(&nodeToReturn, &this->head);
+    } else {
+        nodeToReturn = NULL;
+    }
+    return nodeToReturn;
+}
+
+int Queue :: getSize(){
+    int count = 0;
+    childQueueNode* currNode = this->head;
+    while (currNode){
+        count++;
+        currNode = currNode->getNext();
+    }
+    return count;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////

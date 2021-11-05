@@ -138,7 +138,7 @@ entry :: entry(const word keyword)
     strcpy(this->keyword, keyword);
     this->payload = NULL;
     this->next = NULL;
-    std::cout << "Entry is created!" << std::endl;
+    //std::cout << "Entry is created!" << std::endl;
 }
 const word entry :: getWord() const
 {
@@ -162,7 +162,7 @@ void entry :: setNext(entry* e)
 entry :: ~entry()
 {
     delete[] this->keyword;
-    std::cout << "Entry is deleted!" << std::endl;
+    //std::cout << "Entry is deleted!" << std::endl;
 }
 
 
