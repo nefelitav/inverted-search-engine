@@ -15,7 +15,7 @@ class Query {
         Query(const char * words, int id);
         void printQuery() const;                                                            
         const word getWord(int word_num) const;                                                         
-        char* getText() const;
+        const char* getText() const;
         ~Query();
           
 };

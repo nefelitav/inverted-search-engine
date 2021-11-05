@@ -2,37 +2,37 @@
 
 Query :: Query(const char * words, int id)
 {
-    this->words = new char[MAX_QUERY_LENGTH]();                                // allocate memory and set to zero
-    //memset(this->words, 0, MAX_QUERY_LENGTH);                                // set to zero, to avoid junk
-    const char * ptr = words;                                                  // pointer to input 
-    for (int i = 0; i < MAX_QUERY_WORDS; i++)                                 
+    this->words = new char[MAX_QUERY_LENGTH]();                                // allocate memory and set to zero, to avoid junk
+    int i = 0, length = 0;
+    const char* c = " ";                                                       // delimiter
+    word token = strtok((char *)words, c);
+    while (i < MAX_QUERY_WORDS && token != NULL)                               // get all words from input but not more than MAX_QUERY_WORDS
     {
-        memcpy(this->words + (MAX_WORD_LENGTH + 1)*i, ptr, strlen(ptr) + 1);  // copy from input to struct
-        ptr += (strlen(ptr) + 1);                                             // move pointer
-        if (*(ptr - 1) == '\0' && *ptr == '\0')                               // no more words in input
+        length = strlen(token) + 1;                                            // length of each word
+        words += length;                                                       // pointer to input
+        if (*words == '\0')                                                    // no more words in input
         {
+            memcpy(this->words + (MAX_WORD_LENGTH + 1)*i, token, length);                                             
             break;
         }
+        memcpy(this->words + (MAX_WORD_LENGTH + 1)*i, token, length);                                             
+        token = strtok(NULL, c);
+        i++;  
     }
     this->id = id;
     std::cout << "Query with id = " << this->id << " is created!" << std::endl;
 }
 void Query :: printQuery() const                                               // for debugging reasons
 {
-    char * ptr = this->words;
     std::cout << "-------------------" << std::endl;
     std::cout << "Print query words :" << std::endl;
     for (int i = 0; i < MAX_QUERY_WORDS; i++)
     {
-        std::cout << ptr << std::endl;
-        ptr += (MAX_WORD_LENGTH + 1);                                       // go to next word
-        if (i != MAX_QUERY_WORDS - 1)                                       // if last word, exit
+        if (*(this->words + (MAX_WORD_LENGTH + 1) * i) == '\0')
         {
-            if (*(ptr - 1) == '\0' && *(ptr) == '\0')                       // no more words
-            {
-                break;
-            }
+            return;
         }
+        std::cout << this->words + (MAX_WORD_LENGTH + 1)*i << std::endl;
         
     }
     std::cout << "-------------------" << std::endl;
@@ -53,7 +53,7 @@ const word Query :: getWord(int word_num) const                  // array[i][j] 
     return ptr;
 }
 
-char* Query :: getText() const
+const char* Query :: getText() const                                        // for debugging reasons
 {
     return this->words;
 }
@@ -70,17 +70,22 @@ Query :: ~Query()
 
 Document :: Document(const char * words, int id)  
 {
-    this->text = new char[MAX_DOC_LENGTH]();                                   // allocate memory and set to zero
-    //memset(this->text, 0, MAX_DOC_LENGTH);                                   // set to zero, to avoid junk
-    const char * ptr = words;
-    for (int i = 0; i < MAX_DOC_WORDS; i++)
+    this->text = new char[MAX_DOC_LENGTH]();                                // allocate memory and set to zero, to avoid junk
+    int i = 0, length = 0;
+    const char* c = " ";                                                       // delimiter
+    word token = strtok((char *)words, c);
+    while (i < MAX_DOC_WORDS && token != NULL)                               // get all words from input but not more than MAX_QUERY_WORDS
     {
-        memcpy(this->text + (MAX_WORD_LENGTH + 1)*i, ptr, strlen(ptr) + 1);   // copy from input to struct
-        ptr += (strlen(ptr) + 1 + 1);                                         // go to next word
-        if (*(ptr - 1) == '\0' && *(ptr - 2) == '\0')                         // no more words in input
+        length = strlen(token) + 1;                                            // length of each word
+        words += length;                                                       // pointer to input
+        if (*words == '\0')                                                    // no more words in input
         {
+            memcpy(this->text + (MAX_WORD_LENGTH + 1)*i, token, length);                                             
             break;
         }
+        memcpy(this->text + (MAX_WORD_LENGTH + 1)*i, token, length);                                             
+        token = strtok(NULL, c);
+        i++;  
     }
     this->id = id;
     std::cout << "Document with id = " << this->id << " is created!" << std::endl;
@@ -88,19 +93,18 @@ Document :: Document(const char * words, int id)
 }
 void Document :: printDocument() const
 {
-    char * ptr = this->text;
     std::cout << "-------------------" << std::endl;
     std::cout << "Print text words :" << std::endl;
-    for (int i = 0; i < MAX_DOC_WORDS; i++)                                 
+
+    for (int i = 0; i < MAX_DOC_WORDS; i++)
     {
-        std::cout << ptr << std::endl;
-        ptr += (MAX_WORD_LENGTH + 1);                                         // move pointer
-        if (*(ptr - 1) == '\0' && *(ptr) == '\0')                             // no more words
+        if (*(this->text + (MAX_WORD_LENGTH + 1) * i) == '\0')
         {
-            break;
+            return;
         }
+        std::cout << this->text + (MAX_WORD_LENGTH + 1)*i << std::endl;
+        
     }
-    std::cout << "-------------------" << std::endl;
 }
 const word Document :: getWord(int word_num) const                 // array[i][j] --> arrary[i*(MAX_WORD_LENGTH + 1)]    
 {
@@ -109,7 +113,7 @@ const word Document :: getWord(int word_num) const                 // array[i][j
         //cout << "Sorry, index out of range." << endl;
         return NULL;
     }
-    const word ptr = (this->text + word_num * (MAX_WORD_LENGTH + 1));            // find the word          
+    const word ptr = (this->text + word_num * (MAX_WORD_LENGTH + 1));            // find the word  
     if (*ptr == '\0')
     {
         //cout << "Sorry, index out of range." << endl;
