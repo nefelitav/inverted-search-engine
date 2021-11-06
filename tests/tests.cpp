@@ -1,39 +1,179 @@
 #include "tests.hpp"
-/*
-void test_Query(void)
+
+// Structs
+void test_query(void)
 {
-    char *q_words = new char[MAX_QUERY_LENGTH];
-    memcpy(q_words, "hello\0world\0how\0are\0you\0", MAX_QUERY_LENGTH);
-    Query q(q_words, 1);
-    TEST_ASSERT((*(q.getText()) == 'h'));
-    TEST_ASSERT(strcmp(q.getWord(0),"hello") == 0);
-    TEST_ASSERT(strcmp(q.getWord(1),"world") == 0);
-    TEST_ASSERT(strcmp(q.getWord(2),"how") == 0);
-    TEST_ASSERT(strcmp(q.getWord(3),"are") == 0);
+    // too large / small word in the input and too many words given
+    char *q_words = new char[MAX_QUERY_LENGTH]();
+    memcpy(q_words, "hello    people how hellopeoplehellopeoplehellopeople things people how", MAX_QUERY_LENGTH);
+    Query q(q_words, 0);
+	//q.printQuery();
+
+    TEST_ASSERT((q.getText() != NULL));                 // well created query
+    TEST_ASSERT((*(q.getText()) == 'h'));               // first letter
+    TEST_ASSERT((q.get_word_num() == 4));               // 4 words coz the rest are too small or too large
+    TEST_ASSERT(strcmp(q.getWord(0), "hello") == 0);
+    TEST_ASSERT(strcmp(q.getWord(2), "things") == 0);
+    TEST_ASSERT((q.getWord(6) == NULL));                // max query length = 5
 
     delete[] q_words;
+
+    // empty input
+    TEST_EXCEPTION(Query q2(NULL, 1), std::exception); // given null as input -> throw exception
 }
 
-void test_Document(void)
+void test_document(void)
 {
-    const char* s = "hello world how are you";
-    int i = 0;
-    while(s[i] != '\0' || s[i+1] != '\0')
-    {
-        i++;
-    }
-    char *d_words = new char[strlen(s) + 1]; // 1 -> for the two /0 in the end
-    strcpy(d_words, s); 
-    Document d(d_words, 1);
-    TEST_ASSERT(strcmp(d.getText(),"hello") == 0);
+    // too big/small word in the input
+    char *d_words = new char[MAX_DOC_LENGTH]();
+    strcpy(d_words, "hello people    how hellopeoplehellopeoplehellopeople things people how");
+    Document d(d_words, 0);
+	//d.printDocument();
+
+    TEST_ASSERT((d.getText() != NULL));
+    TEST_ASSERT((*(d.getText()) == 'h'));
+    TEST_ASSERT((d.get_word_num() == 4));
     TEST_ASSERT(strcmp(d.getWord(0),"hello") == 0);
-    TEST_ASSERT(strcmp(d.getWord(1),"world") == 0);
-    TEST_ASSERT(strcmp(d.getWord(2),"how") == 0);
-    TEST_ASSERT(strcmp(d.getWord(3),"are") == 0);
+    TEST_ASSERT(strcmp(d.getWord(2),"things") == 0);
+    TEST_ASSERT((d.getWord(6) == NULL));
 
     delete[] d_words;
+
+    // empty input
+    TEST_EXCEPTION(Document d2(NULL, 1), std::exception);
 }
-*/
+
+void test_entry(void)
+{
+    char *d_words = new char[MAX_DOC_LENGTH]();
+    strcpy(d_words, "hello world lorem ipsum");
+    Document d(d_words, 2);
+
+    const word w = d.getWord(0);
+    const word w2 = d.getWord(1);
+    const word w3 = NULL;
+
+    entry* e = NULL;
+    entry* e2 = NULL;
+    entry* e3 = NULL;
+    entry_list* el = NULL;
+
+    // entry list well created
+    ErrorCode errorcode = create_entry_list(&el);
+    TEST_ASSERT((errorcode == EC_SUCCESS));
+    TEST_ASSERT((el != NULL));
+    TEST_ASSERT((get_number_entries(el) == 0));
+    
+    // entries well created
+    errorcode = create_entry(&w, &e);
+    TEST_ASSERT((errorcode == EC_SUCCESS));
+    errorcode = create_entry(&w2, &e2);
+    TEST_ASSERT((errorcode == EC_SUCCESS));
+    TEST_ASSERT((e != NULL));               
+    TEST_ASSERT((e2 != NULL));  
+
+    // create entry with nullptr
+    TEST_ASSERT((create_entry(&w3, &e3) == EC_FAIL));  
+    // create entry list with nullptr
+    TEST_ASSERT((add_entry(el, e3) == EC_FAIL));             
+
+    // instance variables well initialized  
+    TEST_ASSERT((strcmp(e->getWord(), "hello") == 0));
+    TEST_ASSERT((strcmp(e2->getWord(), "world") == 0));
+    TEST_ASSERT((e->getNext() == NULL));
+    TEST_ASSERT((e2->getNext() == NULL));
+    TEST_ASSERT((e->getPayload() == NULL));
+    TEST_ASSERT((e2->getPayload() == NULL));
+
+    // entries well added to the entry list
+    errorcode = add_entry(el, e);
+    TEST_ASSERT((errorcode == EC_SUCCESS));
+    errorcode = add_entry(el, e2);
+    TEST_ASSERT((errorcode == EC_SUCCESS));
+    TEST_ASSERT((get_number_entries(el) == 2));
+
+    // e2 goes to the head of the list, so its next entry is e
+    TEST_ASSERT((strcmp(get_first(el)->getWord(), "world") == 0));
+    TEST_ASSERT((strcmp(get_next(el, e2)->getWord(), "hello") == 0));
+    TEST_ASSERT((get_next(el, e) == NULL));
+
+    // entries and entry list well destroyed
+    //errorcode = destroy_entry(e);
+    //TEST_ASSERT((errorcode == EC_SUCCESS));
+    //errorcode = destroy_entry(e2);
+    //TEST_ASSERT((errorcode == EC_SUCCESS));
+    errorcode = destroy_entry_list(el);
+    TEST_ASSERT((errorcode == EC_SUCCESS));
+    delete[] d_words;
+}
+
+// Deduplication
+void test_binary_search(void)
+{
+    word* words = new word[3];
+    int words_until_now = 0;
+    for(int i = 0; i < 3; i++)
+    {
+        words[i] = new char[MAX_WORD_LENGTH]();
+    }
+    strcpy(words[0], "b");
+    words_until_now++;
+    // with this function i avoid adding duplicates
+    // but i also keep the bucket sorted
+    TEST_ASSERT((binarySearch(words, 0, words_until_now - 1, (char*)"b") == -1)); 
+    TEST_ASSERT((binarySearch(words, 0, words_until_now - 1, (char*)"a") == 0)); 
+    TEST_ASSERT((binarySearch(words, 0, words_until_now - 1, (char*)"c") == 1)); 
+    TEST_EXCEPTION(binarySearch(NULL, 0, words_until_now - 1, NULL), std::exception); // pass NULL as word
+
+    for(int i = 0; i < 3; i++)
+    {
+        delete[] words[i];
+    }
+    delete[] words;
+}
+
+void test_hash_table(void)
+{
+    HashTable* HT = new HashTable;                                   // create hash table
+    const word w = new char[MAX_WORD_LENGTH];
+    strcpy(w, "hello");
+    unsigned long hash = HT->addToBucket(hashFunction(w), w);        // add word to hash table
+    TEST_ASSERT(( hash == hashFunction(w) ));                   
+    TEST_ASSERT(( HT->getWordsPerBucket(hash) == 1 ));               // one word in this bucket
+    hash = HT->addToBucket(hashFunction(w), w);                      // add the exact same word to hash table
+    TEST_ASSERT(( HT->getWordsPerBucket(hash) == 1 ));               // still one word , coz duplicates are not added
+    TEST_ASSERT((HT->getBucket(hash)[0] != HT->getBucket(hash)[1] && strcmp(HT->getBucket(hash)[0], w) == 0));  // check that the second word wasnt added
+    //HT.printBucket(hash);
+    TEST_EXCEPTION(HT->addToBucket(hashFunction(NULL), NULL), std::exception); // pass NULL as word
+    delete[] w;
+    
+    const word w2 = new char[MAX_WORD_LENGTH];
+    strcpy(w2, "world");
+    hash = HT->addToBucket(hashFunction(w2), w2);     
+    //HT.printTable();
+    delete[] w2;
+    delete HT;
+}
+
+void test_deduplication(void)
+{
+    char *d_words = new char[MAX_DOC_LENGTH]();
+    strcpy(d_words, "hello world lorem ipsum hello world lorem ipsum");
+    Document d(d_words, 3);
+    HashTable* HT = new HashTable();
+    Deduplication(&d, HT);
+    TEST_EXCEPTION(Deduplication(NULL, HT), std::exception);
+    delete HT;
+    delete[] d_words;
+}
+void test_hash_function(void)
+{
+    TEST_ASSERT(hashFunction((char*)"hello") == hashFunction((char*)"hello"));
+    TEST_ASSERT(hashFunction((char*)"hello") <= MAX_BUCKETS);
+    TEST_EXCEPTION(hashFunction(NULL), std::exception);
+    TEST_EXCEPTION(hashFunction((char*)" "), std::exception);
+}
+
 // Match Functions
 void test_exact_match(void)
 {   
@@ -147,7 +287,7 @@ void test_dequeue(void) {
     TEST_ASSERT(nodeToReturn == NULL);      // The queue is empty, return NULL again
 
     // Test queue with multiple items
-    testQueue.enqueue(&testIndex1);         // Add multiple indexNodes
+    testQueue.enqueue(&testIndex1);         // Add multiple indexings
     testQueue.enqueue(&testIndex2);
     testQueue.enqueue(&testIndex3);
     nodeToReturn = testQueue.dequeue();
@@ -471,8 +611,13 @@ void test_lookup_entry_index(void){
 
 
 TEST_LIST = {
-    //{"test_Query", test_Query} ,
-    //{"test_Document", test_Document} ,
+    {"Query", test_query} ,
+    {"Document", test_document} ,
+    {"Entry", test_entry} ,
+    {"Binary Search", test_binary_search} ,
+    {"Hash Function", test_hash_function} ,
+    {"Deduplication", test_deduplication} ,
+    {"Hash Table", test_hash_table},
     {"Test Exact Match", test_exact_match},
     {"Test hamming", test_hamming},
     {"Test Edit Distance", test_edit},
@@ -491,7 +636,5 @@ TEST_LIST = {
     {"Test treeNodeList getNext", treeNodeList_getNext},
     {"Test build_entry_index", test_build_entry_index},
     {"Test build_entry_index", test_lookup_entry_index},
-
-    
     { NULL, NULL }
-};
+};    

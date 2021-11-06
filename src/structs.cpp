@@ -1,26 +1,37 @@
 #include "../include/structs.hpp"
 
-Query :: Query(const char * words, int id)
+Query :: Query(char * words, int id)
 {
+    if (words == NULL)
+    {
+        throw std::invalid_argument( "Got NULL pointer");
+    }
     this->words = new char[MAX_QUERY_LENGTH]();                                // allocate memory and set to zero, to avoid junk
     int i = 0, length = 0;
     const char* c = " ";                                                       // delimiter
     word token = strtok((char *)words, c);
+
     while (i < MAX_QUERY_WORDS && token != NULL)                               // get all words from input but not more than MAX_QUERY_WORDS
     {
         length = strlen(token) + 1;                                            // length of each word
         words += length;                                                       // pointer to input
         if (*words == '\0')                                                    // no more words in input
         {
-            memcpy(this->words + (MAX_WORD_LENGTH + 1)*i, token, length);                                             
+            if (length < MAX_WORD_LENGTH && length > MIN_WORD_LENGTH)
+            {
+                memcpy(this->words + (MAX_WORD_LENGTH + 1)*i, token, length); 
+            }
             break;
         }
-        memcpy(this->words + (MAX_WORD_LENGTH + 1)*i, token, length);                                             
+        if (length < MAX_WORD_LENGTH && length > MIN_WORD_LENGTH)
+        {
+            memcpy(this->words + (MAX_WORD_LENGTH + 1)*i, token, length); 
+            i++;    
+        }
         token = strtok(NULL, c);
-        i++;  
     }
     this->id = id;
-    std::cout << "Query with id = " << this->id << " is created!" << std::endl;
+    //std::cout << "Query with id = " << this->id << " is created!" << std::endl;
 }
 void Query :: printQuery() const                                               // for debugging reasons
 {
@@ -37,20 +48,35 @@ void Query :: printQuery() const                                               /
     }
     std::cout << "-------------------" << std::endl;
 }
-const word Query :: getWord(int word_num) const                  // array[i][j] --> arrary[i*(MAX_WORD_LENGTH + 1)]                                      
+const word Query :: getWord(int word_num) const                              // array[i][j] --> arrary[i*(MAX_WORD_LENGTH + 1)]                                      
 {
     if (word_num >= MAX_QUERY_WORDS)                                         // out of range   
     {
-        std::cout << "Sorry, index out of range." << std::endl;
+        //std::cout << "Sorry, index out of range." << std::endl;
         return NULL;
     }
     const word ptr = (this->words + word_num * (MAX_WORD_LENGTH + 1));      // find the word
     if (*ptr == '\0')                                                       // no more words
     {
-        std::cout << "Sorry, index out of range." << std::endl;
+        //std::cout << "Sorry, index out of range." << std::endl;
         return NULL;
     }
     return ptr;
+}
+
+const int Query :: get_word_num() const
+{
+    int count = 0;
+    for (int i = 0; i < MAX_QUERY_WORDS; i++)
+    {
+        if (*(this->words + (MAX_WORD_LENGTH + 1) * i) == '\0')
+        {
+            return count;
+        }
+        count++;
+        
+    }
+    return count;
 }
 
 const char* Query :: getText() const                                        // for debugging reasons
@@ -60,7 +86,7 @@ const char* Query :: getText() const                                        // f
 Query :: ~Query()
 {
     delete[] this->words;
-    std::cout << "Query with id = " << this->id << " is deleted!" << std::endl;
+    //std::cout << "Query with id = " << this->id << " is deleted!" << std::endl;
 }    
 
 
@@ -68,11 +94,15 @@ Query :: ~Query()
 
 
 
-Document :: Document(const char * words, int id)  
+Document :: Document(char * words, int id)  
 {
+    if (words == NULL)
+    {
+        throw std::invalid_argument( "Got NULL pointer");
+    }
     this->text = new char[MAX_DOC_LENGTH]();                                // allocate memory and set to zero, to avoid junk
     int i = 0, length = 0;
-    const char* c = " ";                                                       // delimiter
+    const char* c = " ";                                                    // delimiter
     word token = strtok((char *)words, c);
     while (i < MAX_DOC_WORDS && token != NULL)                               // get all words from input but not more than MAX_QUERY_WORDS
     {
@@ -80,15 +110,21 @@ Document :: Document(const char * words, int id)
         words += length;                                                       // pointer to input
         if (*words == '\0')                                                    // no more words in input
         {
-            memcpy(this->text + (MAX_WORD_LENGTH + 1)*i, token, length);                                             
+            if (length < MAX_WORD_LENGTH && length > MIN_WORD_LENGTH)
+            {
+                memcpy(this->text + (MAX_WORD_LENGTH + 1)*i, token, length);                                             
+            }
             break;
         }
-        memcpy(this->text + (MAX_WORD_LENGTH + 1)*i, token, length);                                             
+        if (length < MAX_WORD_LENGTH && length > MIN_WORD_LENGTH)
+        {
+            memcpy(this->text + (MAX_WORD_LENGTH + 1)*i, token, length);                                             
+            i++;  
+        }
         token = strtok(NULL, c);
-        i++;  
     }
     this->id = id;
-    std::cout << "Document with id = " << this->id << " is created!" << std::endl;
+    //std::cout << "Document with id = " << this->id << " is created!" << std::endl;
 
 }
 void Document :: printDocument() const
@@ -106,20 +142,34 @@ void Document :: printDocument() const
         
     }
 }
-const word Document :: getWord(int word_num) const                 // array[i][j] --> arrary[i*(MAX_WORD_LENGTH + 1)]    
+const word Document :: getWord(int word_num) const                              // array[i][j] --> arrary[i*(MAX_WORD_LENGTH + 1)]    
 {
-    if (word_num >= MAX_DOC_WORDS)                                                // out of range
+    if (word_num >= MAX_DOC_WORDS)                                              // out of range
     {
         //cout << "Sorry, index out of range." << endl;
         return NULL;
     }
-    const word ptr = (this->text + word_num * (MAX_WORD_LENGTH + 1));            // find the word  
+    const word ptr = (this->text + word_num * (MAX_WORD_LENGTH + 1));           // find the word  
     if (*ptr == '\0')
     {
         //cout << "Sorry, index out of range." << endl;
         return NULL;
     }
     return ptr;
+}
+const int Document :: get_word_num() const
+{
+    int count = 0;
+    for (int i = 0; i < MAX_DOC_WORDS; i++)
+    {
+        if (*(this->text + (MAX_WORD_LENGTH + 1) * i) == '\0')
+        {
+            return count;
+        }
+        count++;
+        
+    }
+    return count;
 }
 char* Document :: getText() const
 {
@@ -128,7 +178,7 @@ char* Document :: getText() const
 Document :: ~Document()
 {
     delete[] this->text;
-    std::cout << "Document with id = " << this->id << " is deleted!" << std::endl;
+    //std::cout << "Document with id = " << this->id << " is deleted!" << std::endl;
 }
 
 
@@ -138,6 +188,10 @@ Document :: ~Document()
 
 entry :: entry(const word keyword)
 {
+    if (keyword == NULL)
+    {
+        throw std::invalid_argument( "Got NULL pointer");
+    }
     this->keyword = new char[MAX_WORD_LENGTH];
     strcpy(this->keyword, keyword);
     this->payload = NULL;
@@ -177,7 +231,7 @@ entry_list :: entry_list()
 {
     this->head = NULL;
     this->entryNum = 0;
-    std::cout << "Entry list is created!" << std::endl;
+    //std::cout << "Entry list is created!" << std::endl;
 }
 unsigned int entry_list :: getEntryNum() const
 {
@@ -189,6 +243,10 @@ entry* entry_list :: getHead() const
 }
 void entry_list :: addEntry(entry * new_entry)
 {
+    if (new_entry == NULL)
+    {
+        throw std::invalid_argument( "Got NULL pointer");
+    }
     if (this->head == NULL)
     {
         this->head = new_entry;
@@ -210,7 +268,7 @@ entry* entry_list :: getNext(entry* e) const
 }
 entry_list :: ~entry_list()
 {
-    std::cout << "Entry list is deleted!" << std::endl;
+    //std::cout << "Entry list is deleted!" << std::endl;
 }
 
 
@@ -232,7 +290,11 @@ ErrorCode create_entry(const word* w, entry** e)
 ErrorCode destroy_entry(entry *e)
 {
     try {
-        delete e;
+        if (e != NULL)
+        {
+            delete e;
+            e = NULL;
+        }
         return EC_SUCCESS;
     } catch (const std::exception& _) {
         return EC_FAIL;
@@ -251,19 +313,23 @@ ErrorCode create_entry_list(entry_list** el)
     return EC_NO_AVAIL_RES;
 }
 
-ErrorCode destroy_entry_list(entry_list* el) // first delete entries and then list
+ErrorCode destroy_entry_list(entry_list* el)// first delete entries and then list
 {
     try {
         entry * curr = el->getHead();       // pointer to head of list
         entry * next = NULL;
 
-        while ( curr != NULL)               // if null -> end of list
+        while (curr != NULL)                // if null -> end of list
         {
             next = curr->getNext();         // save next entry
             destroy_entry(curr);            // delete entry
             curr = next;                    // go to next entry
         }
-        delete el;                          // delete entrylist
+        if (el != NULL)
+        {
+            delete el;                      // delete entrylist
+            el = NULL;
+        }
         return EC_SUCCESS;
     } catch (const std::exception& _) {
         return EC_FAIL;

@@ -1,14 +1,14 @@
 #include "../include/functions.hpp"
 
 bool exactMatch(const word word1, const word word2) {
-    if (word1 == NULL || word2 == NULL){
+    if (word1 == NULL || word2 == NULL) {
         throw std::invalid_argument( "Got NULL pointer");
     }
     return (strcmp(word1,word2) == 0);
 }
 
 int hammingDistance(const word word1, const word word2) {
-    if (word1 == NULL || word2 == NULL){
+    if (word1 == NULL || word2 == NULL) {
         throw std::invalid_argument( "Got NULL pointer");
     }
     int i = 0;
@@ -29,7 +29,7 @@ int hammingDistance(const word word1, const word word2) {
 }
 
 int editDistance(const word word1,const word word2) {
-    if (word1 == NULL || word2 == NULL){
+    if (word1 == NULL || word2 == NULL) {
         throw std::invalid_argument( "Got NULL pointer");
     }
     int final_distance;
@@ -88,6 +88,10 @@ int editDistance(const word word1,const word word2) {
 
 int binarySearch(word* words, int left, int right, const word w)
 {
+    if (words == NULL || w == NULL)
+    {
+        throw std::invalid_argument( "Got NULL pointer");
+    }
     int mid, cmp;
     while (left < right) 
     {
@@ -123,29 +127,32 @@ HashTable :: HashTable()
 {
     this->buckets = new word*[MAX_BUCKETS]();                               // pointers to buckets
     this->wordsPerBucket = new int[MAX_BUCKETS]();                         
-    std::cout << "Hash Table is created!" << std::endl;
+    //std::cout << "Hash Table is created!" << std::endl;
 }
-
-void HashTable :: addToBucket(int hash, const word w)
+unsigned long HashTable :: addToBucket(unsigned long hash, const word w)
 {
     //cout << "hash = " << hash << endl;
+    if (w == NULL)
+    {
+        throw std::invalid_argument( "Got NULL pointer");
+    }
     int i;
     if (this->buckets[hash] == NULL)
     {
-        this->buckets[hash] = new word[100]();                            // create bucket
-        for (i = 0; i < 100; i++)
+        this->buckets[hash] = new word[WORDS_PER_BUCKET]();                            // create bucket
+        for (i = 0; i < WORDS_PER_BUCKET; i++)
         {
             this->buckets[hash][i] = new char[MAX_WORD_LENGTH];
         }
         strcpy(this->buckets[hash][0], w);                                 // first word in bucket
         this->wordsPerBucket[hash]++;    
         //cout << "Bucket no " << hash << " is created" << endl;
-        return;
+        return hash;
     }
-    if (this->wordsPerBucket[hash] % 100 == 0)                             // have reached limit of bucket
+    if (this->wordsPerBucket[hash] % WORDS_PER_BUCKET == 0)                             // have reached limit of bucket
     {
-        word* resized = new word[this->wordsPerBucket[hash] + 100]();     // create bigger bucket
-        for (i = 0; i <  this->wordsPerBucket[hash] + 100; i++)
+        word* resized = new word[this->wordsPerBucket[hash] + WORDS_PER_BUCKET]();     // create bigger bucket
+        for (i = 0; i <  this->wordsPerBucket[hash] + WORDS_PER_BUCKET; i++)
         {
             resized[i] = new char[MAX_WORD_LENGTH];
             if (i < this->wordsPerBucket[hash])
@@ -156,10 +163,10 @@ void HashTable :: addToBucket(int hash, const word w)
 
         if (this->buckets[hash] != NULL)                                   // delete old bucket
         {
-            int wordsNum = 100 + (this->wordsPerBucket[hash] / 100) * 100;
-            if (this->wordsPerBucket[hash] % 100 == 0)
+            int wordsNum = WORDS_PER_BUCKET + (this->wordsPerBucket[hash] / WORDS_PER_BUCKET) * WORDS_PER_BUCKET;
+            if (this->wordsPerBucket[hash] % WORDS_PER_BUCKET == 0)
             {
-                wordsNum = (this->wordsPerBucket[hash] / 100) * 100;
+                wordsNum = (this->wordsPerBucket[hash] / WORDS_PER_BUCKET) * WORDS_PER_BUCKET;
             }
             for (i = 0; i < wordsNum; i++)
             {
@@ -175,7 +182,7 @@ void HashTable :: addToBucket(int hash, const word w)
     
     if (pos == -1)
     {
-        return;
+        return hash;
     }
     //cout << pos << endl;
 
@@ -187,9 +194,30 @@ void HashTable :: addToBucket(int hash, const word w)
         }
     }
     strcpy(this->buckets[hash][pos], w);                              // new node in array
-    this->wordsPerBucket[hash]++;  
+    this->wordsPerBucket[hash]++; 
+    return hash;
 }
-void HashTable :: printTable() 
+
+const int HashTable :: getWordsPerBucket(unsigned long hash) const
+{
+    return this->wordsPerBucket[hash];
+}
+
+const word* HashTable :: getBucket(unsigned long hash) const
+{
+    return this->buckets[hash];
+}
+void HashTable :: printBucket(unsigned long hash) const
+{
+    std::cout << "Bucket no " << hash << std::endl;
+    for (int i = 0; i < this->wordsPerBucket[hash]; i++)
+    {
+        std::cout << this->buckets[hash][i] << std::endl;
+    }
+    std::cout << "######################" << std::endl;
+} 
+
+void HashTable :: printTable() const
 {
     for (int bucket = 0; bucket < MAX_BUCKETS; bucket++)
     {
@@ -210,10 +238,10 @@ HashTable :: ~HashTable()
     {
         if (this->buckets[bucket] != NULL)
         {
-            int wordsNum = 100 + (this->wordsPerBucket[bucket] / 100) * 100; // figure out how many words should be deleted
-            if (this->wordsPerBucket[bucket] % 100 == 0)
+            int wordsNum = WORDS_PER_BUCKET + (this->wordsPerBucket[bucket] / WORDS_PER_BUCKET) * WORDS_PER_BUCKET; // figure out how many words should be deleted
+            if (this->wordsPerBucket[bucket] % WORDS_PER_BUCKET == 0)
             {
-                wordsNum = (this->wordsPerBucket[bucket] / 100) * 100;
+                wordsNum = (this->wordsPerBucket[bucket] / WORDS_PER_BUCKET) * WORDS_PER_BUCKET;
             }
             for (int w = 0; w < wordsNum; w++)
             {
@@ -225,11 +253,15 @@ HashTable :: ~HashTable()
     }
     delete[] this->wordsPerBucket;
     delete[] this->buckets;                                                 // delete hash table
-    std::cout << "Hash Table is deleted!" << std::endl;
+    //std::cout << "Hash Table is deleted!" << std::endl;
 }
 
-unsigned long hashFunction(word str)
+unsigned long hashFunction(word str)                                        // a typical hash function
 {
+    if (str == NULL || strcmp(str, " ") == 0)
+    {
+        throw std::invalid_argument( "Got NULL pointer");
+    }
     unsigned long hash = 5381;
     int character;
 
@@ -237,15 +269,17 @@ unsigned long hashFunction(word str)
     {
         hash = ((hash << 5) + hash) + character; 
     }
-
     return hash % MAX_BUCKETS;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////
 
-void Deduplication(Document* d)
+HashTable* Deduplication(Document* d, HashTable* HT)
 {
-    HashTable HT;
+    if (d == NULL)
+    {
+        throw std::invalid_argument( "Got NULL pointer");
+    }
     for (int i = 0; i < MAX_DOC_WORDS; i ++)
     {
         const word w = d->getWord(i);
@@ -254,7 +288,8 @@ void Deduplication(Document* d)
         {
             break;
         }
-        HT.addToBucket(hashFunction(w), w);
+        HT->addToBucket(hashFunction(w), w);
     }
-    HT.printTable();
+    return HT;
+    //HT.printTable();
 }
