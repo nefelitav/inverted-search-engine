@@ -2,6 +2,12 @@
 #include "../include/functions.hpp"
 
 indexing :: indexing(entry* input, MatchType matchingMetric) {
+    if (input == NULL){
+        throw std::invalid_argument( "Got NULL pointer");
+    }
+    if (matchingMetric != MT_HAMMING_DIST && matchingMetric != MT_EDIT_DIST ){
+        throw std::invalid_argument( "Invalid Distance Metric");
+    }
     //std::cout<<"Creating new node\n";
     this->MatchingType = matchingMetric;
     this->content = input;
@@ -16,9 +22,11 @@ MatchType indexing :: getMatchingType() {
     return this->MatchingType;
 }
 
-int indexing :: addEntry(entry* input) {
+ErrorCode indexing :: addEntry(entry* input) {
     int distance;
-
+    if (input == NULL){
+        throw std::invalid_argument( "Got NULL pointer");
+    }
     // Get distance for given metric
     if (this->getMatchingType() == MT_HAMMING_DIST) {
         //cout<<"Selected HAMMING\n";
@@ -38,7 +46,7 @@ int indexing :: addEntry(entry* input) {
     }else {          // Children list exists, new entry has equal or greater dist than first child
         this->children->addToList(input, distance);
     }
-    return 0;
+    return EC_SUCCESS;
 }
 
 int indexing :: printTree(int depth) {
@@ -59,6 +67,9 @@ treeNodeList* indexing :: getChildren() {
 ////////////////////////////////////////////////////////////////////////////////////
 
 ErrorCode build_entry_index(const entry_list* el, MatchType type, indexing** ix) {
+    if(el == NULL){
+        throw std::invalid_argument( "Got NULL pointer");
+    }
     try {
         entry* currEntry = el->getHead();
         *ix = new indexing(currEntry, type);
@@ -75,7 +86,12 @@ ErrorCode build_entry_index(const entry_list* el, MatchType type, indexing** ix)
 
 ErrorCode lookup_entry_index(const word* w, indexing* ix, int threshold, entry_list* result) {
     int distance;
-
+    if(w == NULL || *w == NULL || ix == NULL){
+        throw std::invalid_argument( "Got NULL pointer");
+    }
+    if(threshold < 0){
+        throw std::invalid_argument( "Invalid Threshold");
+    }
     try {
         // Store the children of current node, if any
         treeNodeList* currChild;
@@ -199,7 +215,15 @@ int Queue :: getSize(){
 ////////////////////////////////////////////////////////////////////////////////////
 
 treeNodeList :: treeNodeList(entry* content, int distance, MatchType matchingMetric, treeNodeList* next) {
-
+    if (content == NULL){
+        throw std::invalid_argument( "Got NULL pointer");
+    }
+    if (matchingMetric != MT_HAMMING_DIST && matchingMetric != MT_EDIT_DIST ){
+        throw std::invalid_argument( "Invalid Distance Metric");
+    }
+    if (distance <= 0){
+        throw std::invalid_argument( "Invalid Distance Value");
+    }
     // Point to the next list node and set distance from parrent for this node
     this->next = next;
     this->distanceFromParent = distance;
@@ -214,11 +238,18 @@ treeNodeList :: ~treeNodeList() {
     delete this->node;
 }
 
-int treeNodeList :: getDistanceFromParent() {
+int treeNodeList :: getDistanceFromParent() const{
     return this->distanceFromParent;
 }
 
-void treeNodeList :: addToList(entry* content,int distance) {
+int treeNodeList :: addToList(entry* content,int distance) {
+    if (content == NULL){
+        throw std::invalid_argument( "Got NULL pointer");
+    }
+    if (distance <= 0){
+        throw std::invalid_argument( "Invalid Distance Value");
+    }
+
     treeNodeList* next = this->next;
     if (distance == this->distanceFromParent) {                 // If we have the same distance as this node, push lower in the tree
         this->node->addEntry(content);
@@ -231,6 +262,7 @@ void treeNodeList :: addToList(entry* content,int distance) {
     } else {                                                     // If there is no next node, create a new node after this
         this->next = new treeNodeList(content, distance, this->node->getMatchingType(), next);
     }
+    return 0;
 }
 
 void treeNodeList::printList(int depth) {
@@ -244,11 +276,11 @@ void treeNodeList::printList(int depth) {
     }
 }
 
-indexing* treeNodeList :: getNode() {
+indexing* treeNodeList :: getNode() const{
     return this->node;
 }
 
-treeNodeList* treeNodeList :: getNext() {
+treeNodeList* treeNodeList :: getNext() const {
     return this->next;
 }
 

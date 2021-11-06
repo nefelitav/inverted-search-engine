@@ -12,10 +12,11 @@ class Query {
         char* words;                 // saving words in a 1d array instead of a 2d to save time (contiguous allocation)            
         QueryID id;
     public:
-        Query(const char * words, int id);
+        Query(char * words, int id);
         void printQuery() const;                                                            
         const word getWord(int word_num) const;                                                         
         const char* getText() const;
+        const int get_word_num() const;
         ~Query();
           
 };
@@ -25,10 +26,11 @@ class Document {
         char* text;                 // saving words in a 1d array instead of a 2d to save time (contiguous allocation)   
         DocID id;
     public:
-        Document(const char * words, int id); 
+        Document(char * words, int id); 
         void printDocument() const;
         const word getWord(int word_num) const;                      
         char* getText() const;
+        const int get_word_num() const;
         ~Document();
 };
 
@@ -61,7 +63,7 @@ class entry_list {
 
 
 ErrorCode create_entry(const word* w, entry** e);
-ErrorCode destroy_entry(entry *e);
+ErrorCode destroy_entry(entry **e);
 ErrorCode create_entry_list(entry_list** el);
 ErrorCode destroy_entry_list(entry_list* el);
 unsigned int get_number_entries(const entry_list* el);

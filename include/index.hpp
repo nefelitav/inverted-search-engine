@@ -14,10 +14,10 @@ class indexing {
         treeNodeList* children;
     public:
         indexing(entry* input, MatchType matchingMetric = MT_EDIT_DIST);
-        int addEntry(entry* input);
+        ErrorCode addEntry(entry* input);
         int printTree(int depth = 0);
-        class entry* getEntry();
-        class treeNodeList* getChildren();
+        entry* getEntry();
+        treeNodeList* getChildren();
         MatchType getMatchingType();
         ~indexing();
 };
@@ -61,11 +61,11 @@ class treeNodeList {
         treeNodeList* next;
     public:
         treeNodeList(entry* content, int distance, MatchType matchingMetric, treeNodeList* next = nullptr);
-        void addToList(entry* content, int distance);
-        int getDistanceFromParent();
+        int addToList(entry* content, int distance);
+        int getDistanceFromParent() const;
         void printList(int depth = 0);
-        indexing* getNode();
-        treeNodeList* getNext();
+        indexing* getNode() const ;
+        treeNodeList* getNext() const;
         ~treeNodeList();
 };
 

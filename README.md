@@ -1,8 +1,6 @@
-# Software Development for Information Systems
+# Inverted Search Engine
 
-<a href="https://github.com/NefeliTav/Software-Development-for-Information-Systems/actions">
-    <img alt="Tests" src="https://github.com/NefeliTav/Software-Development-for-Information-Systems/actions/workflows/C/C++%20CI/badge.svg">
-</a>
+[![C/C++ CI Actions Status](https://github.com/NefeliTav/Software-Development-for-Information-Systems/workflows/C/C++%20CI/badge.svg)](https://github.com/NefeliTav/Software-Development-for-Information-Systems/actions)
 
 ## Compile & Run
 ```
@@ -18,7 +16,7 @@ $ make clean
 ```
 ## Test
 ```
-$ make test && make test_run
+$ make test && make run_test
 ```
 ## Memcheck Test
 ```

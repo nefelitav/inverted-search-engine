@@ -47,11 +47,10 @@ extern "C" {
     #define MAX_QUERY_LENGTH ((MAX_WORD_LENGTH+1)*MAX_QUERY_WORDS)
     
     #define MAX_DOC_WORDS (MAX_DOC_LENGTH /(MIN_WORD_LENGTH + 1))
-
     #define MAX_BUCKETS  ((int)sqrt(MAX_DOC_WORDS / 0.75))
     #define NUM_QUERIES 5
     #define NUM_DOCS 2
-
+    #define WORDS_PER_BUCKET 100
 
     typedef unsigned int QueryID;
     typedef unsigned int DocID;
