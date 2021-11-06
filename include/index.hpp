@@ -7,38 +7,38 @@
 
 class treeNodeList;
 
-class indexing {
+class indexNode {
     private:
         MatchType MatchingType;
         entry* content;
         treeNodeList* children;
     public:
-        indexing(entry* input, MatchType matchingMetric = MT_EDIT_DIST);
-        int addEntry(entry* input);
+        indexNode(entry* input, MatchType matchingMetric = MT_EDIT_DIST);
+        ErrorCode addEntry(entry* input);
         int printTree(int depth = 0);
-        class entry* getEntry();
-        class treeNodeList* getChildren();
+        entry* getEntry();
+        treeNodeList* getChildren();
         MatchType getMatchingType();
-        ~indexing();
+        ~indexNode();
 };
 
 ////////////////////////////////////////////////////////////////////////////////////
 
-ErrorCode build_entry_index(const entry_list* el, MatchType type, indexing** ix);
-ErrorCode lookup_entry_index(const word* w, indexing* ix, int threshold, entry_list* result);
-ErrorCode destroy_entry_index(indexing* ix);
+ErrorCode build_entry_index(const entry_list* el, MatchType type, indexNode** ix);
+ErrorCode lookup_entry_index(const word* w, indexNode* ix, int threshold, entry_list* result);
+ErrorCode destroy_entry_index(indexNode* ix);
 
 ////////////////////////////////////////////////////////////////////////////////////
 
 class childQueueNode {
     private:
-        indexing* entry;
+        indexNode* entry;
         childQueueNode* next;
     public:
         // Create a new queueNode, given input and (optionaly, if this is not the first node) the previous head to set as next
-        childQueueNode(indexing* input, childQueueNode* next = nullptr);
+        childQueueNode(indexNode* input, childQueueNode* next = nullptr);
         // Return content of this node, and the head to it's next node, to be the new head
-        void pop(indexing** content, childQueueNode** newHead);
+        void pop(indexNode** content, childQueueNode** newHead);
         childQueueNode* getNext();
 };
 
@@ -47,8 +47,8 @@ class Queue {
         childQueueNode* head;
     public:
         Queue();
-        void enqueue(indexing** input);
-        indexing* dequeue();
+        void enqueue(indexNode** input);
+        indexNode* dequeue();
         int getSize();
 };
 
@@ -57,15 +57,15 @@ class Queue {
 class treeNodeList {
     private:
         int distanceFromParent;
-        indexing* node;
+        indexNode* node;
         treeNodeList* next;
     public:
         treeNodeList(entry* content, int distance, MatchType matchingMetric, treeNodeList* next = nullptr);
-        void addToList(entry* content, int distance);
-        int getDistanceFromParent();
+        int addToList(entry* content, int distance);
+        int getDistanceFromParent() const;
         void printList(int depth = 0);
-        indexing* getNode();
-        treeNodeList* getNext();
+        indexNode* getNode() const ;
+        treeNodeList* getNext() const;
         ~treeNodeList();
 };
 
