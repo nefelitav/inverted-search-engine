@@ -1,6 +1,6 @@
-# Software Development for Information Systems
+# Inverted Search Engine
 
-![CI/CD](../../workflows/cpp_make/badge.svg)
+[![C/C++ CI Actions Status](https://github.com/NefeliTav/Software-Development-for-Information-Systems/workflows/C/C++%20CI/badge.svg)](https://github.com/NefeliTav/Software-Development-for-Information-Systems/actions)
 
 ## Compile & Run
 ```

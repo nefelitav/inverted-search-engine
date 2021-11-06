@@ -21,6 +21,16 @@ void test_enqueue(void);
 void test_dequeue(void);
 void test_childQueueNode_create(void);
 void test_childQueueNode_pop(void);
-
+void test_indexNode_construction_addEntry(void);
+void test_indexNode_getEntry(void);
+void test_indexNode_getChildren(void);
+void test_indexNode_getMatchingType(void);
+void treeNodeList_constructor(void);
+void treeNodeList_addToList(void);
+void treeNodeList_getDistanceFromParent(void);
+void treeNodeList_getNode(void);
+void treeNodeList_getNext(void);
+void test_build_entry_index(void);
+void test_lookup_entry_index(void);
 
 #endif  //TESTS
