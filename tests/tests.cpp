@@ -364,9 +364,14 @@ void test_indexNode_construction_addEntry(void){
     word testWord1 = (word)"TESTWORD1";
     word testWord2 = (word)"TESTWORD2";
     word testWord3 = (word)"TESTWORD3";
+    word testWord4 = (word)"TESTWOR33";
+    
+
     entry* testEntry1 = new entry(testWord1);
     entry* testEntry2 = new entry(testWord2);
     entry* testEntry3 = new entry(testWord3);
+    entry* testEntry4 = new entry(testWord4);
+
     entry* nullPTR = NULL;
     indexNode* head;
 
@@ -380,6 +385,10 @@ void test_indexNode_construction_addEntry(void){
     TEST_EXCEPTION(head->addEntry(nullPTR), std::exception);
     TEST_ASSERT(head->addEntry(testEntry2) == EC_SUCCESS);
     TEST_ASSERT(head->addEntry(testEntry3) == EC_SUCCESS);
+    TEST_EXCEPTION(head->addEntry(testEntry3), std::exception);
+    TEST_ASSERT(head->addEntry(testEntry4) == EC_SUCCESS);
+    TEST_EXCEPTION(head->addEntry(testEntry4), std::exception);
+
     
     delete head;
 }
@@ -571,8 +580,9 @@ void test_lookup_entry_index(void){
     entry* testEntry4 = new entry(word4);
     entry* testEntry5 = new entry(word5);
     entry* testEntry6 = new entry(word6);
+    entry* tempResult = NULL;
     entry* resultNode = NULL;
-    entry_list* result = new entry_list();;
+    entry_list* result = new entry_list();
     entry_list* test_list = new entry_list();
     test_list->addEntry(testEntry6);
     test_list->addEntry(testEntry5);
@@ -582,18 +592,19 @@ void test_lookup_entry_index(void){
     test_list->addEntry(testEntry1);
     indexNode* tree = NULL;
     indexNode* nullTree = NULL;
-    const word text = (char*)"TESTWOR22\0";
     build_entry_index(test_list, MT_EDIT_DIST ,&tree);
+    const word text1 = (char*)"TESTWOR22\0";
+    const word nullText = NULL;
 
-    TEST_EXCEPTION(lookup_entry_index(&text,tree, -1, result), std::exception);
-    TEST_EXCEPTION(lookup_entry_index(&text,nullTree, 0, result), std::exception);
-    TEST_EXCEPTION(lookup_entry_index(&text,tree, -1, result), std::exception);
-    TEST_ASSERT(lookup_entry_index(&text,tree, 0, result) == EC_SUCCESS);
+    // Test exceptions on bad arguments
+    TEST_EXCEPTION(lookup_entry_index(&nullText, tree, -1, result), std::exception);
+    TEST_EXCEPTION(lookup_entry_index(&text1,nullTree, 0, result), std::exception);
+    TEST_EXCEPTION(lookup_entry_index(&text1,tree, -1, result), std::exception);
 
-    TEST_ASSERT(lookup_entry_index(&text,tree, 0, result) == EC_SUCCESS);
+    // Search for word that exists with exact match
+    TEST_ASSERT(lookup_entry_index(&text1,tree, 0, result) == EC_SUCCESS);
     resultNode=result->getHead();
     TEST_ASSERT(strcmp(resultNode->getWord(),testEntry3->getWord())==0);
-
     resultNode=result->getHead();
     while(resultNode){
         entry* tempResult = NULL;
@@ -602,11 +613,60 @@ void test_lookup_entry_index(void){
         resultNode = tempResult;
     }
     delete result;
+    result = NULL;
 
+    // Search for word that does not exist with exact match
+    const word text2 = (char*)"TESTWOR\0";
+    TEST_ASSERT ( lookup_entry_index(&text2, tree, 0, result) == EC_SUCCESS);
+    TEST_ASSERT ( resultNode == NULL);
+    delete result;
+    result = NULL;
+
+    // This word does not exist, but there are several words with a distance 1 to it
+    const word text3 = (char*)"TESTWORD\0";
+    result = new entry_list();
+    TEST_ASSERT ( lookup_entry_index(&text3, tree, 1, result) == EC_SUCCESS);
+    resultNode = result->getHead();
+    TEST_ASSERT(strcmp(resultNode->getWord(),testEntry6->getWord())==0);
+    resultNode = resultNode->getNext();
+    TEST_ASSERT(strcmp(resultNode->getWord(),testEntry5->getWord())==0);
+    resultNode = resultNode->getNext();
+    TEST_ASSERT(strcmp(resultNode->getWord(),testEntry4->getWord())==0);
+    resultNode = resultNode->getNext();
+    TEST_ASSERT(strcmp(resultNode->getWord(),testEntry2->getWord())==0);
+    resultNode = resultNode->getNext();
+    TEST_ASSERT(strcmp(resultNode->getWord(),testEntry1->getWord())==0);
+    resultNode = resultNode->getNext();
+    TEST_ASSERT(resultNode == NULL);
+    resultNode=result->getHead();
+    while(resultNode){
+        tempResult = resultNode->getNext();
+        delete resultNode;
+        resultNode = tempResult;
+    }
+    delete result;
+    result = NULL;
+
+    // Search for word that exists as second child using exact match
+    const word text5 = (char*)"TESTWOR22\0";
+    result = new entry_list();
+    TEST_ASSERT ( lookup_entry_index(&text5, tree, 0, result) == EC_SUCCESS);
+    resultNode = result->getHead();
+    TEST_ASSERT(strcmp(resultNode->getWord(),testEntry3->getWord())==0);
+    resultNode = resultNode->getNext();
+    TEST_ASSERT(resultNode == NULL);
+    resultNode=result->getHead();
+    while(resultNode){
+        tempResult = NULL;
+        tempResult=resultNode->getNext();
+        delete resultNode;
+        resultNode = tempResult;
+    }
+    delete result;
+    result = NULL;
 
     destroy_entry_index(tree);
     delete test_list;
-    
 }
 
 
@@ -635,6 +695,6 @@ TEST_LIST = {
     {"Test treeNodeList getNode", treeNodeList_getNode},
     {"Test treeNodeList getNext", treeNodeList_getNext},
     {"Test build_entry_index", test_build_entry_index},
-    {"Test build_entry_index", test_lookup_entry_index},
+    {"Test lookup_entry_index", test_lookup_entry_index},
     { NULL, NULL }
 };    

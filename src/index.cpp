@@ -38,13 +38,24 @@ ErrorCode indexNode :: addEntry(entry* input) {
         return EC_FAIL;
     }
 
+    // If the entry already exists in this node
+    if (distance == 0){
+        throw std::runtime_error( "Word already in the tree");
+        return EC_FAIL;
+    }
+
     if (this->children == NULL) {           //If there are no children
         this->children = new treeNodeList(input, distance,this->getMatchingType());
     }else if (this->children->getDistanceFromParent() > distance) {      // Children list exists, first child has bigger dist
         treeNodeList* oldFirstChild = this->children;
         this->children = new treeNodeList(input, distance, this->getMatchingType(), oldFirstChild);
     }else {          // Children list exists, new entry has equal or greater dist than first child
-        this->children->addToList(input, distance);
+        try{
+            this->children->addToList(input, distance);
+        }catch (const std::exception& _) {
+            throw std::runtime_error( "Word already in the tree");
+            return EC_FAIL;
+        }
     }
     return EC_SUCCESS;
 }
@@ -74,7 +85,11 @@ ErrorCode build_entry_index(const entry_list* el, MatchType type, indexNode** ix
         entry* currEntry = el->getHead();
         *ix = new indexNode(currEntry, type);
         while (currEntry->getNext()) {
-            (*ix)->addEntry(currEntry->getNext());
+            try {
+                (*ix)->addEntry(currEntry->getNext());
+            }catch (const std::exception& _) {
+                std::cout<<"Word already in the tree\n";
+            }
             currEntry = currEntry->getNext();
         }
         return EC_SUCCESS;
@@ -254,7 +269,7 @@ int treeNodeList :: addToList(entry* content,int distance) {
     if (distance == this->distanceFromParent) {                 // If we have the same distance as this node, push lower in the tree
         this->node->addEntry(content);
     } else if (this->next) {                                    // If we are not in the last node
-        if (distance > this->next->getDistanceFromParent()) {   // If the next node has distance lower than the input, pass input along
+        if (distance >= this->next->getDistanceFromParent()) {   // If the next node has distance lower than the input, pass input along
             this->next->addToList(content, distance);
         }else {                                                 // Else if the next node has higher distance, create a new list node between these
             this->next = new treeNodeList(content, distance, this->node->getMatchingType(), next);
