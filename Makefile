@@ -1,7 +1,7 @@
 FILES = src/
 TEST_FILES = tests/
-OBJS = main.o functions.o structs.o index.o 
-TEST_OBJ = tests.o functions.o structs.o index.o 
+OBJS = main.o utilities.o structs.o index.o 
+TEST_OBJ = tests.o utilities.o structs.o index.o 
 OUT	= main
 CC	 = g++
 FLAGS = -g -c -Wall -std=c++11 
@@ -12,8 +12,8 @@ all: $(OBJS)
 main.o: $(FILES)main.cpp
 	$(CC) $(FLAGS) $(FILES)main.cpp 
 
-functions.o: $(FILES)functions.cpp
-	$(CC) $(FLAGS) $(FILES)functions.cpp
+utilities.o: $(FILES)utilities.cpp
+	$(CC) $(FLAGS) $(FILES)utilities.cpp
 
 structs.o: $(FILES)structs.cpp
 	$(CC) $(FLAGS) $(FILES)structs.cpp

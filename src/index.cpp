@@ -1,5 +1,5 @@
 #include "../include/index.hpp"
-#include "../include/functions.hpp"
+#include "../include/utilities.hpp"
 
 indexNode :: indexNode(entry* input, MatchType matchingMetric) {
     if (input == NULL){

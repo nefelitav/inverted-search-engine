@@ -1,5 +1,5 @@
-#ifndef FUNCTIONS
-#define FUNCTIONS
+#ifndef UTILITIES
+#define UTILITIES
 
 #include "core.h"
 #include "structs.hpp"

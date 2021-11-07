@@ -62,7 +62,7 @@
 
 
 /* Macros for testing whether an unit test succeeds or fails. These macros
- * can be used arbitrarily in functions implementing the unit tests.
+ * can be used arbitrarily in utilities implementing the unit tests.
  *
  * If any condition fails throughout execution of a test, the test fails.
  *
@@ -340,7 +340,7 @@
 
 #ifdef _MSC_VER
     /* In the multi-platform code like ours, we cannot use the non-standard
-     * "safe" functions from Microsoft C lib like e.g. sprintf_s() instead of
+     * "safe" utilities from Microsoft C lib like e.g. sprintf_s() instead of
      * standard sprintf(). Hence, lets disable the warning C4996. */
     #pragma warning(push)
     #pragma warning(disable: 4996)

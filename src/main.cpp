@@ -1,5 +1,5 @@
 #include "../include/structs.hpp"
-#include "../include/functions.hpp"
+#include "../include/utilities.hpp"
 #include "../include/index.hpp"
 #include "../include/core.h"
 #include <fstream>

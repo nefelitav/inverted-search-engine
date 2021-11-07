@@ -1,4 +1,4 @@
-#include "../include/functions.hpp"
+#include "../include/utilities.hpp"
 
 bool exactMatch(const word word1, const word word2) {
     if (word1 == NULL || word2 == NULL) {

@@ -174,7 +174,7 @@ void test_hash_function(void)
     TEST_EXCEPTION(hashFunction((char*)" "), std::exception);
 }
 
-// Match Functions
+// Match functions
 void test_exact_match(void)
 {   
     word word1 = (word)"hello";
@@ -284,7 +284,7 @@ void test_dequeue(void) {
     TEST_ASSERT(nodeToReturn == NULL);      // The queue is empty, return NULL again
 
     // Test queue with multiple items
-    testQueue.enqueue(&testIndex1);         // Add multiple indexNodes
+    testQueue.enqueue(&testIndex1);         // Add multiple indexings
     testQueue.enqueue(&testIndex2);
     testQueue.enqueue(&testIndex3);
     nodeToReturn = testQueue.dequeue();
@@ -442,7 +442,7 @@ void test_indexNode_getMatchingType(void) {
 
 //////////////////////////// treeNodeList ////////////////////////////
 
-void treeNodeList_constructor(void) {
+void test_treeNodeList_constructor(void) {
     // Setup
     word testWord1 = (word)"TESTWORD1";
     entry* testEntry1 = new entry(testWord1);
@@ -461,7 +461,7 @@ void treeNodeList_constructor(void) {
     delete testList;
 }
 
-void treeNodeList_addToList(void) {
+void test_treeNodeList_addToList(void) {
     // Setup
     word testWord1 = (word)"TESTWORD1";
     word testWord2 = (word)"TESTWORD2";
@@ -482,7 +482,7 @@ void treeNodeList_addToList(void) {
     delete testList;
 }
 
-void treeNodeList_getDistanceFromParent(void) {
+void test_treeNodeList_getDistanceFromParent(void) {
     // Setup
     word testWord1 = (word)"TESTWORD1";
     entry* testEntry1 = new entry(testWord1);
@@ -494,7 +494,7 @@ void treeNodeList_getDistanceFromParent(void) {
     delete testList;
 }
 
-void treeNodeList_getNode(void) {
+void test_treeNodeList_getNode(void) {
     // Setup
     word testWord1 = (word)"TESTWORD1";
     entry* testEntry1 = new entry(testWord1);
@@ -506,7 +506,7 @@ void treeNodeList_getNode(void) {
     delete testList;
 }
 
-void treeNodeList_getNext(void) {
+void test_treeNodeList_getNext(void) {
     // Setup
     word testWord1 = (word)"TESTWORD1";
     word testWord2 = (word)"TESTWORD22";
@@ -626,12 +626,12 @@ TEST_LIST = {
     {"indexNode getEntry", test_indexNode_getEntry},
     {"indexNode getChildren", test_indexNode_getChildren},
     {"indexNode getMatchingType", test_indexNode_getMatchingType},
-    {"treeNodeList Constructor", treeNodeList_constructor},
-    {"treeNodeList addEntry", treeNodeList_addToList},
-    {"treeNodeList getDistanceFromParent", treeNodeList_getDistanceFromParent},
-    {"treeNodeList getNode", treeNodeList_getNode},
-    {"treeNodeList getNext", treeNodeList_getNext},
+    {"treeNodeList Constructor", test_treeNodeList_constructor},
+    {"treeNodeList addEntry", test_treeNodeList_addToList},
+    {"treeNodeList getDistanceFromParent", test_treeNodeList_getDistanceFromParent},
+    {"treeNodeList getNode", test_treeNodeList_getNode},
+    {"treeNodeList getNext", test_treeNodeList_getNext},
     {"build_entry_index", test_build_entry_index},
     {"build_entry_index", test_lookup_entry_index},
     { NULL, NULL }
-};
+};    
