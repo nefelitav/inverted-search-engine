@@ -5,19 +5,19 @@
 #include "core.h"
 #include "structs.hpp"
 
-class treeNodeList;
+class indexList;
 
 class indexNode {
     private:
         MatchType MatchingType;
         entry* content;
-        treeNodeList* children;
+        indexList* children;
     public:
         indexNode(entry* input, MatchType matchingMetric = MT_EDIT_DIST);
         ErrorCode addEntry(entry* input);
         int printTree(int depth = 0);
         entry* getEntry();
-        treeNodeList* getChildren();
+        indexList* getChildren();
         MatchType getMatchingType();
         ~indexNode();
 };
@@ -30,43 +30,43 @@ ErrorCode destroy_entry_index(indexNode* ix);
 
 ////////////////////////////////////////////////////////////////////////////////////
 
-class childQueueNode {
+class stackNode {
     private:
         indexNode* entry;
-        childQueueNode* next;
+        stackNode* next;
     public:
-        // Create a new queueNode, given input and (optionaly, if this is not the first node) the previous head to set as next
-        childQueueNode(indexNode* input, childQueueNode* next = nullptr);
+        // Create a new StackNode, given input and (optionaly, if this is not the first node) the previous head to set as next
+        stackNode(indexNode* input, stackNode* next = nullptr);
         // Return content of this node, and the head to it's next node, to be the new head
-        void pop(indexNode** content, childQueueNode** newHead);
-        childQueueNode* getNext();
+        void pop(indexNode** content, stackNode** newHead);
+        stackNode* getNext();
 };
 
-class Queue {
+class Stack {
     private:
-        childQueueNode* head;
+        stackNode* head;
     public:
-        Queue();
-        void enqueue(indexNode** input);
-        indexNode* dequeue();
+        Stack();
+        void add(indexNode** input);
+        indexNode* pop();
         int getSize();
 };
 
 ////////////////////////////////////////////////////////////////////////////////////
 
-class treeNodeList {
+class indexList {
     private:
         int distanceFromParent;
         indexNode* node;
-        treeNodeList* next;
+        indexList* next;
     public:
-        treeNodeList(entry* content, int distance, MatchType matchingMetric, treeNodeList* next = nullptr);
-        int addToList(entry* content, int distance);
+        indexList(entry* content, int distance, MatchType matchingMetric, indexList* next = nullptr);
+        int addToList(entry* content, int distance);    // Insert new entry in the right place in the list
         int getDistanceFromParent() const;
         void printList(int depth = 0);
         indexNode* getNode() const ;
-        treeNodeList* getNext() const;
-        ~treeNodeList();
+        indexList* getNext() const;
+        ~indexList();
 };
 
 #endif  //INDEX

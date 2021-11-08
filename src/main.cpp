@@ -6,6 +6,7 @@
 #include <string>
 #include <iostream>
 
+// create documents and queries, reading words from a file
 int main()
 {
     Query** q = new Query*[NUM_QUERIES];                         // array of queries - static 
@@ -60,7 +61,55 @@ int main()
         std::cout << "Unable to open file" << std::endl; 
         return -1;
     }
-    // delete queries and documents
+
+    const word w = d[0]->getWord(1);
+    const word w2 = d[0]->getWord(2);
+
+    entry* e = NULL;
+    entry* e2 = NULL;
+    entry_list* el = NULL;
+    entry_list* result = NULL;
+
+    create_entry_list(&el);
+    create_entry(&w, &e);
+    create_entry(&w2, &e2);
+
+    add_entry(el, e);
+    add_entry(el, e2);
+
+    std::cout << e2->getWord() << std::endl;
+    std::cout << get_number_entries(el) << std::endl;
+    std::cout << get_first(el)->getWord() << std::endl;
+    std::cout << get_next(el, e2)->getWord() << std::endl;
+
+    // Create the index
+    indexNode* tree;
+    build_entry_index(el, MT_EDIT_DIST, &tree);
+
+    // Create the list that will store the search results
+    create_entry_list(&result);
+
+    // The search term
+    const word search_term=(char*)"ipsum";
+
+    //Search the tree
+    lookup_entry_index(&search_term, tree, 0, result);
+
+    // Present the result(s)
+    entry* result_node = result->getHead();
+    std::cout<<"Search Results for "<<search_term<<":\n";
+    while(result_node){
+        std::cout<<result_node->getWord()<<"\n";
+        result_node = result_node->getNext();
+    }
+    destroy_entry_index(tree);
+
+    // Destroy_entries and entrylist
+    destroy_entry_list(el);
+    destroy_entry_list(result);
+
+
+    // Delete queries and documents
     for (int i = 0; i < NUM_QUERIES; i++)
     {
         delete q[i];
