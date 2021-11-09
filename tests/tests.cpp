@@ -177,8 +177,11 @@ void test_exact_match(void)
     word word2 = (word)"hello";
     word word3 = (word)"hellno";
     const word ptrNull = NULL;
+    // The words are the same
     TEST_ASSERT(exactMatch(word1,word2) == true);
+    // The words are different
     TEST_ASSERT(exactMatch(word1,word3) == false);
+    // Test the exceptions for NULL pointers
     TEST_EXCEPTION(exactMatch(ptrNull, word1), std::exception);
     TEST_EXCEPTION(exactMatch(ptrNull, ptrNull), std::exception);
 }
@@ -190,9 +193,11 @@ void test_hamming(void)
     word word3 = (word)"hellno";
     word word4 = (word)"hellO";
     const word ptrNull = NULL;
+    // Test distance for good input
     TEST_ASSERT(hammingDistance(word1,word2) == 0);
     TEST_ASSERT(hammingDistance(word1,word3) == 2);
     TEST_ASSERT(hammingDistance(word1,word4) == 1);
+    // Test exceptions for bad input (NULL Pointers)
     TEST_EXCEPTION(hammingDistance(ptrNull, word1), std::exception);
     TEST_EXCEPTION(hammingDistance(ptrNull, ptrNull), std::exception);
 }
@@ -205,19 +210,21 @@ void test_edit(void)
     word word4 = (word)"hellO";
     word word5 = (word)"_hello";
     const word ptrNull = NULL;
+    // Test distance for good input
     TEST_ASSERT( editDistance(word1,word2) == 0);
     TEST_ASSERT( editDistance(word1,word3) == 1);
     TEST_ASSERT( editDistance(word1,word4) == 1);
     TEST_ASSERT( editDistance(word1,word5) == 1);
+    // Test exceptions for bad input (NULL Pointers)
     TEST_EXCEPTION( editDistance(ptrNull, word1), std::exception);
     TEST_EXCEPTION( editDistance(ptrNull, ptrNull), std::exception);
 }
 
-// Queue
-void test_enqueue(void) {
+// Stack
+void test_add(void) {
     // Setup
     indexNode* nullPTR = NULL;
-	Queue testQueue;
+	Stack testStack;
     word testWord1 = (word)"TESTWORD1";
     word testWord2 = (word)"TESTWORD2";
     word testWord3 = (word)"TESTWORD3";
@@ -228,36 +235,40 @@ void test_enqueue(void) {
     indexNode* testIndex2 = new indexNode(testEntry2);
     indexNode* testIndex3 = new indexNode(testEntry3);
 
-    // Try to enqueue NULL
-    TEST_EXCEPTION(testQueue.enqueue(NULL), std::exception);
-    TEST_EXCEPTION(testQueue.enqueue(&nullPTR), std::exception);
-    TEST_ASSERT(testQueue.getSize() == 0);
+    // Try to add NULL
+    TEST_EXCEPTION(testStack.add(NULL), std::exception);
+    TEST_EXCEPTION(testStack.add(&nullPTR), std::exception);
+    TEST_ASSERT(testStack.getSize() == 0);
 
-    // Enqueue one, check size
-    testQueue.enqueue(&testIndex1);
-    TEST_ASSERT(testQueue.getSize() == 1);
+    // Add one, check size
+    testStack.add(&testIndex1);
+    TEST_ASSERT(testStack.getSize() == 1);
 
-    // Enqueue second, check size
-    testQueue.enqueue(&testIndex1);
-    TEST_ASSERT(testQueue.getSize() == 2);
+    // Add second, check size
+    testStack.add(&testIndex1);
+    TEST_ASSERT(testStack.getSize() == 2);
 
-    // Enqueue third, check size
-    testQueue.enqueue(&testIndex3);
-    TEST_ASSERT(testQueue.getSize() == 3);
+    // Add third, check size
+    testStack.add(&testIndex3);
+    TEST_ASSERT(testStack.getSize() == 3);
 
-    while(testQueue.getSize() > 0) {
-        testQueue.dequeue();
+    // Cleanup
+    while(testStack.getSize() > 0) {
+        testStack.pop();
     }
     delete testIndex1;
     delete testIndex2;
     delete testIndex3;
+    delete testEntry1;
+    delete testEntry2;
+    delete testEntry3;
 
 }
 
-void test_dequeue(void) {
+void test_pop(void) {
     // Setup
     indexNode* nodeToReturn;
-	Queue testQueue;
+	Stack testStack;
     word testWord1 = (word)"TESTWORD1";
     word testWord2 = (word)"TESTWORD2";
     word testWord3 = (word)"TESTWORD3";
@@ -268,61 +279,72 @@ void test_dequeue(void) {
     indexNode* testIndex2 = new indexNode(testEntry2);
     indexNode* testIndex3 = new indexNode(testEntry3);
 
-    // Test empty queue
-    nodeToReturn = testQueue.dequeue();
-    TEST_ASSERT(nodeToReturn == NULL);      // We should get NULL, the queue is empty
+    // Test empty stack
+    nodeToReturn = testStack.pop();
+    TEST_ASSERT(nodeToReturn == NULL);      // We should get NULL, the stack is empty
 
-    // Test queue with one item
-    testQueue.enqueue(&testIndex1);
-    nodeToReturn = testQueue.dequeue();
+    // Test stack with one item
+    testStack.add(&testIndex1);
+    nodeToReturn = testStack.pop();
     TEST_ASSERT(nodeToReturn == testIndex1); // We should get node we put in
-    nodeToReturn = testQueue.dequeue();
-    TEST_ASSERT(nodeToReturn == NULL);      // The queue is empty, return NULL again
+    nodeToReturn = testStack.pop();
+    TEST_ASSERT(nodeToReturn == NULL);      // The stack is empty, return NULL again
 
-    // Test queue with multiple items
-    testQueue.enqueue(&testIndex1);         // Add multiple indexings
-    testQueue.enqueue(&testIndex2);
-    testQueue.enqueue(&testIndex3);
-    nodeToReturn = testQueue.dequeue();
+    // Test stack with multiple items
+    testStack.add(&testIndex1);         // Add multiple indexings
+    testStack.add(&testIndex2);
+    testStack.add(&testIndex3);
+    nodeToReturn = testStack.pop();
     TEST_ASSERT(nodeToReturn == testIndex3);    // Get them one by one
-    nodeToReturn = testQueue.dequeue();
+    nodeToReturn = testStack.pop();
     TEST_ASSERT(nodeToReturn == testIndex2);
-    nodeToReturn = testQueue.dequeue();
+    nodeToReturn = testStack.pop();
     TEST_ASSERT(nodeToReturn == testIndex1);
-    nodeToReturn = testQueue.dequeue();
-    TEST_ASSERT(nodeToReturn == NULL);          // The queue is empty, return NULL again
+    nodeToReturn = testStack.pop();
+    TEST_ASSERT(nodeToReturn == NULL);          // The stack is empty, return NULL again
 
+    // Cleanup
     delete testIndex1;
     delete testIndex2;
     delete testIndex3;
+    delete testEntry1;
+    delete testEntry2;
+    delete testEntry3;
 }
 
-void test_childQueueNode_create(void) {
+void test_stackNode_create(void) {
     word testWord1 = (word)"TESTWORD1";
     word testWord2 = (word)"TESTWORD2";
     entry* testEntry1 = new entry(testWord1);
     entry* testEntry2 = new entry(testWord2);
     indexNode* testIndex1 = new indexNode(testEntry1);
     indexNode* testIndex2 = new indexNode(testEntry2);
-    childQueueNode* testNode1 = NULL;
-    childQueueNode* testNode2 = NULL;
+    stackNode* testNode1 = NULL;
+    stackNode* testNode2 = NULL;
 
-    TEST_EXCEPTION(testNode1 = new childQueueNode(NULL), std::exception);
+    // Test exception for NULL input
+    TEST_EXCEPTION(testNode1 = new stackNode(NULL), std::exception);
+    // Check that the pointer did not change
     TEST_ASSERT(testNode1 == NULL);
 
-    testNode1 = new childQueueNode(testIndex1);
+    // Check that this is the only node
+    testNode1 = new stackNode(testIndex1);
     TEST_ASSERT(testNode1->getNext() == NULL);
 
-    testNode2 = new childQueueNode(testIndex2, testNode1);
+    // Check that the first can see the second
+    testNode2 = new stackNode(testIndex2, testNode1);
     TEST_ASSERT(testNode2->getNext() == testNode1);
 
+    // Cleanup
     delete testNode1;
     delete testNode2;
     delete testIndex1;
     delete testIndex2;
+    delete testEntry1;
+    delete testEntry2;
 }
 
-void test_childQueueNode_pop(void) {
+void test_stackNode_pop(void) {
     indexNode* nodeToReturn;
     word testWord1 = (word)"TESTWORD1";
     word testWord2 = (word)"TESTWORD2";
@@ -330,16 +352,19 @@ void test_childQueueNode_pop(void) {
     entry* testEntry2 = new entry(testWord2);
     indexNode* testIndex1 = new indexNode(testEntry1);
     indexNode* testIndex2 = new indexNode(testEntry2);
-    childQueueNode* testNode1 = NULL;
-    childQueueNode* testNode2 = NULL;
-    childQueueNode* childNodeToReturn;
+    stackNode* testNode1 = NULL;
+    stackNode* testNode2 = NULL;
+    stackNode* childNodeToReturn;
 
-    testNode1 = new childQueueNode(testIndex1);
+    // Test adding and removing single node
+    testNode1 = new stackNode(testIndex1);
     testNode1->pop(&nodeToReturn, &childNodeToReturn);
     TEST_ASSERT (nodeToReturn == testIndex1);
     TEST_ASSERT (childNodeToReturn == NULL);
-    testNode1 = new childQueueNode(testIndex1);
-    testNode2 = new childQueueNode(testIndex2, testNode1);
+
+    // Test adding and removind 2 nodes
+    testNode1 = new stackNode(testIndex1);
+    testNode2 = new stackNode(testIndex2, testNode1);
     testNode2->pop(&nodeToReturn, &childNodeToReturn);
     TEST_ASSERT (nodeToReturn == testIndex2);
     TEST_ASSERT (childNodeToReturn == testNode1);
@@ -349,6 +374,8 @@ void test_childQueueNode_pop(void) {
 
     delete testIndex1;
     delete testIndex2;
+    delete testEntry1;
+    delete testEntry2;
 }
 
 //////////////////////////// Index ////////////////////////////
@@ -374,6 +401,7 @@ void test_indexNode_construction_addEntry(void) {
     // Test creating with exact match (considered invalid for tree creation)
     TEST_EXCEPTION(head = new indexNode(testEntry1,MT_EXACT_MATCH), std::exception);
 
+    // Test insertion and exceptions when adding duplicates
     head = new indexNode(testEntry1);
     TEST_EXCEPTION(head->addEntry(nullPTR), std::exception);
     TEST_ASSERT(head->addEntry(testEntry2) == EC_SUCCESS);
@@ -382,7 +410,10 @@ void test_indexNode_construction_addEntry(void) {
     TEST_ASSERT(head->addEntry(testEntry4) == EC_SUCCESS);
     TEST_EXCEPTION(head->addEntry(testEntry4), std::exception);
 
-    
+    delete testEntry1;
+    delete testEntry2;
+    delete testEntry3;
+    delete testEntry4;
     delete head;
 }
 
@@ -392,6 +423,7 @@ void test_indexNode_getEntry(void) {
     indexNode* head = new indexNode(testEntry1);
     TEST_ASSERT(head->getEntry() == testEntry1);    
     
+    delete testEntry1;
     delete head;
 }
 
@@ -404,18 +436,22 @@ void test_indexNode_getChildren(void) {
     entry* testEntry2 = new entry(testWord2);
     entry* testEntry3 = new entry(testWord3);
     indexNode* head;
-    treeNodeList* listOfChildren;
+    indexList* listOfChildren;
 
     head = new indexNode(testEntry1);
     head->addEntry(testEntry2);
     head->addEntry(testEntry3);
 
-    listOfChildren=head->getChildren();
+    listOfChildren = head->getChildren();
+    // Test the correct order of the nodes in the list
     TEST_ASSERT(listOfChildren->getNode()->getEntry() == testEntry2);
     TEST_ASSERT(listOfChildren->getDistanceFromParent() == 1);
     TEST_ASSERT(listOfChildren->getNext()->getNode()->getEntry() == testEntry3);
     TEST_ASSERT(listOfChildren->getNext()->getDistanceFromParent() == 2);
 
+    delete testEntry1;
+    delete testEntry2;
+    delete testEntry3;
     delete head;
 }
 
@@ -430,43 +466,47 @@ void test_indexNode_getMatchingType(void) {
     testEntry1 = new entry(testWord1);
     head = new indexNode(testEntry1);
     TEST_ASSERT(head->getMatchingType() == MT_EDIT_DIST);    
+    delete testEntry1;
     delete head;
 
     // Test by explicit argument EDIT_DIST
     testEntry1 = new entry(testWord1);
     head = new indexNode(testEntry1, MT_EDIT_DIST);
-    TEST_ASSERT(head->getMatchingType() == MT_EDIT_DIST);    
+    TEST_ASSERT(head->getMatchingType() == MT_EDIT_DIST);
+    delete testEntry1;    
     delete head;
 
     // Test by explicit argument EDIT_DIST
     testEntry1 = new entry(testWord1);
     head = new indexNode(testEntry1, MT_HAMMING_DIST);
-    TEST_ASSERT(head->getMatchingType() == MT_HAMMING_DIST);    
+    TEST_ASSERT(head->getMatchingType() == MT_HAMMING_DIST);
+    delete testEntry1;    
     delete head;
 }
 
-//////////////////////////// treeNodeList ////////////////////////////
+//////////////////////////// indexList ////////////////////////////
 
-void test_treeNodeList_constructor(void) {
+void test_indexList_constructor(void) {
     // Setup
     word testWord1 = (word)"TESTWORD1";
     entry* testEntry1 = new entry(testWord1);
     entry* nullTestEntry = NULL;
-    treeNodeList* testList = NULL;
+    indexList* testList = NULL;
 
-    // Test treeNodeList Constructor Edge Cases
-    TEST_EXCEPTION(testList = new treeNodeList(nullTestEntry, 1, MT_EDIT_DIST), std::exception);
-    TEST_EXCEPTION(testList = new treeNodeList(testEntry1, 1,  MT_EXACT_MATCH), std::exception);
-    TEST_EXCEPTION(testList = new treeNodeList(testEntry1, 0,  MT_EDIT_DIST), std::exception);
-    TEST_EXCEPTION(testList = new treeNodeList(testEntry1, -1,  MT_EDIT_DIST), std::exception);
+    // Test indexList Constructor Edge Cases
+    TEST_EXCEPTION(testList = new indexList(nullTestEntry, 1, MT_EDIT_DIST), std::exception);
+    TEST_EXCEPTION(testList = new indexList(testEntry1, 1,  MT_EXACT_MATCH), std::exception);
+    TEST_EXCEPTION(testList = new indexList(testEntry1, 0,  MT_EDIT_DIST), std::exception);
+    TEST_EXCEPTION(testList = new indexList(testEntry1, -1,  MT_EDIT_DIST), std::exception);
 
-    testList = new treeNodeList(testEntry1, 1,  MT_EDIT_DIST);
+    testList = new indexList(testEntry1, 1,  MT_EDIT_DIST);
     TEST_ASSERT (testList != NULL);
 
+    delete testEntry1;
     delete testList;
 }
 
-void test_treeNodeList_addToList(void) {
+void test_indexList_addToList(void) {
     // Setup
     word testWord1 = (word)"TESTWORD1";
     word testWord2 = (word)"TESTWORD2";
@@ -475,54 +515,65 @@ void test_treeNodeList_addToList(void) {
     entry* testEntry2 = new entry(testWord2);
     entry* testEntry3 = new entry(testWord3);
     entry* nullTestEntry = NULL;
-    treeNodeList* testList = NULL;
+    indexList* testList = NULL;
 
-    testList = new treeNodeList(testEntry1, 1,  MT_EDIT_DIST);
+    // Test adding good inputs
+    testList = new indexList(testEntry1, 1,  MT_EDIT_DIST);
     TEST_ASSERT(testList->addToList(testEntry3, 2) == 0);
     TEST_ASSERT(testList->addToList(testEntry2, 1) == 0);
+
+    // Test NULL Pointers and invalid distance from parent
     TEST_EXCEPTION(testList->addToList(testEntry3, 0), std::exception);
     TEST_EXCEPTION(testList->addToList(testEntry3, -1), std::exception);
     TEST_EXCEPTION(testList->addToList(nullTestEntry, 3), std::exception);
 
+    delete testEntry1;
+    delete testEntry2;
+    delete testEntry3;
     delete testList;
 }
 
-void test_treeNodeList_getDistanceFromParent(void) {
+void test_indexList_getDistanceFromParent(void) {
     // Setup
     word testWord1 = (word)"TESTWORD1";
     entry* testEntry1 = new entry(testWord1);
-    treeNodeList* testList = NULL;
+    indexList* testList = NULL;
 
-    testList = new treeNodeList(testEntry1, 1,  MT_EDIT_DIST);
+    testList = new indexList(testEntry1, 1,  MT_EDIT_DIST);
     TEST_ASSERT (testList->getDistanceFromParent() == 1);
 
+    delete testEntry1;
     delete testList;
 }
 
-void test_treeNodeList_getNode(void) {
+void test_indexList_getNode(void) {
     // Setup
     word testWord1 = (word)"TESTWORD1";
     entry* testEntry1 = new entry(testWord1);
-    treeNodeList* testList = NULL;
+    indexList* testList = NULL;
 
-    testList = new treeNodeList(testEntry1, 1,  MT_EDIT_DIST);
+    testList = new indexList(testEntry1, 1,  MT_EDIT_DIST);
     TEST_ASSERT (testList->getNode()->getEntry() == testEntry1);
 
+
+    delete testEntry1;
     delete testList;
 }
 
-void test_treeNodeList_getNext(void) {
+void test_indexList_getNext(void) {
     // Setup
     word testWord1 = (word)"TESTWORD1";
     word testWord2 = (word)"TESTWORD22";
     entry* testEntry1 = new entry(testWord1);
     entry* testEntry2 = new entry(testWord2);
-    treeNodeList* testList = NULL;
+    indexList* testList = NULL;
 
-    testList = new treeNodeList(testEntry1, 1,  MT_EDIT_DIST);
+    testList = new indexList(testEntry1, 1,  MT_EDIT_DIST);
     testList->addToList(testEntry2, 2);
     TEST_ASSERT (testList->getNext()->getNode()->getEntry() == testEntry2);
 
+    delete testEntry2;
+    delete testEntry1;
     delete testList;
 }
 
@@ -551,12 +602,17 @@ void test_build_entry_index(void) {
     test_list->addEntry(testEntry1);
     indexNode* tree = NULL;
     
+    // Test exception when giving a NULL list
     TEST_EXCEPTION(build_entry_index(nullList, MT_EDIT_DIST ,&tree), std::exception);
+
+    // Test returned EC_FAIL when passing invalid distance metric
     TEST_ASSERT(build_entry_index(test_list, MT_EXACT_MATCH ,&tree) == EC_FAIL);
+
+    // Test Correct Index Creation
     TEST_ASSERT(build_entry_index(test_list, MT_EDIT_DIST ,&tree) == EC_SUCCESS);
 
     destroy_entry_index(tree);
-    delete test_list;
+    destroy_entry_list(test_list);
 }
 
 
@@ -599,6 +655,8 @@ void test_lookup_entry_index(void) {
     resultNode=result->getHead();
     TEST_ASSERT(strcmp(resultNode->getWord(),testEntry3->getWord())==0);
     resultNode=result->getHead();
+
+    // Clear the result entry_list
     while(resultNode) {
         entry* tempResult = NULL;
         tempResult=resultNode->getNext();
@@ -619,6 +677,7 @@ void test_lookup_entry_index(void) {
     const word text3 = (char*)"TESTWORD\0";
     result = new entry_list();
     TEST_ASSERT ( lookup_entry_index(&text3, tree, 1, result) == EC_SUCCESS);
+    // Test that only the correct words matched
     resultNode = result->getHead();
     TEST_ASSERT(strcmp(resultNode->getWord(),testEntry6->getWord())==0);
     resultNode = resultNode->getNext();
@@ -631,6 +690,8 @@ void test_lookup_entry_index(void) {
     TEST_ASSERT(strcmp(resultNode->getWord(),testEntry1->getWord())==0);
     resultNode = resultNode->getNext();
     TEST_ASSERT(resultNode == NULL);
+
+    // Clear the result entry_list
     resultNode=result->getHead();
     while(resultNode){
         tempResult = resultNode->getNext();
@@ -639,6 +700,7 @@ void test_lookup_entry_index(void) {
     }
     delete result;
     result = NULL;
+
 
     // Search for word that exists as second child using exact match
     const word text5 = (char*)"TESTWOR22\0";
@@ -649,6 +711,7 @@ void test_lookup_entry_index(void) {
     resultNode = resultNode->getNext();
     TEST_ASSERT(resultNode == NULL);
     resultNode=result->getHead();
+    // Clear the result entry_list
     while(resultNode){
         tempResult = NULL;
         tempResult=resultNode->getNext();
@@ -659,7 +722,7 @@ void test_lookup_entry_index(void) {
     result = NULL;
 
     destroy_entry_index(tree);
-    delete test_list;
+    destroy_entry_list(test_list);
 }
 
 
@@ -674,20 +737,20 @@ TEST_LIST = {
     {"Exact Match", test_exact_match},
     {"Hamming Distance", test_hamming},
     {"Edit Distance", test_edit},
-    {"Enqueue", test_enqueue},
-    {"Dequeue", test_dequeue},
-    {"Create ChildQueueNode", test_childQueueNode_create},
-    {"Pop ChildQueueNode", test_childQueueNode_pop},
-    {"indexNode Creation", test_indexNode_construction_addEntry},
+    {"Stack Add", test_add},
+    {"Stack Remove", test_pop},
+    {"Create StackNode", test_stackNode_create},
+    {"Pop StackNode", test_stackNode_pop},
+    {"indexNode Constructor and Add Entry", test_indexNode_construction_addEntry},
     {"indexNode getEntry", test_indexNode_getEntry},
     {"indexNode getChildren", test_indexNode_getChildren},
     {"indexNode getMatchingType", test_indexNode_getMatchingType},
-    {"treeNodeList Constructor", test_treeNodeList_constructor},
-    {"treeNodeList addEntry", test_treeNodeList_addToList},
-    {"treeNodeList getDistanceFromParent", test_treeNodeList_getDistanceFromParent},
-    {"treeNodeList getNode", test_treeNodeList_getNode},
-    {"treeNodeList getNext", test_treeNodeList_getNext},
+    {"indexList Constructor", test_indexList_constructor},
+    {"indexList addEntry", test_indexList_addToList},
+    {"indexList getDistanceFromParent", test_indexList_getDistanceFromParent},
+    {"indexList getNode", test_indexList_getNode},
+    {"indexList getNext", test_indexList_getNext},
     {"build_entry_index", test_build_entry_index},
-    {"build_entry_index", test_lookup_entry_index},
+    {"lookup_entry_index", test_lookup_entry_index},
     { NULL, NULL }
 };    

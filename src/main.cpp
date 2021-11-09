@@ -68,6 +68,7 @@ int main()
     entry* e = NULL;
     entry* e2 = NULL;
     entry_list* el = NULL;
+    entry_list* result = NULL;
 
     create_entry_list(&el);
     create_entry(&w, &e);
@@ -81,11 +82,34 @@ int main()
     std::cout << get_first(el)->getWord() << std::endl;
     std::cout << get_next(el, e2)->getWord() << std::endl;
 
-    //destroy_entries and entrylist
+    // Create the index
+    indexNode* tree;
+    build_entry_index(el, MT_EDIT_DIST, &tree);
+
+    // Create the list that will store the search results
+    create_entry_list(&result);
+
+    // The search term
+    const word search_term=(char*)"ipsum";
+
+    //Search the tree
+    lookup_entry_index(&search_term, tree, 0, result);
+
+    // Present the result(s)
+    entry* result_node = result->getHead();
+    std::cout<<"Search Results for "<<search_term<<":\n";
+    while(result_node){
+        std::cout<<result_node->getWord()<<"\n";
+        result_node = result_node->getNext();
+    }
+    destroy_entry_index(tree);
+
+    // Destroy_entries and entrylist
     destroy_entry_list(el);
+    destroy_entry_list(result);
 
 
-    // delete queries and documents
+    // Delete queries and documents
     for (int i = 0; i < NUM_QUERIES; i++)
     {
         delete q[i];

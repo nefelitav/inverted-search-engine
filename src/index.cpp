@@ -2,19 +2,18 @@
 #include "../include/utilities.hpp"
 
 indexNode :: indexNode(entry* input, MatchType matchingMetric) {
+    // Check Input
     if (input == NULL){
         throw std::invalid_argument( "Got NULL pointer");
     }
     if (matchingMetric != MT_HAMMING_DIST && matchingMetric != MT_EDIT_DIST ){
         throw std::invalid_argument( "Invalid Distance Metric");
     }
-    //std::cout<<"Creating new node\n";
     this->MatchingType = matchingMetric;
     this->content = input;
     this->children = NULL;
 }
 indexNode :: ~indexNode() {
-    delete this->content;
     delete this->children;
 }
 
@@ -24,33 +23,32 @@ MatchType indexNode :: getMatchingType() {
 
 ErrorCode indexNode :: addEntry(entry* input) {
     int distance;
+    // Check Input
     if (input == NULL){
         throw std::invalid_argument( "Got NULL pointer");
     }
     // Get distance for given metric
     if (this->getMatchingType() == MT_HAMMING_DIST) {
-        //cout<<"Selected HAMMING\n";
         distance = hammingDistance(this->content->getWord(), input->getWord());
     } else if(this->getMatchingType() == MT_EDIT_DIST) {
-        //cout<<"Selected EDIT\n";
         distance = editDistance(this->content->getWord(), input->getWord());
     }else {
         return EC_FAIL;
     }
 
-    // If the entry already exists in this node
+    // If the entry already exists in this node raise exception, this should not happen
     if (distance == 0){
         throw std::runtime_error( "Word already in the tree");
         return EC_FAIL;
     }
 
-    if (this->children == NULL) {           //If there are no children
-        this->children = new treeNodeList(input, distance,this->getMatchingType());
+    if (this->children == NULL) {           //If there are no children create new list with the input in the first node
+        this->children = new indexList(input, distance,this->getMatchingType());
     }else if (this->children->getDistanceFromParent() > distance) {      // Children list exists, first child has bigger dist
-        treeNodeList* oldFirstChild = this->children;
-        this->children = new treeNodeList(input, distance, this->getMatchingType(), oldFirstChild);
+        indexList* oldFirstChild = this->children;
+        this->children = new indexList(input, distance, this->getMatchingType(), oldFirstChild);
     }else {          // Children list exists, new entry has equal or greater dist than first child
-        try{
+        try{         // Give the entry to the list to handle
             this->children->addToList(input, distance);
         }catch (const std::exception& _) {
             throw std::runtime_error( "Word already in the tree");
@@ -71,7 +69,7 @@ entry* indexNode :: getEntry() {
     return this->content;
 }
 
-treeNodeList* indexNode :: getChildren() {
+indexList* indexNode :: getChildren() {
     return this->children;
 }
 
@@ -82,9 +80,9 @@ ErrorCode build_entry_index(const entry_list* el, MatchType type, indexNode** ix
         throw std::invalid_argument( "Got NULL pointer");
     }
     try {
-        entry* currEntry = el->getHead();
+        entry* currEntry = el->getHead();   //Get the first entry
         *ix = new indexNode(currEntry, type);
-        while (currEntry->getNext()) {
+        while (currEntry->getNext()) {          // Enter every entry after that
             try {
                 (*ix)->addEntry(currEntry->getNext());
             }catch (const std::exception& _) {
@@ -101,6 +99,7 @@ ErrorCode build_entry_index(const entry_list* el, MatchType type, indexNode** ix
 
 ErrorCode lookup_entry_index(const word* w, indexNode* ix, int threshold, entry_list* result) {
     int distance;
+    // Check input
     if(w == NULL || *w == NULL || ix == NULL){
         throw std::invalid_argument( "Got NULL pointer");
     }
@@ -109,14 +108,14 @@ ErrorCode lookup_entry_index(const word* w, indexNode* ix, int threshold, entry_
     }
     try {
         // Store the children of current node, if any
-        treeNodeList* currChild;
+        indexList* currChild;
 
         // New result to be stored on the result list
         entry* tempEntry;
 
         // Nodes to be examined next
-        Queue* queue = new Queue();
-        indexNode* toEnqueue;
+        Stack* stack = new Stack();
+        indexNode* toadd;
 
         // Start the search with the root of the tree
         indexNode* currNode = ix;
@@ -141,9 +140,10 @@ ErrorCode lookup_entry_index(const word* w, indexNode* ix, int threshold, entry_
             // Add any applicable children to examine later
             currChild = currNode->getChildren();
             while (currChild) {
+                // If the child meets the criteria, add it to the stack
                 if (currChild->getDistanceFromParent() >= distance-threshold && currChild->getDistanceFromParent() <= distance+threshold) {
-                    toEnqueue = currChild->getNode();
-                    queue->enqueue(&toEnqueue);
+                    toadd = currChild->getNode();
+                    stack->add(&toadd);
                 } else if (currChild->getDistanceFromParent() > distance + threshold){
                     // Children are ordered by distance, if one in not acceptable we can skip the rest
                     break;
@@ -152,10 +152,10 @@ ErrorCode lookup_entry_index(const word* w, indexNode* ix, int threshold, entry_
             }
 
             // Get the next item to be examined
-            currNode = queue->dequeue();
+            currNode = stack->pop();
             
         }
-        delete queue;
+        delete stack;
         return EC_SUCCESS;
     } catch (const std::exception& _) {
         return EC_FAIL;
@@ -174,7 +174,7 @@ ErrorCode destroy_entry_index(indexNode* ix) {
 ////////////////////////////////////////////////////////////////////////////////////
 
 
-childQueueNode :: childQueueNode(indexNode* input, childQueueNode* oldHead) {
+stackNode :: stackNode(indexNode* input, stackNode* oldHead) {
     if (input == NULL){
         throw std::invalid_argument( "Got NULL pointer");
     }else{
@@ -182,32 +182,33 @@ childQueueNode :: childQueueNode(indexNode* input, childQueueNode* oldHead) {
         this->next = oldHead;
     }
 }
-void childQueueNode :: pop(indexNode** content, childQueueNode** newHead) {
+void stackNode :: pop(indexNode** content, stackNode** newHead) {
+    // Point the given pointers to the content and the next node respectively and delete this node
     *newHead = this->next;
     *content = this->entry;
     delete this;
 }
 
-childQueueNode* childQueueNode:: getNext(){
+stackNode* stackNode:: getNext(){
     return this->next;
 }
 
 
-Queue :: Queue() {
+Stack :: Stack() {
     this->head = NULL;
 }
 
-void Queue :: enqueue(indexNode** input) {
+void Stack :: add(indexNode** input) {
     if (input == NULL){
         throw std::invalid_argument( "Got NULL pointer");
     }else if (*input == NULL){
         throw std::invalid_argument( "Got pointer to NULL pointer");
     }else{
-        this->head = new childQueueNode(*input, this->head);
+        this->head = new stackNode(*input, this->head);
     }
     
 }
-indexNode*  Queue :: dequeue() {
+indexNode*  Stack :: pop() {
     indexNode* nodeToReturn;
     if (this->head) {
         this->head->pop(&nodeToReturn, &this->head);
@@ -217,9 +218,9 @@ indexNode*  Queue :: dequeue() {
     return nodeToReturn;
 }
 
-int Queue :: getSize(){
+int Stack :: getSize(){
     int count = 0;
-    childQueueNode* currNode = this->head;
+    stackNode* currNode = this->head;
     while (currNode){
         count++;
         currNode = currNode->getNext();
@@ -229,7 +230,8 @@ int Queue :: getSize(){
 
 ////////////////////////////////////////////////////////////////////////////////////
 
-treeNodeList :: treeNodeList(entry* content, int distance, MatchType matchingMetric, treeNodeList* next) {
+indexList :: indexList(entry* content, int distance, MatchType matchingMetric, indexList* next) {
+    // Check input
     if (content == NULL){
         throw std::invalid_argument( "Got NULL pointer");
     }
@@ -246,18 +248,20 @@ treeNodeList :: treeNodeList(entry* content, int distance, MatchType matchingMet
     this->node = new indexNode(content, matchingMetric);
 }
 
-treeNodeList :: ~treeNodeList() {
+indexList :: ~indexList() {
     if (this->next) {
+        // Delete next node(s) if they exist
         delete this->next;
     }
+    // Then the contents of this node
     delete this->node;
 }
 
-int treeNodeList :: getDistanceFromParent() const{
+int indexList :: getDistanceFromParent() const{
     return this->distanceFromParent;
 }
 
-int treeNodeList :: addToList(entry* content,int distance) {
+int indexList :: addToList(entry* content,int distance) {
     if (content == NULL){
         throw std::invalid_argument( "Got NULL pointer");
     }
@@ -265,22 +269,22 @@ int treeNodeList :: addToList(entry* content,int distance) {
         throw std::invalid_argument( "Invalid Distance Value");
     }
 
-    treeNodeList* next = this->next;
+    indexList* next = this->next;
     if (distance == this->distanceFromParent) {                 // If we have the same distance as this node, push lower in the tree
         this->node->addEntry(content);
     } else if (this->next) {                                    // If we are not in the last node
-        if (distance >= this->next->getDistanceFromParent()) {   // If the next node has distance lower than the input, pass input along
+        if (distance >= this->next->getDistanceFromParent()) {  // If the next node has distance lower than the input, pass input along
             this->next->addToList(content, distance);
-        }else {                                                 // Else if the next node has higher distance, create a new list node between these
-            this->next = new treeNodeList(content, distance, this->node->getMatchingType(), next);
+        }else {                                                 // Else if the next node has higher distance, create a new list node between this one and the next
+            this->next = new indexList(content, distance, this->node->getMatchingType(), next);
         }
-    } else {                                                     // If there is no next node, create a new node after this
-        this->next = new treeNodeList(content, distance, this->node->getMatchingType(), next);
+    } else {                                                    // If there is no next node, create a new node after this
+        this->next = new indexList(content, distance, this->node->getMatchingType(), next);
     }
     return 0;
 }
 
-void treeNodeList::printList(int depth) {
+void indexList::printList(int depth) {
     for (int i = 0; i <= depth*3 + 1; i++ ){
         std::cout << " ";
     }
@@ -291,11 +295,11 @@ void treeNodeList::printList(int depth) {
     }
 }
 
-indexNode* treeNodeList :: getNode() const{
+indexNode* indexList :: getNode() const{
     return this->node;
 }
 
-treeNodeList* treeNodeList :: getNext() const {
+indexList* indexList :: getNext() const {
     return this->next;
 }
 
