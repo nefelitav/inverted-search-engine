@@ -144,14 +144,14 @@ unsigned long HashTable :: addToBucket(unsigned long hash, const word w)
         {
             this->buckets[hash][i] = new char[MAX_WORD_LENGTH];
         }
-        strcpy(this->buckets[hash][0], w);                                 // first word in bucket
+        strcpy(this->buckets[hash][0], w);                                              // first word in bucket
         this->wordsPerBucket[hash]++;    
         //cout << "Bucket no " << hash << " is created" << endl;
         return hash;
     }
     if (this->wordsPerBucket[hash] % WORDS_PER_BUCKET == 0)                             // have reached limit of bucket
     {
-        word* resized = new word[this->wordsPerBucket[hash] + WORDS_PER_BUCKET]();     // create bigger bucket
+        word* resized = new word[this->wordsPerBucket[hash] + WORDS_PER_BUCKET]();      // create bigger bucket
         for (i = 0; i <  this->wordsPerBucket[hash] + WORDS_PER_BUCKET; i++)
         {
             resized[i] = new char[MAX_WORD_LENGTH];
@@ -280,7 +280,7 @@ HashTable* Deduplication(Document* d, HashTable* HT)
     {
         throw std::invalid_argument( "Got NULL pointer");
     }
-    for (int i = 0; i < MAX_DOC_WORDS; i ++)
+    for (int i = 0; i < MAX_DOC_WORDS; i ++)                            // push each word to hash table
     {
         const word w = d->getWord(i);
         //cout << w << endl;

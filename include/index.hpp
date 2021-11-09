@@ -22,13 +22,9 @@ class indexNode {
         ~indexNode();
 };
 
-////////////////////////////////////////////////////////////////////////////////////
-
 ErrorCode build_entry_index(const entry_list* el, MatchType type, indexNode** ix);
 ErrorCode lookup_entry_index(const word* w, indexNode* ix, int threshold, entry_list* result);
 ErrorCode destroy_entry_index(indexNode* ix);
-
-////////////////////////////////////////////////////////////////////////////////////
 
 class childQueueNode {
     private:
@@ -51,8 +47,6 @@ class Queue {
         indexNode* dequeue();
         int getSize();
 };
-
-////////////////////////////////////////////////////////////////////////////////////
 
 class treeNodeList {
     private:

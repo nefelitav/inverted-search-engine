@@ -9,17 +9,17 @@ void test_query(void)
     Query q(q_words, 0);
 	//q.printQuery();
 
-    TEST_ASSERT((q.getText() != NULL));                 // well created query
-    TEST_ASSERT((*(q.getText()) == 'h'));               // first letter
-    TEST_ASSERT((q.get_word_num() == 4));               // 4 words coz the rest are too small or too large
+    TEST_ASSERT((q.getText() != NULL));                         // well created query
+    TEST_ASSERT((*(q.getText()) == 'h'));                       // first letter
+    TEST_ASSERT((q.get_word_num() == 4));                       // 4 words coz the rest are too small or too large
     TEST_ASSERT(strcmp(q.getWord(0), "hello") == 0);
     TEST_ASSERT(strcmp(q.getWord(2), "things") == 0);
-    TEST_ASSERT((q.getWord(6) == NULL));                // max query length = 5
+    TEST_ASSERT((q.getWord(6) == NULL));                        // max query length = 5
 
     delete[] q_words;
 
     // empty input
-    TEST_EXCEPTION(Query q2(NULL, 1), std::exception); // given null as input -> throw exception
+    TEST_EXCEPTION(Query q2(NULL, 1), std::exception);          // given null as input -> throw exception
 }
 
 void test_document(void)
@@ -98,10 +98,6 @@ void test_entry(void)
     TEST_ASSERT((get_next(el, e) == NULL));
 
     // entries and entry list well destroyed
-    //errorcode = destroy_entry(e);
-    //TEST_ASSERT((errorcode == EC_SUCCESS));
-    //errorcode = destroy_entry(e2);
-    //TEST_ASSERT((errorcode == EC_SUCCESS));
     errorcode = destroy_entry_list(el);
     TEST_ASSERT((errorcode == EC_SUCCESS));
     delete[] d_words;

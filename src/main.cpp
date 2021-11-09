@@ -6,6 +6,7 @@
 #include <string>
 #include <iostream>
 
+// create documents and queries, reading words from a file
 int main()
 {
     Query** q = new Query*[NUM_QUERIES];                         // array of queries - static 
@@ -60,6 +61,30 @@ int main()
         std::cout << "Unable to open file" << std::endl; 
         return -1;
     }
+
+    const word w = d[0]->getWord(1);
+    const word w2 = d[0]->getWord(2);
+
+    entry* e = NULL;
+    entry* e2 = NULL;
+    entry_list* el = NULL;
+
+    create_entry_list(&el);
+    create_entry(&w, &e);
+    create_entry(&w2, &e2);
+
+    add_entry(el, e);
+    add_entry(el, e2);
+
+    std::cout << e2->getWord() << std::endl;
+    std::cout << get_number_entries(el) << std::endl;
+    std::cout << get_first(el)->getWord() << std::endl;
+    std::cout << get_next(el, e2)->getWord() << std::endl;
+
+    //destroy_entries and entrylist
+    destroy_entry_list(el);
+
+
     // delete queries and documents
     for (int i = 0; i < NUM_QUERIES; i++)
     {

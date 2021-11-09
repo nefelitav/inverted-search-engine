@@ -104,11 +104,11 @@ Document :: Document(char * words, int id)
     int i = 0, length = 0;
     const char* c = " ";                                                    // delimiter
     word token = strtok((char *)words, c);
-    while (i < MAX_DOC_WORDS && token != NULL)                               // get all words from input but not more than MAX_QUERY_WORDS
+    while (i < MAX_DOC_WORDS && token != NULL)                              // get all words from input but not more than MAX_QUERY_WORDS
     {
-        length = strlen(token) + 1;                                            // length of each word
-        words += length;                                                       // pointer to input
-        if (*words == '\0')                                                    // no more words in input
+        length = strlen(token) + 1;                                         // length of each word
+        words += length;                                                    // pointer to input
+        if (*words == '\0')                                                 // no more words in input
         {
             if (length < MAX_WORD_LENGTH && length > MIN_WORD_LENGTH)
             {
@@ -313,23 +313,20 @@ ErrorCode create_entry_list(entry_list** el)
     return EC_NO_AVAIL_RES;
 }
 
-ErrorCode destroy_entry_list(entry_list* el)// first delete entries and then list
+ErrorCode destroy_entry_list(entry_list* el)                        // first delete entries and then list
 {
     try {
-        entry * curr = el->getHead();       // pointer to head of list
+        entry * curr = el->getHead();                               // pointer to head of list
         entry * next = NULL;
 
-        while (curr != NULL)                // if null -> end of list
+        while (curr != NULL)                                        // if null -> end of list
         {
-            next = curr->getNext();         // save next entry
-            destroy_entry(curr);            // delete entry
-            curr = next;                    // go to next entry
+            next = curr->getNext();                                 // save next entry
+            destroy_entry(curr);                                    // delete entry
+            curr = next;                                            // go to next entry
         }
-        if (el != NULL)
-        {
-            delete el;                      // delete entrylist
-            el = NULL;
-        }
+        delete el;                                                  // delete entrylist
+        el = NULL;
         return EC_SUCCESS;
     } catch (const std::exception& _) {
         return EC_FAIL;
