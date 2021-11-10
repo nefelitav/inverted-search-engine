@@ -228,9 +228,12 @@ void test_add(void) {
     word testWord1 = (word)"TESTWORD1";
     word testWord2 = (word)"TESTWORD2";
     word testWord3 = (word)"TESTWORD3";
-    entry* testEntry1 = new entry(testWord1);
-    entry* testEntry2 = new entry(testWord2);
-    entry* testEntry3 = new entry(testWord3);
+    entry* testEntry1;
+    entry* testEntry2;
+    entry* testEntry3;
+    create_entry(&testWord1, &testEntry1);
+    create_entry(&testWord2, &testEntry2);
+    create_entry(&testWord3, &testEntry3);
     indexNode* testIndex1 = new indexNode(testEntry1);
     indexNode* testIndex2 = new indexNode(testEntry2);
     indexNode* testIndex3 = new indexNode(testEntry3);
@@ -259,10 +262,9 @@ void test_add(void) {
     delete testIndex1;
     delete testIndex2;
     delete testIndex3;
-    delete testEntry1;
-    delete testEntry2;
-    delete testEntry3;
-
+    destroy_entry(testEntry1);
+    destroy_entry(testEntry2);
+    destroy_entry(testEntry3);
 }
 
 void test_pop(void) {
@@ -272,9 +274,12 @@ void test_pop(void) {
     word testWord1 = (word)"TESTWORD1";
     word testWord2 = (word)"TESTWORD2";
     word testWord3 = (word)"TESTWORD3";
-    entry* testEntry1 = new entry(testWord1);
-    entry* testEntry2 = new entry(testWord2);
-    entry* testEntry3 = new entry(testWord3);
+    entry* testEntry1;
+    entry* testEntry2;
+    entry* testEntry3;
+    create_entry(&testWord1, &testEntry1);
+    create_entry(&testWord2, &testEntry2);
+    create_entry(&testWord3, &testEntry3);
     indexNode* testIndex1 = new indexNode(testEntry1);
     indexNode* testIndex2 = new indexNode(testEntry2);
     indexNode* testIndex3 = new indexNode(testEntry3);
@@ -307,16 +312,18 @@ void test_pop(void) {
     delete testIndex1;
     delete testIndex2;
     delete testIndex3;
-    delete testEntry1;
-    delete testEntry2;
-    delete testEntry3;
+    destroy_entry(testEntry1);
+    destroy_entry(testEntry2);
+    destroy_entry(testEntry3);
 }
 
 void test_stackNode_create(void) {
     word testWord1 = (word)"TESTWORD1";
     word testWord2 = (word)"TESTWORD2";
-    entry* testEntry1 = new entry(testWord1);
-    entry* testEntry2 = new entry(testWord2);
+    entry* testEntry1;
+    entry* testEntry2;
+    create_entry(&testWord1, &testEntry1);
+    create_entry(&testWord2, &testEntry2);
     indexNode* testIndex1 = new indexNode(testEntry1);
     indexNode* testIndex2 = new indexNode(testEntry2);
     stackNode* testNode1 = NULL;
@@ -340,16 +347,18 @@ void test_stackNode_create(void) {
     delete testNode2;
     delete testIndex1;
     delete testIndex2;
-    delete testEntry1;
-    delete testEntry2;
+    destroy_entry(testEntry1);
+    destroy_entry(testEntry2);
 }
 
 void test_stackNode_pop(void) {
     indexNode* nodeToReturn;
     word testWord1 = (word)"TESTWORD1";
     word testWord2 = (word)"TESTWORD2";
-    entry* testEntry1 = new entry(testWord1);
-    entry* testEntry2 = new entry(testWord2);
+    entry* testEntry1;
+    entry* testEntry2;
+    create_entry(&testWord1, &testEntry1);
+    create_entry(&testWord2, &testEntry2);
     indexNode* testIndex1 = new indexNode(testEntry1);
     indexNode* testIndex2 = new indexNode(testEntry2);
     stackNode* testNode1 = NULL;
@@ -374,8 +383,8 @@ void test_stackNode_pop(void) {
 
     delete testIndex1;
     delete testIndex2;
-    delete testEntry1;
-    delete testEntry2;
+    destroy_entry(testEntry1);
+    destroy_entry(testEntry2);
 }
 
 //////////////////////////// Index ////////////////////////////
@@ -385,12 +394,14 @@ void test_indexNode_construction_addEntry(void) {
     word testWord2 = (word)"TESTWORD2";
     word testWord3 = (word)"TESTWORD3";
     word testWord4 = (word)"TESTWOR33";
-    
-
-    entry* testEntry1 = new entry(testWord1);
-    entry* testEntry2 = new entry(testWord2);
-    entry* testEntry3 = new entry(testWord3);
-    entry* testEntry4 = new entry(testWord4);
+    entry* testEntry1;
+    entry* testEntry2;
+    entry* testEntry3;
+    entry* testEntry4;
+    create_entry(&testWord1, &testEntry1);
+    create_entry(&testWord2, &testEntry2);
+    create_entry(&testWord3, &testEntry3);
+    create_entry(&testWord4, &testEntry4);
 
     entry* nullPTR = NULL;
     indexNode* head;
@@ -410,20 +421,21 @@ void test_indexNode_construction_addEntry(void) {
     TEST_ASSERT(head->addEntry(testEntry4) == EC_SUCCESS);
     TEST_EXCEPTION(head->addEntry(testEntry4), std::exception);
 
-    delete testEntry1;
-    delete testEntry2;
-    delete testEntry3;
-    delete testEntry4;
+    destroy_entry(testEntry1);
+    destroy_entry(testEntry2);
+    destroy_entry(testEntry3);
+    destroy_entry(testEntry4);
     delete head;
 }
 
 void test_indexNode_getEntry(void) {
     word testWord1 = (word)"TESTWORD1";
-    entry* testEntry1 = new entry(testWord1);
+    entry* testEntry1;
+    create_entry(&testWord1, &testEntry1);
     indexNode* head = new indexNode(testEntry1);
     TEST_ASSERT(head->getEntry() == testEntry1);    
     
-    delete testEntry1;
+    destroy_entry(testEntry1);
     delete head;
 }
 
@@ -432,9 +444,13 @@ void test_indexNode_getChildren(void) {
     word testWord1 = (word)"TESTWORD1";
     word testWord2 = (word)"TESTWORD2";
     word testWord3 = (word)"TESTWORd3";
-    entry* testEntry1 = new entry(testWord1);
-    entry* testEntry2 = new entry(testWord2);
-    entry* testEntry3 = new entry(testWord3);
+    entry* testEntry1;
+    entry* testEntry2;
+    entry* testEntry3;
+    create_entry(&testWord1, &testEntry1);
+    create_entry(&testWord2, &testEntry2);
+    create_entry(&testWord3, &testEntry3);
+
     indexNode* head;
     indexList* listOfChildren;
 
@@ -449,9 +465,9 @@ void test_indexNode_getChildren(void) {
     TEST_ASSERT(listOfChildren->getNext()->getNode()->getEntry() == testEntry3);
     TEST_ASSERT(listOfChildren->getNext()->getDistanceFromParent() == 2);
 
-    delete testEntry1;
-    delete testEntry2;
-    delete testEntry3;
+    destroy_entry(testEntry1);
+    destroy_entry(testEntry2);
+    destroy_entry(testEntry3);
     delete head;
 }
 
@@ -463,24 +479,24 @@ void test_indexNode_getMatchingType(void) {
     indexNode* head = NULL;
 
     // Test with default args
-    testEntry1 = new entry(testWord1);
+    create_entry(&testWord1,&testEntry1);
     head = new indexNode(testEntry1);
     TEST_ASSERT(head->getMatchingType() == MT_EDIT_DIST);    
-    delete testEntry1;
+    destroy_entry(testEntry1);
     delete head;
 
     // Test by explicit argument EDIT_DIST
-    testEntry1 = new entry(testWord1);
+    create_entry(&testWord1,&testEntry1);
     head = new indexNode(testEntry1, MT_EDIT_DIST);
     TEST_ASSERT(head->getMatchingType() == MT_EDIT_DIST);
-    delete testEntry1;    
+    destroy_entry(testEntry1);   
     delete head;
 
     // Test by explicit argument EDIT_DIST
-    testEntry1 = new entry(testWord1);
+    create_entry(&testWord1,&testEntry1);
     head = new indexNode(testEntry1, MT_HAMMING_DIST);
     TEST_ASSERT(head->getMatchingType() == MT_HAMMING_DIST);
-    delete testEntry1;    
+    destroy_entry(testEntry1);    
     delete head;
 }
 
@@ -489,7 +505,8 @@ void test_indexNode_getMatchingType(void) {
 void test_indexList_constructor(void) {
     // Setup
     word testWord1 = (word)"TESTWORD1";
-    entry* testEntry1 = new entry(testWord1);
+    entry* testEntry1;
+    create_entry(&testWord1,&testEntry1);
     entry* nullTestEntry = NULL;
     indexList* testList = NULL;
 
@@ -502,7 +519,7 @@ void test_indexList_constructor(void) {
     testList = new indexList(testEntry1, 1,  MT_EDIT_DIST);
     TEST_ASSERT (testList != NULL);
 
-    delete testEntry1;
+    destroy_entry(testEntry1);
     delete testList;
 }
 
@@ -511,9 +528,12 @@ void test_indexList_addToList(void) {
     word testWord1 = (word)"TESTWORD1";
     word testWord2 = (word)"TESTWORD2";
     word testWord3 = (word)"TESTWORd3";
-    entry* testEntry1 = new entry(testWord1);
-    entry* testEntry2 = new entry(testWord2);
-    entry* testEntry3 = new entry(testWord3);
+    entry* testEntry1;
+    entry* testEntry2;
+    entry* testEntry3;
+    create_entry(&testWord1, &testEntry1);
+    create_entry(&testWord2, &testEntry2);
+    create_entry(&testWord3, &testEntry3);
     entry* nullTestEntry = NULL;
     indexList* testList = NULL;
 
@@ -527,36 +547,38 @@ void test_indexList_addToList(void) {
     TEST_EXCEPTION(testList->addToList(testEntry3, -1), std::exception);
     TEST_EXCEPTION(testList->addToList(nullTestEntry, 3), std::exception);
 
-    delete testEntry1;
-    delete testEntry2;
-    delete testEntry3;
+    destroy_entry(testEntry1);
+    destroy_entry(testEntry2);
+    destroy_entry(testEntry3);
     delete testList;
 }
 
 void test_indexList_getDistanceFromParent(void) {
     // Setup
     word testWord1 = (word)"TESTWORD1";
-    entry* testEntry1 = new entry(testWord1);
+    entry* testEntry1;
+    create_entry(&testWord1, &testEntry1);
     indexList* testList = NULL;
 
     testList = new indexList(testEntry1, 1,  MT_EDIT_DIST);
     TEST_ASSERT (testList->getDistanceFromParent() == 1);
 
-    delete testEntry1;
+    destroy_entry(testEntry1);
     delete testList;
 }
 
 void test_indexList_getNode(void) {
     // Setup
     word testWord1 = (word)"TESTWORD1";
-    entry* testEntry1 = new entry(testWord1);
+    entry* testEntry1;
+    create_entry(&testWord1, &testEntry1);
     indexList* testList = NULL;
 
     testList = new indexList(testEntry1, 1,  MT_EDIT_DIST);
     TEST_ASSERT (testList->getNode()->getEntry() == testEntry1);
 
 
-    delete testEntry1;
+    destroy_entry(testEntry1);
     delete testList;
 }
 
@@ -564,35 +586,44 @@ void test_indexList_getNext(void) {
     // Setup
     word testWord1 = (word)"TESTWORD1";
     word testWord2 = (word)"TESTWORD22";
-    entry* testEntry1 = new entry(testWord1);
-    entry* testEntry2 = new entry(testWord2);
+    entry* testEntry1;
+    entry* testEntry2;
+    create_entry(&testWord1, &testEntry1);
+    create_entry(&testWord2, &testEntry2);
     indexList* testList = NULL;
 
     testList = new indexList(testEntry1, 1,  MT_EDIT_DIST);
     testList->addToList(testEntry2, 2);
     TEST_ASSERT (testList->getNext()->getNode()->getEntry() == testEntry2);
 
-    delete testEntry2;
-    delete testEntry1;
+    destroy_entry(testEntry1);
+    destroy_entry(testEntry2);
     delete testList;
 }
 
 //////////////////////////// indexInterface ////////////////////////////
 void test_build_entry_index(void) {
     // Setup
-    char* word1=(char*)"TESTWORD1";   // Parent
-    char* word2=(char*)"TESTWORD2";   // Child diff=1
-    char* word3=(char*)"TESTWOR22";   // Child diff=2
-    char* word4=(char*)"TESTWORD3";   // Child diff=1,1
-    char* word5=(char*)"TESTWORD4";   // Child diff=1,1
-    char* word6=(char*)"TESTWORD5";   // Child diff=1,1
-    entry* testEntry1 = new entry(word1);
-    entry* testEntry2 = new entry(word2);
-    entry* testEntry3 = new entry(word3);
-    entry* testEntry4 = new entry(word4);
-    entry* testEntry5 = new entry(word5);
-    entry* testEntry6 = new entry(word6);
-    entry_list* test_list = new entry_list();
+    char* testWord1=(char*)"TESTWORD1";   // Parent
+    char* testWord2=(char*)"TESTWORD2";   // Child diff=1
+    char* testWord3=(char*)"TESTWOR22";   // Child diff=2
+    char* testWord4=(char*)"TESTWORD3";   // Child diff=1,1
+    char* testWord5=(char*)"TESTWORD4";   // Child diff=1,1
+    char* testWord6=(char*)"TESTWORD5";   // Child diff=1,1
+    entry* testEntry1;
+    entry* testEntry2;
+    entry* testEntry3;
+    entry* testEntry4;
+    entry* testEntry5;
+    entry* testEntry6;
+    create_entry(&testWord1, &testEntry1);
+    create_entry(&testWord2, &testEntry2);
+    create_entry(&testWord3, &testEntry3);
+    create_entry(&testWord4, &testEntry4);
+    create_entry(&testWord5, &testEntry5);
+    create_entry(&testWord6, &testEntry6);
+    entry_list* test_list;
+    create_entry_list(&test_list);
     entry_list* nullList = NULL;
     test_list->addEntry(testEntry6);
     test_list->addEntry(testEntry5);
@@ -617,22 +648,29 @@ void test_build_entry_index(void) {
 
 
 void test_lookup_entry_index(void) {
-    char* word1=(char*)"TESTWORD1";   // Parent
-    char* word2=(char*)"TESTWORD2";   // Child diff=1
-    char* word3=(char*)"TESTWOR22";   // Child diff=2
-    char* word4=(char*)"TESTWORD3";   // Child diff=1,1
-    char* word5=(char*)"TESTWORD4";   // Child diff=1,1
-    char* word6=(char*)"TESTWORD5";   // Child diff=1,1
-    entry* testEntry1 = new entry(word1);
-    entry* testEntry2 = new entry(word2);
-    entry* testEntry3 = new entry(word3);
-    entry* testEntry4 = new entry(word4);
-    entry* testEntry5 = new entry(word5);
-    entry* testEntry6 = new entry(word6);
-    entry* tempResult = NULL;
+    char* testWord1=(char*)"TESTWORD1";   // Parent
+    char* testWord2=(char*)"TESTWORD2";   // Child diff=1
+    char* testWord3=(char*)"TESTWOR22";   // Child diff=2
+    char* testWord4=(char*)"TESTWORD3";   // Child diff=1,1
+    char* testWord5=(char*)"TESTWORD4";   // Child diff=1,1
+    char* testWord6=(char*)"TESTWORD5";   // Child diff=1,1
+    entry* testEntry1;
+    entry* testEntry2;
+    entry* testEntry3;
+    entry* testEntry4;
+    entry* testEntry5;
+    entry* testEntry6;
+    create_entry(&testWord1, &testEntry1);
+    create_entry(&testWord2, &testEntry2);
+    create_entry(&testWord3, &testEntry3);
+    create_entry(&testWord4, &testEntry4);
+    create_entry(&testWord5, &testEntry5);
+    create_entry(&testWord6, &testEntry6);
     entry* resultNode = NULL;
-    entry_list* result = new entry_list();
-    entry_list* test_list = new entry_list();
+    entry_list* result;
+    entry_list* test_list;
+    create_entry_list(&result);
+    create_entry_list(&test_list);
     test_list->addEntry(testEntry6);
     test_list->addEntry(testEntry5);
     test_list->addEntry(testEntry4);
@@ -654,28 +692,22 @@ void test_lookup_entry_index(void) {
     TEST_ASSERT(lookup_entry_index(&text1,tree, 0, result) == EC_SUCCESS);
     resultNode=result->getHead();
     TEST_ASSERT(strcmp(resultNode->getWord(),testEntry3->getWord())==0);
-    resultNode=result->getHead();
+    resultNode=result->getHead()->getNext();
+    TEST_ASSERT ( resultNode == NULL);
+    destroy_entry_list(result);
 
-    // Clear the result entry_list
-    while(resultNode) {
-        entry* tempResult = NULL;
-        tempResult=resultNode->getNext();
-        delete resultNode;
-        resultNode = tempResult;
-    }
-    delete result;
-    result = NULL;
-
+    
     // Search for word that does not exist with exact match
+    create_entry_list(&result);
     const word text2 = (char*)"TESTWOR\0";
     TEST_ASSERT ( lookup_entry_index(&text2, tree, 0, result) == EC_SUCCESS);
+    resultNode = result->getHead();
     TEST_ASSERT ( resultNode == NULL);
-    delete result;
-    result = NULL;
+    destroy_entry_list(result);
 
     // This word does not exist, but there are several words with a distance 1 to it
     const word text3 = (char*)"TESTWORD\0";
-    result = new entry_list();
+    create_entry_list(&result);
     TEST_ASSERT ( lookup_entry_index(&text3, tree, 1, result) == EC_SUCCESS);
     // Test that only the correct words matched
     resultNode = result->getHead();
@@ -692,34 +724,19 @@ void test_lookup_entry_index(void) {
     TEST_ASSERT(resultNode == NULL);
 
     // Clear the result entry_list
-    resultNode=result->getHead();
-    while(resultNode){
-        tempResult = resultNode->getNext();
-        delete resultNode;
-        resultNode = tempResult;
-    }
-    delete result;
-    result = NULL;
+    destroy_entry_list(result);
 
 
     // Search for word that exists as second child using exact match
     const word text5 = (char*)"TESTWOR22\0";
-    result = new entry_list();
+    create_entry_list(&result);
     TEST_ASSERT ( lookup_entry_index(&text5, tree, 0, result) == EC_SUCCESS);
     resultNode = result->getHead();
     TEST_ASSERT(strcmp(resultNode->getWord(),testEntry3->getWord())==0);
     resultNode = resultNode->getNext();
     TEST_ASSERT(resultNode == NULL);
     resultNode=result->getHead();
-    // Clear the result entry_list
-    while(resultNode){
-        tempResult = NULL;
-        tempResult=resultNode->getNext();
-        delete resultNode;
-        resultNode = tempResult;
-    }
-    delete result;
-    result = NULL;
+    destroy_entry_list(result);
 
     destroy_entry_index(tree);
     destroy_entry_list(test_list);

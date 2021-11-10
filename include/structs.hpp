@@ -63,7 +63,7 @@ class entry_list {
 
 
 ErrorCode create_entry(const word* w, entry** e);
-ErrorCode destroy_entry(entry **e);
+ErrorCode destroy_entry(entry *e);
 ErrorCode create_entry_list(entry_list** el);
 ErrorCode destroy_entry_list(entry_list* el);
 unsigned int get_number_entries(const entry_list* el);
