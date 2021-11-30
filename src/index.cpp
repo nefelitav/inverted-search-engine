@@ -1,11 +1,11 @@
 #include "../include/index.hpp"
 #include "../include/utilities.hpp"
 
-indexNode :: indexNode(entry* input, MatchType matchingMetric) {
-    // Check Input
-    if (input == NULL){
-        throw std::invalid_argument( "Got NULL pointer");
-    }
+indexNode* editIndex;
+indexNode** hammingIndexes;
+void* exactHash;
+
+indexNode :: indexNode(entry** input, MatchType matchingMetric) {
     if (matchingMetric != MT_HAMMING_DIST && matchingMetric != MT_EDIT_DIST ){
         throw std::invalid_argument( "Invalid Distance Metric");
     }
@@ -21,51 +21,57 @@ MatchType indexNode :: getMatchingType() {
     return this->MatchingType;
 }
 
-ErrorCode indexNode :: addEntry(entry* input) {
+ErrorCode indexNode :: addEntry(entry** input) {
     int distance;
     // Check Input
     if (input == NULL){
         throw std::invalid_argument( "Got NULL pointer");
     }
-    // Get distance for given metric
-    if (this->getMatchingType() == MT_HAMMING_DIST) {
-        distance = hammingDistance(this->content->getWord(), input->getWord());
-    } else if(this->getMatchingType() == MT_EDIT_DIST) {
-        distance = editDistance(this->content->getWord(), input->getWord());
-    }else {
-        return EC_FAIL;
-    }
 
-    // If the entry already exists in this node raise exception, this should not happen
-    if (distance == 0){
-        throw std::runtime_error( "Word already in the tree");
-        return EC_FAIL;
-    }
+    // If this node was created as a NULL head node, populate it
+    if (this->content == NULL){
+        this->content = input;
+    }else{
+        // Get distance for given metric
+        if (this->getMatchingType() == MT_HAMMING_DIST) {
+            distance = hammingDistance((*this->content)->getWord(), (*input)->getWord());
+        } else if(this->getMatchingType() == MT_EDIT_DIST) {
+            distance = editDistance((*this->content)->getWord(), (*input)->getWord());
+        }else {
+            return EC_FAIL;
+        }
 
-    if (this->children == NULL) {           //If there are no children create new list with the input in the first node
-        this->children = new indexList(input, distance,this->getMatchingType());
-    }else if (this->children->getDistanceFromParent() > distance) {      // Children list exists, first child has bigger dist
-        indexList* oldFirstChild = this->children;
-        this->children = new indexList(input, distance, this->getMatchingType(), oldFirstChild);
-    }else {          // Children list exists, new entry has equal or greater dist than first child
-        try{         // Give the entry to the list to handle
-            this->children->addToList(input, distance);
-        }catch (const std::exception& _) {
+        // If the entry already exists in this node raise exception, this should not happen
+        if (distance == 0){
             throw std::runtime_error( "Word already in the tree");
             return EC_FAIL;
+        }
+
+        if (this->children == NULL) {           //If there are no children create new list with the input in the first node
+            this->children = new indexList(input, distance,this->getMatchingType());
+        }else if (this->children->getDistanceFromParent() > distance) {      // Children list exists, first child has bigger dist
+            indexList* oldFirstChild = this->children;
+            this->children = new indexList(input, distance, this->getMatchingType(), oldFirstChild);
+        }else {          // Children list exists, new entry has equal or greater dist than first child
+            try{         // Give the entry to the list to handle
+                this->children->addToList(input, distance);
+            }catch (const std::exception& _) {
+                throw std::runtime_error( "Word already in the tree");
+                return EC_FAIL;
+            }
         }
     }
     return EC_SUCCESS;
 }
 
 int indexNode :: printTree(int depth) {
-    std::cout << "Word: " << this->content->getWord() << "\n";
+    std::cout << "Word: " << (*this->content)->getWord() << "\n";
     if (this->children ) {
         this->children->printList(depth);
     }
     return 0;
 }
-entry* indexNode :: getEntry() {
+entry** indexNode :: getEntry() {
     return this->content;
 }
 
@@ -75,7 +81,7 @@ indexList* indexNode :: getChildren() {
 
 ////////////////////////////////////////////////////////////////////////////////////
 
-ErrorCode build_entry_index(const entry_list* el, MatchType type, indexNode** ix) {
+/*ErrorCode build_entry_index(const entry_list* el, MatchType type, indexNode** ix) {
     if(el == NULL){
         throw std::invalid_argument( "Got NULL pointer");
     }
@@ -94,7 +100,7 @@ ErrorCode build_entry_index(const entry_list* el, MatchType type, indexNode** ix
     } catch (const std::exception& _) {
         return EC_FAIL;
     }
-}
+}*/
 
 
 ErrorCode lookup_entry_index(const word* w, indexNode* ix, int threshold, entry_list* result) {
@@ -124,16 +130,16 @@ ErrorCode lookup_entry_index(const word* w, indexNode* ix, int threshold, entry_
         while (currNode) {
             // Calculate distance from target word
             if (currNode->getMatchingType() == MT_HAMMING_DIST) {
-                distance = hammingDistance(currNode->getEntry()->getWord(), *w);
+                distance = hammingDistance((*currNode->getEntry())->getWord(), *w);
             } else if (currNode->getMatchingType() == MT_EDIT_DIST) {
-                distance = editDistance(currNode->getEntry()->getWord(), *w);
+                distance = editDistance((*currNode->getEntry())->getWord(), *w);
             } else {
                 return EC_FAIL;
             }
             
             // Add to results if close enough
             if  (distance <= threshold) {
-                tempEntry = new entry (currNode->getEntry()->getWord());
+                tempEntry = new entry ((*currNode->getEntry())->getWord());
                 result->addEntry (tempEntry);
             }
 
@@ -167,6 +173,40 @@ ErrorCode destroy_entry_index(indexNode* ix) {
         delete ix;
         return EC_SUCCESS;
     } catch (const std::exception& _) {
+        return EC_FAIL;
+    }
+}
+
+ErrorCode InitializeIndex(){
+    try{
+        editIndex = new indexNode(NULL);
+        hammingIndexes = new indexNode*[27];
+        for ( int i = 27; i<27;i++ ){
+            hammingIndexes[i] = new indexNode(NULL, MT_HAMMING_DIST);
+        }
+        exactHash = NULL;
+        return EC_SUCCESS;
+    } catch (const std::exception& _) {
+        return EC_FAIL;
+    }
+    
+}
+
+
+ErrorCode addToIndex(entry** toAdd, int queryId, MatchType queryMatchingType){
+    try{
+        if (queryMatchingType == MT_HAMMING_DIST) {
+            editIndex->addEntry(toAdd);
+        } else if (queryMatchingType == MT_EDIT_DIST) {
+            
+            hammingIndexes[strlen((*toAdd)->getWord())-1]->addEntry(toAdd);
+        }else if (queryMatchingType == MT_EXACT_MATCH) {
+            //TODO
+        } else {
+            return EC_FAIL;
+        }
+        return EC_SUCCESS;
+    }catch (const std::exception& _) {
         return EC_FAIL;
     }
 }
@@ -230,9 +270,9 @@ int Stack :: getSize(){
 
 ////////////////////////////////////////////////////////////////////////////////////
 
-indexList :: indexList(entry* content, int distance, MatchType matchingMetric, indexList* next) {
+indexList :: indexList(entry** content, int distance, MatchType matchingMetric, indexList* next) {
     // Check input
-    if (content == NULL){
+    if (content == NULL || *content == NULL){
         throw std::invalid_argument( "Got NULL pointer");
     }
     if (matchingMetric != MT_HAMMING_DIST && matchingMetric != MT_EDIT_DIST ){
@@ -261,7 +301,7 @@ int indexList :: getDistanceFromParent() const{
     return this->distanceFromParent;
 }
 
-int indexList :: addToList(entry* content,int distance) {
+int indexList :: addToList(entry** content,int distance) {
     if (content == NULL){
         throw std::invalid_argument( "Got NULL pointer");
     }

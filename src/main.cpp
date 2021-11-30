@@ -77,6 +77,7 @@ int main()
     add_entry(el, e);
     add_entry(el, e2);
 
+    std::cout << e->getWord() << std::endl;
     std::cout << e2->getWord() << std::endl;
     std::cout << get_number_entries(el) << std::endl;
     std::cout << get_first(el)->getWord() << std::endl;
@@ -84,7 +85,8 @@ int main()
 
     // Create the index
     indexNode* tree;
-    build_entry_index(el, MT_EDIT_DIST, &tree);
+    tree = new indexNode(&e);
+    tree->addEntry(&e2);
 
     // Create the list that will store the search results
     create_entry_list(&result);

@@ -13,8 +13,11 @@ int hammingDistance(const word word1, const word word2) {
     }
     int i = 0;
 
-    // If one word is larger, consider each extra character a difference
+    // If words have different length raise exception
     int diff = abs((int)strlen(word1) - (int)strlen(word2));
+    if ( diff != 0 ){
+        throw std::invalid_argument( "Words Have Different Length");
+    }
 
     // Difference in the common part of the words
     while (word1[i] != '\0' && word2[i] != '\0' ) {

@@ -10,22 +10,23 @@ class indexList;
 class indexNode {
     private:
         MatchType MatchingType;
-        entry* content;
+        entry** content;
         indexList* children;
     public:
-        indexNode(entry* input, MatchType matchingMetric = MT_EDIT_DIST);
-        ErrorCode addEntry(entry* input);
+        indexNode(entry** input, MatchType matchingMetric = MT_EDIT_DIST);
+        ErrorCode addEntry(entry** input);
         int printTree(int depth = 0);
-        entry* getEntry();
+        entry** getEntry();
         indexList* getChildren();
         MatchType getMatchingType();
         ~indexNode();
 };
 
-ErrorCode build_entry_index(const entry_list* el, MatchType type, indexNode** ix);
+//ErrorCode build_entry_index(const entry_list* el, MatchType type, indexNode** ix);
 ErrorCode lookup_entry_index(const word* w, indexNode* ix, int threshold, entry_list* result);
 ErrorCode destroy_entry_index(indexNode* ix);
-
+ErrorCode InitializeIndex();
+ErrorCode addToIndex(entry** toAdd, int queryId, MatchType queryMatchingType);
 ////////////////////////////////////////////////////////////////////////////////////
 
 class stackNode {
@@ -58,13 +59,18 @@ class indexList {
         indexNode* node;
         indexList* next;
     public:
-        indexList(entry* content, int distance, MatchType matchingMetric, indexList* next = nullptr);
-        int addToList(entry* content, int distance);    // Insert new entry in the right place in the list
+        indexList(entry** content, int distance, MatchType matchingMetric, indexList* next = nullptr);
+        int addToList(entry** content, int distance);    // Insert new entry in the right place in the list
         int getDistanceFromParent() const;
         void printList(int depth = 0);
         indexNode* getNode() const ;
         indexList* getNext() const;
         ~indexList();
 };
+
+//Global Var for Index Initialization
+extern indexNode* editIndex;
+extern indexNode** hammingIndexes;
+extern void* exactHash;
 
 #endif  //INDEX
