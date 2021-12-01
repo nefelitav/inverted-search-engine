@@ -1,6 +1,5 @@
 #include "../include/structs.hpp"
-
-Query :: Query(char * words, int id)
+Query :: Query(QueryID id, char * words, MatchType match_type, unsigned int match_dist)
 {
     if (words == NULL)
     {
@@ -31,6 +30,9 @@ Query :: Query(char * words, int id)
         token = strtok(NULL, c);
     }
     this->id = id;
+    this->match_type = match_type;
+    this->match_dist = match_dist;
+
     //std::cout << "Query with id = " << this->id << " is created!" << std::endl;
 }
 void Query :: printQuery() const                                               // for debugging reasons
@@ -48,9 +50,13 @@ void Query :: printQuery() const                                               /
     }
     std::cout << "-------------------" << std::endl;
 }
-const word Query :: getWord(int word_num) const                              // array[i][j] --> arrary[i*(MAX_WORD_LENGTH + 1)]                                      
+const QueryID Query :: getId() const                                                             
 {
-    if (word_num >= MAX_QUERY_WORDS)                                         // out of range   
+    return this->id;
+}
+const word Query :: getWord(int word_num) const                             // array[i][j] --> arrary[i*(MAX_WORD_LENGTH + 1)]                                      
+{
+    if (word_num >= MAX_QUERY_WORDS)                                        // out of range   
     {
         //std::cout << "Sorry, index out of range." << std::endl;
         return NULL;
@@ -262,6 +268,19 @@ void entry_list :: addEntry(entry * new_entry)
     this->entryNum++;
 
 }
+void entry_list :: printList()                        
+{
+    entry * curr = this->head;                               
+    entry * next = NULL;
+
+    while (curr != NULL)                                        
+    {
+        next = curr->getNext();                                 // save next entry
+        std::cout << curr->getWord() << std::endl;                                    // print entry
+        curr = next;                                            // go to next entry
+    }
+}
+
 entry* entry_list :: getNext(entry* e) const
 {
     return e->getNext();

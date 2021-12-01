@@ -1,9 +1,6 @@
 #include "../include/index.hpp"
 #include "../include/utilities.hpp"
 
-indexNode* editIndex;
-indexNode** hammingIndexes;
-void* exactHash;
 
 indexNode :: indexNode(entry** input, MatchType matchingMetric) {
     if (matchingMetric != MT_HAMMING_DIST && matchingMetric != MT_EDIT_DIST ){
@@ -177,21 +174,6 @@ ErrorCode destroy_entry_index(indexNode* ix) {
     }
 }
 
-ErrorCode InitializeIndex(){
-    try{
-        editIndex = new indexNode(NULL);
-        hammingIndexes = new indexNode*[27];
-        for ( int i = 27; i<27;i++ ){
-            hammingIndexes[i] = new indexNode(NULL, MT_HAMMING_DIST);
-        }
-        exactHash = NULL;
-        return EC_SUCCESS;
-    } catch (const std::exception& _) {
-        return EC_FAIL;
-    }
-    
-}
-
 
 ErrorCode addToIndex(entry** toAdd, int queryId, MatchType queryMatchingType){
     try{
@@ -342,4 +324,3 @@ indexNode* indexList :: getNode() const{
 indexList* indexList :: getNext() const {
     return this->next;
 }
-

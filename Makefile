@@ -1,7 +1,7 @@
 FILES = src/
 TEST_FILES = tests/
-OBJS = main.o utilities.o structs.o index.o 
-TEST_OBJ = tests.o utilities.o structs.o index.o 
+OBJS = main.o utilities.o structs.o index.o core.o
+TEST_OBJ = tests.o utilities.o structs.o index.o core.o
 OUT	= main
 CC	 = g++
 FLAGS = -g -c -Wall -std=c++11 
@@ -21,6 +21,9 @@ structs.o: $(FILES)structs.cpp
 index.o: $(FILES)index.cpp
 	$(CC) $(FLAGS) $(FILES)index.cpp
 
+core.o: $(FILES)core.cpp
+	$(CC) $(FLAGS) $(FILES)core.cpp
+
 tests.o: $(TEST_FILES)tests.cpp
 	$(CC) $(FLAGS) $(TEST_FILES)tests.cpp
 
@@ -37,7 +40,7 @@ run_test: test
 	./test
 
 valgrind: $(OUT)
-	valgrind --leak-check=full --show-leak-kinds=all  --track-origins=yes ./$(OUT) $(ARGS)
+	valgrind --leak-check=full --show-leak-kinds=all  --track-origins=yes ./$(OUT)
 	
 valgrind_test: test
-	valgrind --leak-check=full --show-leak-kinds=all  --track-origins=yes ./test $(ARGS)
+	valgrind --leak-check=full --show-leak-kinds=all  --track-origins=yes ./test

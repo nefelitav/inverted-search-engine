@@ -1,4 +1,7 @@
+#include "../include/core.h"
 #include "../include/utilities.hpp"
+
+
 
 bool exactMatch(const word word1, const word word2) {
     if (word1 == NULL || word2 == NULL) {
@@ -53,7 +56,7 @@ int editDistance(const word word1,const word word2) {
     // Allocate the matrix with dims Size1*Size2
     d = new int*[size1 + 1];
     for (int i = 0; i < size1 + 1; i++) {
-        d[i] = new int [size2 + 1]();
+        d[i] = new int[size2 + 1]();
     }
 
     // Initialize border elements
@@ -142,7 +145,7 @@ unsigned long HashTable :: addToBucket(unsigned long hash, const word w)
     int i;
     if (this->buckets[hash] == NULL)
     {
-        this->buckets[hash] = new word[WORDS_PER_BUCKET]();                            // create bucket
+        this->buckets[hash] = new word[WORDS_PER_BUCKET]();                             // create bucket
         for (i = 0; i < WORDS_PER_BUCKET; i++)
         {
             this->buckets[hash][i] = new char[MAX_WORD_LENGTH];
@@ -160,25 +163,12 @@ unsigned long HashTable :: addToBucket(unsigned long hash, const word w)
             resized[i] = new char[MAX_WORD_LENGTH];
             if (i < this->wordsPerBucket[hash])
             {
-                strcpy(resized[i], this->buckets[hash][i]);                // copy words accumulated until now
+                strcpy(resized[i], this->buckets[hash][i]);                            // copy words accumulated until now
             }
         }
+        delete [] this->buckets[hash];
 
-        if (this->buckets[hash] != NULL)                                   // delete old bucket
-        {
-            int wordsNum = WORDS_PER_BUCKET + (this->wordsPerBucket[hash] / WORDS_PER_BUCKET) * WORDS_PER_BUCKET;
-            if (this->wordsPerBucket[hash] % WORDS_PER_BUCKET == 0)
-            {
-                wordsNum = (this->wordsPerBucket[hash] / WORDS_PER_BUCKET) * WORDS_PER_BUCKET;
-            }
-            for (i = 0; i < wordsNum; i++)
-            {
-                delete [] this->buckets[hash][i];
-            }
-            delete [] this->buckets[hash];
-        }
-
-        this->buckets[hash] = resized;                                    // pointer to the new bigger bucket 
+        this->buckets[hash] = resized;                                                 // pointer to the new bigger bucket 
     }
 
     int pos = binarySearch(this->buckets[hash], 0, this->wordsPerBucket[hash] - 1, w);
@@ -200,7 +190,24 @@ unsigned long HashTable :: addToBucket(unsigned long hash, const word w)
     this->wordsPerBucket[hash]++; 
     return hash;
 }
+void HashTable :: addWordsToIndex()
+{
+    entry* e = NULL;
+    for (int bucket = 0; bucket < MAX_BUCKETS; bucket++)            // each bucket
+    {
+        if (this->wordsPerBucket[bucket] > 0)
+        {
+            for (int word = 0; word < this->wordsPerBucket[bucket]; word++) 
+            {
+                create_entry(&this->buckets[bucket][word], &e);
+                add_entry(EntryList, e);
+                //add entry to index   // build or lookup
+            }
+        }
+    }
+    //EntryList->printList();
 
+}
 const int HashTable :: getWordsPerBucket(unsigned long hash) const
 {
     return this->wordsPerBucket[hash];
@@ -277,7 +284,7 @@ unsigned long hashFunction(word str)                                        // a
 
 ////////////////////////////////////////////////////////////////////////////////////
 
-HashTable* Deduplication(Document* d, HashTable* HT)
+HashTable* DocumentDeduplication(Document* d, HashTable* HT)
 {
     if (d == NULL)
     {
@@ -295,4 +302,184 @@ HashTable* Deduplication(Document* d, HashTable* HT)
     }
     return HT;
     //HT.printTable();
+}
+
+HashTable* QueryDeduplication(Query* q, HashTable* HT)
+{
+
+    if (q == NULL)
+    {
+        throw std::invalid_argument( "Got NULL pointer");
+    }
+    for (int i = 0; i < MAX_QUERY_WORDS; i ++)                            // push each word to hash table
+    {
+        const word w = q->getWord(i);
+        //cout << w << endl;
+        if ( w == NULL)
+        {
+            break;
+        }
+        HT->addToBucket(hashFunction(w), w);
+    }
+    return HT;
+    //HT.printTable();
+}
+
+//////////////////////////////////////////////////////////////////////////
+
+
+
+int QuerybinarySearch(Query** queries, int left, int right, const QueryID id)
+{
+    if (queries == NULL)
+    {
+        throw std::invalid_argument( "Got NULL pointer");
+    }
+    int mid;
+    while (left < right) 
+    {
+        mid = left + (right - left) / 2;
+        if (id == queries[mid]->getId())
+        {
+            return -1;                                                      // query already in array -> continue
+        }
+        else if (id > queries[mid]->getId())                                                   // query should go after mid
+        {
+            left = mid + 1;
+        }
+        else if (id < queries[mid]->getId())                                                   // query should go before mid
+        {
+            right = mid - 1;
+        }
+    }
+    if (id == queries[left]->getId())
+    {
+        return -1;
+    }
+    if (id > queries[left]->getId())
+    {
+        return left + 1;
+    }
+    else if (id < queries[left]->getId())
+    {
+        return left;
+    }
+    return -1;                                                              // query already in array -> continue
+}
+
+QueryTable :: QueryTable()
+{
+    this->buckets = new Query**[MAX_QUERY_BUCKETS]();                               // pointers to buckets / arrays of query pointers -> ***
+    this->QueriesPerBucket = new int[MAX_QUERY_BUCKETS]();                         
+    std::cout << "Query Table is created!" << std::endl;
+}
+
+unsigned long QueryTable :: addToBucket(unsigned long hash, Query* q)
+{
+    int i;
+    if (this->buckets[hash] == NULL)
+    {
+        this->buckets[hash] = new Query*[QUERIES_PER_BUCKET]();                               // create bucket
+        this->buckets[hash][0] = q;                                                           // first query in bucket
+        this->QueriesPerBucket[hash]++;   
+        std::cout << "Bucket no " << hash << " is created" << std::endl;
+        std::cout << "Query no " << this->buckets[hash][0]->getId() << " is created" << std::endl;
+        return hash;
+    }
+    if (this->QueriesPerBucket[hash] % QUERIES_PER_BUCKET == 0)                             // have reached limit of bucket
+    {
+        Query** resized = new Query*[this->QueriesPerBucket[hash] + QUERIES_PER_BUCKET]();      // create bigger bucket
+        for (i = 0; i < this->QueriesPerBucket[hash]; i++)
+        {
+            resized[i] = this->buckets[hash][i];                            // copy queries accumulated until now
+        }
+        delete[] this->buckets[hash];                                       // delete bucket
+        this->buckets[hash] = resized;                                                 // pointer to the new bigger bucket 
+
+    }
+    int pos = QuerybinarySearch(this->buckets[hash], 0, this->QueriesPerBucket[hash] - 1, q->getId());
+    std::cout << "pos = " << std::endl;
+    if (pos == -1)
+    {
+        delete q;
+        return hash;
+    }
+    if (this->QueriesPerBucket[hash] >= pos)                             // in the middle of the array
+    {
+        for (i = this->QueriesPerBucket[hash]; i > pos; i--)
+        {
+            this->buckets[hash][i] = this->buckets[hash][i-1]; 
+        }
+    }
+    this->buckets[hash][pos] = q;                              // new node in array
+    this->QueriesPerBucket[hash]++; 
+    std::cout << "Query no " << this->buckets[hash][0]->getId() << " is created" << std::endl;
+    return hash;
+}
+
+const int QueryTable :: getQueriesPerBucket(unsigned long hash) const
+{
+    return this->QueriesPerBucket[hash];
+}
+
+Query** QueryTable :: getBucket(unsigned long hash) const
+{
+    return this->buckets[hash];
+}
+
+// const Query* QueryTable :: getQuery(QueryID id) const
+// {
+
+// }
+void QueryTable :: printBucket(unsigned long hash) const
+{
+    std::cout << "Bucket no " << hash << std::endl;
+    for (int i = 0; i < this->QueriesPerBucket[hash]; i++)
+    {
+        std::cout << this->buckets[hash][i]->getWord(0) << std::endl;
+    }
+    std::cout << "######################" << std::endl;
+} 
+
+void QueryTable :: printTable() const
+{
+    for (int bucket = 0; bucket < MAX_QUERY_BUCKETS; bucket++)
+    {
+        if (this->QueriesPerBucket[bucket] > 0)
+        {
+            std::cout << "Bucket no " << bucket << std::endl;
+            for (int q = 0; q < this->QueriesPerBucket[bucket]; q++) 
+            {
+                std::cout << this->buckets[bucket][q]->getWord(0) << std::endl;
+            }
+            std::cout << "######################" << std::endl;
+        }
+    }
+}
+QueryTable :: ~QueryTable()
+{
+    for (int bucket = 0; bucket < MAX_QUERY_BUCKETS; bucket++)
+    {
+        for (int q = 0; q < this->QueriesPerBucket[bucket]; q++)
+        {
+            std::cout << "Query no " << this->buckets[bucket][q]->getId() << " is deleted!" << std::endl;
+            delete this->buckets[bucket][q];                                // delete queries
+        }
+        if (this->buckets[bucket] != NULL)
+        {   
+            delete[] this->buckets[bucket];                                       // delete buckets
+            std::cout << "Bucket no " << bucket << " is deleted!" << std::endl;
+        }
+    }
+    delete[] this->QueriesPerBucket;
+    delete[] this->buckets;                                                 // delete hash table
+    std::cout << "Query Table is deleted!" << std::endl;
+}
+
+unsigned long hashFunctionById(QueryID id)                                        // a typical hash function
+{
+    unsigned long hash = ((id >> 16) ^ id) * 0x45d9f3b;
+    hash = ((hash >> 16) ^ hash) * 0x45d9f3b;
+    hash = (hash >> 16) ^ hash;
+    return hash % MAX_QUERY_BUCKETS;
 }

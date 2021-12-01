@@ -11,11 +11,14 @@ class Query {
     private:
         char* words;                 // saving words in a 1d array instead of a 2d to save time (contiguous allocation)            
         QueryID id;
+        MatchType match_type;
+        unsigned int match_dist;
     public:
-        Query(char * words, int id);
+        Query(QueryID id, char * words, MatchType match_type, unsigned int match_dist);
         void printQuery() const;                                                            
         const word getWord(int word_num) const;                                                         
         const char* getText() const;
+        const QueryID getId() const;                                                             
         const int get_word_num() const;
         ~Query();
           
@@ -58,6 +61,7 @@ class entry_list {
         entry* getHead() const;
         void addEntry(entry * new_entry);
         entry* getNext(entry* e) const;
+        void printList();                        
         ~entry_list();
 };
 
@@ -70,6 +74,7 @@ unsigned int get_number_entries(const entry_list* el);
 ErrorCode add_entry(entry_list* el, entry* e);
 entry* get_first(const entry_list* el);
 entry* get_next(const entry_list* el, entry* e);
+
 
 
 #endif
