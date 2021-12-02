@@ -49,6 +49,8 @@ class QueryTable {
         Query** getBucket(unsigned long hash) const;
         void printBucket(unsigned long hash) const;
         void printTable() const;
+        const Query* getQuery(QueryID id) const;
+        void deleteQuery(QueryID id) const;
         const int getQueriesPerBucket(unsigned long hash) const;
         ~QueryTable();
 };

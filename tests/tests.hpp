@@ -17,6 +17,7 @@ void test_hash_table(void);
 void test_hash_function(void);
 void test_doc_deduplication(void);
 void test_query_deduplication(void);
+void test_start_query(void);
 void test_exact_match(void);
 void test_hamming(void);
 void test_edit(void);

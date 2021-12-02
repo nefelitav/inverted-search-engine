@@ -242,6 +242,25 @@ void test_hash_function(void)
     TEST_EXCEPTION(hashFunction((char*)" "), std::exception);
 }
 
+void test_start_query(void)
+{
+    InitializeIndex();
+    char *q_words = new char[MAX_QUERY_LENGTH]();
+    memcpy(q_words, "hello people things going better", MAX_QUERY_LENGTH);
+    StartQuery(0, q_words, MT_EXACT_MATCH, 0);
+    
+    TEST_ASSERT(strcmp(QT->getQuery(0)->getWord(0), "hello") == 0);        // get first word of query with id = 0
+    TEST_ASSERT(strcmp(QT->getQuery(0)->getWord(1), "people") == 0);       // get second word of query with id = 0
+    TEST_ASSERT(strcmp(QT->getBucket(hashFunctionById(0))[0]->getWord(1), "people") == 0);// get second word of bucket
+    TEST_ASSERT(QT->getQueriesPerBucket(hashFunctionById(0)) == 1);        // one query in the bucket
+    QT->deleteQuery(0);
+    TEST_ASSERT(QT->getQueriesPerBucket(hashFunctionById(0)) == 0);        // minus one
+    delete[] q_words;
+
+    DestroyIndex();
+}
+
+
 // Match functions
 void test_exact_match(void)
 {   
@@ -825,6 +844,7 @@ TEST_LIST = {
     {"Hash Function", test_hash_function},
     {"Document Deduplication", test_doc_deduplication},
     {"Query Deduplication", test_query_deduplication},
+    {"Start Query", test_start_query},
     {"Hash Table", test_hash_table} ,
     {"Exact Match", test_exact_match},
     {"Hamming Distance", test_hamming},

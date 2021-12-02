@@ -30,31 +30,30 @@ ErrorCode InitializeIndex(){
 ErrorCode StartQuery(QueryID query_id, const char* query_str, MatchType match_type, unsigned int match_dist)
 {
     try {
-        HashTable* QHT;
-        QHT = new HashTable();
+        //HashTable* QHT;
+        //QHT = new HashTable();
         Query* q = new Query(query_id, (char*)query_str, match_type, match_dist);
-        // std::cout << "----------------" << q->getId() << std::endl;
         QT->addToBucket(hashFunctionById(query_id), q);
-        
-        QueryDeduplication(q, QHT);
-        QHT->addWordsToIndex();
+        //QueryDeduplication(q, QHT);
+        //QHT->addWordsToIndex();
         //QHT->printTable();
-        // int i = 0;
-        // entry* e = NULL;
-        // word w = q->getWord(0);
-        // if (w == NULL)
-        // {
-        //     return EC_FAIL;
-        // }
-        // while (w != NULL)
-        // {   
-        //     create_entry(&w, &e);
-        //     add_entry(EntryList, e);
-        //     //add entry to index    
-        //     i++;
-        //     w = q->getWord(i);
-        // }
-        delete QHT;
+        int i = 0;
+        entry* e = NULL;
+        word w = q->getWord(0);
+        if (w == NULL)
+        {
+            return EC_FAIL;
+        }
+        while (w != NULL)
+        {   
+            create_entry(&w, &e);
+            add_entry(EntryList, e);
+            //add entry to index    
+            addToIndex(&e, query_id, match_type);
+            i++;
+            w = q->getWord(i);
+        }
+        //delete QHT;
         //delete q;                       // delete querytable instead
         return EC_SUCCESS;
     } catch (const std::exception& _) {
@@ -75,10 +74,16 @@ ErrorCode DestroyIndex()
     return EC_NO_AVAIL_RES;
 }
 
-// ErrorCode EndQuery(QueryID query_id)
-// {
-//     delete[] QT->getQuery();
-// }
+ErrorCode EndQuery(QueryID query_id)
+{
+    try {
+        QT->deleteQuery(query_id);
+        return EC_SUCCESS;
+    } catch (const std::exception& _) {
+        return EC_FAIL;
+    }
+    return EC_NO_AVAIL_RES;
+}
 // ErrorCode MatchDocument(DocID         doc_id,
                         // const char*   doc_str);
 // ErrorCode GetNextAvailRes(DocID*         p_doc_id,

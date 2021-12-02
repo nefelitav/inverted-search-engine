@@ -180,7 +180,6 @@ ErrorCode addToIndex(entry** toAdd, int queryId, MatchType queryMatchingType){
         if (queryMatchingType == MT_HAMMING_DIST) {
             editIndex->addEntry(toAdd);
         } else if (queryMatchingType == MT_EDIT_DIST) {
-            
             hammingIndexes[strlen((*toAdd)->getWord())-1]->addEntry(toAdd);
         }else if (queryMatchingType == MT_EXACT_MATCH) {
             //TODO

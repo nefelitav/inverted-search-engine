@@ -327,7 +327,29 @@ HashTable* QueryDeduplication(Query* q, HashTable* HT)
 
 //////////////////////////////////////////////////////////////////////////
 
+int FindQuery(Query** queries, int left, int right, const QueryID id)
+{
+    if (queries == NULL)
+    {
+        throw std::invalid_argument( "Got NULL pointer");
+    }                                                         
+    if (right >= left)
+    {
+        int mid = left + (right - left) / 2;
+        if (id == queries[mid]->getId())
+        {
+            return mid;
+        }
+        if (queries[mid]->getId() > id)
+        {
+            return FindQuery(queries, left, mid - 1, id);
+        }
+        return FindQuery(queries, mid + 1, right, id);
+    }
+    // not in array
+    return -1;
 
+}
 
 int QuerybinarySearch(Query** queries, int left, int right, const QueryID id)
 {
@@ -371,7 +393,7 @@ QueryTable :: QueryTable()
 {
     this->buckets = new Query**[MAX_QUERY_BUCKETS]();                               // pointers to buckets / arrays of query pointers -> ***
     this->QueriesPerBucket = new int[MAX_QUERY_BUCKETS]();                         
-    std::cout << "Query Table is created!" << std::endl;
+    //std::cout << "Query Table is created!" << std::endl;
 }
 
 unsigned long QueryTable :: addToBucket(unsigned long hash, Query* q)
@@ -382,8 +404,8 @@ unsigned long QueryTable :: addToBucket(unsigned long hash, Query* q)
         this->buckets[hash] = new Query*[QUERIES_PER_BUCKET]();                               // create bucket
         this->buckets[hash][0] = q;                                                           // first query in bucket
         this->QueriesPerBucket[hash]++;   
-        std::cout << "Bucket no " << hash << " is created" << std::endl;
-        std::cout << "Query no " << this->buckets[hash][0]->getId() << " is created" << std::endl;
+        //std::cout << "Bucket no " << hash << " is created" << std::endl;
+        //std::cout << "Query no " << this->buckets[hash][0]->getId() << " is created" << std::endl;
         return hash;
     }
     if (this->QueriesPerBucket[hash] % QUERIES_PER_BUCKET == 0)                             // have reached limit of bucket
@@ -398,7 +420,7 @@ unsigned long QueryTable :: addToBucket(unsigned long hash, Query* q)
 
     }
     int pos = QuerybinarySearch(this->buckets[hash], 0, this->QueriesPerBucket[hash] - 1, q->getId());
-    std::cout << "pos = " << std::endl;
+    //std::cout << "pos = " << std::endl;
     if (pos == -1)
     {
         delete q;
@@ -413,7 +435,7 @@ unsigned long QueryTable :: addToBucket(unsigned long hash, Query* q)
     }
     this->buckets[hash][pos] = q;                              // new node in array
     this->QueriesPerBucket[hash]++; 
-    std::cout << "Query no " << this->buckets[hash][0]->getId() << " is created" << std::endl;
+    //std::cout << "Query no " << this->buckets[hash][0]->getId() << " is created" << std::endl;
     return hash;
 }
 
@@ -427,10 +449,30 @@ Query** QueryTable :: getBucket(unsigned long hash) const
     return this->buckets[hash];
 }
 
-// const Query* QueryTable :: getQuery(QueryID id) const
-// {
+const Query* QueryTable :: getQuery(QueryID id) const
+{
+    unsigned long hash = hashFunctionById(id); 
+    int pos = FindQuery(this->buckets[hash], 0, this->QueriesPerBucket[hash] - 1, id);
+    if (pos == -1)
+        return NULL;
+    return this->buckets[hash][pos];
+}
 
-// }
+void QueryTable :: deleteQuery(QueryID id) const
+{
+    unsigned long hash = hashFunctionById(id); 
+    int pos = FindQuery(this->buckets[hash], 0, this->QueriesPerBucket[hash] - 1, id);
+    delete this->buckets[hash][pos];
+    if (this->QueriesPerBucket[hash] >= pos)                             // in the middle of the array
+    {
+        for (int i = pos; i < this->QueriesPerBucket[hash]; i++)
+        {
+            this->buckets[hash][i] = this->buckets[hash][i+1]; 
+        }
+    }
+    this->QueriesPerBucket[hash]--;
+
+}
 void QueryTable :: printBucket(unsigned long hash) const
 {
     std::cout << "Bucket no " << hash << std::endl;
@@ -462,18 +504,18 @@ QueryTable :: ~QueryTable()
     {
         for (int q = 0; q < this->QueriesPerBucket[bucket]; q++)
         {
-            std::cout << "Query no " << this->buckets[bucket][q]->getId() << " is deleted!" << std::endl;
+            //std::cout << "Query no " << this->buckets[bucket][q]->getId() << " is deleted!" << std::endl;
             delete this->buckets[bucket][q];                                // delete queries
         }
         if (this->buckets[bucket] != NULL)
         {   
             delete[] this->buckets[bucket];                                       // delete buckets
-            std::cout << "Bucket no " << bucket << " is deleted!" << std::endl;
+            //std::cout << "Bucket no " << bucket << " is deleted!" << std::endl;
         }
     }
     delete[] this->QueriesPerBucket;
     delete[] this->buckets;                                                 // delete hash table
-    std::cout << "Query Table is deleted!" << std::endl;
+    //std::cout << "Query Table is deleted!" << std::endl;
 }
 
 unsigned long hashFunctionById(QueryID id)                                        // a typical hash function
