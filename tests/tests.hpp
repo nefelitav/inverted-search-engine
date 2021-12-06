@@ -10,6 +10,7 @@
 void test_query(void);
 void test_document(void);
 void test_entry(void);
+void test_entry_set_get_payload(void);
 void test_entrylist(void);
 void test_binary_search(void);
 void test_query_binary_search(void);
@@ -36,5 +37,12 @@ void test_indexList_getNode(void);
 void test_indexList_getNext(void);
 void test_build_entry_index(void);
 void test_lookup_entry_index(void);
+void test_payloadNode_constructor_getters(void);
+void test_payloadNode_setNext(void);
+void test_payloadList_constructor_isEmpty_getFirst(void);
+void test_payloadList_insertNode(void);
+void test_payloadList_deleteNode(void);
+void test_removeFromIndex(void);
+void test_addToIndex(void);
 
 #endif  //TESTS

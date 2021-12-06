@@ -4,9 +4,10 @@
 #include <iostream>
 #include <cstring>
 #include "core.h"
+#include "index.hpp"
 
 typedef char* word;
-
+class payloadList;
 class Query {
     private:
         char* words;                 // saving words in a 1d array instead of a 2d to save time (contiguous allocation)            
@@ -40,14 +41,15 @@ class Document {
 class entry {
     private:
         word keyword;
-        void* payload;
+        payloadList* payload;
         entry* next;
     public:
         entry(const word keyword);
         const word getWord() const;
-        void* getPayload() const;
+        payloadList* getPayload() const;
         entry* getNext() const;
         void setNext(entry* e);
+        void addPayload(int givenId, int givenThreshold);
         ~entry();
 };
 

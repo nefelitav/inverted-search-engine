@@ -3,7 +3,7 @@
 #include "../include/utilities.hpp"
 #include "../include/index.hpp"
 
-// some globals
+// Some globals
 entry_list* EntryList; 
 QueryTable* QT;
 indexNode* editIndex;
@@ -14,11 +14,11 @@ ErrorCode InitializeIndex(){
     try{
         create_entry_list(&EntryList);
         QT = new QueryTable();
-        // editIndex = new indexNode(NULL);
-        // hammingIndexes = new indexNode*[27];
-        // for (int i = 0; i < 27; i++) {
-        //     hammingIndexes[i] = new indexNode(NULL, MT_HAMMING_DIST);
-        // }
+        editIndex = new indexNode(NULL);
+        hammingIndexes = new indexNode*[27];
+        for (int i = 0; i < 27; i++) {
+            hammingIndexes[i] = new indexNode(NULL, MT_HAMMING_DIST);
+        }
         exactHash = NULL;
         return EC_SUCCESS;
     } catch (const std::exception& _) {
@@ -49,7 +49,7 @@ ErrorCode StartQuery(QueryID query_id, const char* query_str, MatchType match_ty
             create_entry(&w, &e);
             add_entry(EntryList, e);
             //add entry to index    
-            addToIndex(&e, query_id, match_type);
+            addToIndex(&e, query_id, match_type, match_dist);
             i++;
             w = q->getWord(i);
         }
@@ -65,6 +65,11 @@ ErrorCode StartQuery(QueryID query_id, const char* query_str, MatchType match_ty
 ErrorCode DestroyIndex()
 {
     try {
+        delete editIndex;
+        for ( int i = 0; i< 27; i++){
+            delete hammingIndexes[i];
+        }
+        delete[] hammingIndexes;
         delete QT;
         destroy_entry_list(EntryList);
         return EC_SUCCESS;

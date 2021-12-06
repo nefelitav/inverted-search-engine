@@ -200,7 +200,7 @@ entry :: entry(const word keyword)
     }
     this->keyword = new char[MAX_WORD_LENGTH];
     strcpy(this->keyword, keyword);
-    this->payload = NULL;
+    this->payload = new payloadList();
     this->next = NULL;
     //std::cout << "Entry is created!" << std::endl;
 }
@@ -208,7 +208,7 @@ const word entry :: getWord() const
 {
     return this->keyword;
 }
-void* entry :: getPayload() const
+payloadList* entry :: getPayload() const
 {
     return this->payload;
 }
@@ -226,9 +226,13 @@ void entry :: setNext(entry* e)
 entry :: ~entry()
 {
     delete[] this->keyword;
+    delete payload;
     //std::cout << "Entry is deleted!" << std::endl;
 }
 
+void entry::addPayload(int givenId, int givenThreshold){
+    this->payload->insertNode(givenId,givenThreshold);
+}
 
 ////////////////////////////////////////////////////////////////////////////////////
 

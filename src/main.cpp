@@ -8,7 +8,7 @@
 
 // create documents and queries, reading words from a file
 int main()
-{
+{    
     Query** q = new Query*[NUM_QUERIES]();                         // array of queries - static 
     Document** d = new Document*[NUM_DOCS]();                      // array of docs - static 
     std::string line;
@@ -90,8 +90,8 @@ int main()
     std::cout << get_next(el, e2)->getWord() << std::endl;
     // Create the index
     indexNode* tree;
-    tree = new indexNode(&e);
-    tree->addEntry(&e2);
+    tree = new indexNode(&e, 1, 1);
+    tree->addEntry(&e2, 1 ,1);
     // Create the list that will store the search results
     create_entry_list(&result);
     // The search term
