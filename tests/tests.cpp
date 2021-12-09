@@ -90,10 +90,10 @@ void test_entry_set_get_payload(void)
     entry *testEntry;
     create_entry(&testWord, &testEntry);
 
-    TEST_CHECK( testEntry->getPayload()->getHead() == NULL);
-    testEntry->addPayload( 1, 2);
-    TEST_CHECK( testEntry->getPayload()->getHead()->getId() == 1);
-    TEST_CHECK( testEntry->getPayload()->getHead()->getThreshold() == 2);
+    TEST_CHECK(testEntry->getPayload()->getHead() == NULL);
+    testEntry->addPayload(1, 2);
+    TEST_CHECK(testEntry->getPayload()->getHead()->getId() == 1);
+    TEST_CHECK(testEntry->getPayload()->getHead()->getThreshold() == 2);
 
     destroy_entry(testEntry);
 }
@@ -610,8 +610,8 @@ void test_indexList_constructor(void)
 
     // Test indexList Constructor Edge Cases
     TEST_EXCEPTION(testList = new indexList(&nullTestEntry, 1, MT_EDIT_DIST, 1, 1), std::exception);
-    TEST_EXCEPTION(testList = new indexList(&testEntry1, 1,  MT_EXACT_MATCH, 1, 1), std::exception);
-    TEST_EXCEPTION(testList = new indexList(&testEntry1, 0,  MT_EDIT_DIST, 1, 1), std::exception);
+    TEST_EXCEPTION(testList = new indexList(&testEntry1, 1, MT_EXACT_MATCH, 1, 1), std::exception);
+    TEST_EXCEPTION(testList = new indexList(&testEntry1, 0, MT_EDIT_DIST, 1, 1), std::exception);
 
     testList = new indexList(&testEntry1, 1, MT_EDIT_DIST, 1, 1);
     TEST_CHECK(testList != NULL);
@@ -768,6 +768,8 @@ void test_lookup_entry_index(void)
 
     // Test exceptions on bad arguments
     TEST_EXCEPTION(lookup_entry_index(&nullText, result, MT_EDIT_DIST), std::exception);
+
+    //editIndex->printTree();
 
     // This word does not exist, but there are several words with a distance 1 to it
     const word searchTermEdit1 = (char *)"TESTWORD\0";
@@ -1014,7 +1016,6 @@ void test_removeFromIndex(void)
     destroy_entry_list(test_list);
 }
 
-
 //////////////////////////// Payload List-Node ////////////////////////////
 
 void test_payloadNode_constructor_getters(void)
@@ -1047,21 +1048,23 @@ void test_payloadNode_setNext(void)
     delete testNode2;
 }
 
-void test_payload_constructor_isEmpty_getHead(void){
-    payload* testList = new payload();
+void test_payload_constructor_isEmpty_getHead(void)
+{
+    payload *testList = new payload();
     TEST_CHECK(testList->getHead() == NULL);
     TEST_CHECK(testList->isEmpty() == true);
     delete testList;
 }
 
-void test_payload_insertNode(void){
+void test_payload_insertNode(void)
+{
     payload *testList = new payload();
-    testList->insertNode(2,2);
+    testList->insertNode(2, 2);
     TEST_CHECK(testList->getHead()->getId() == 2);
-    testList->insertNode(3,3);
+    testList->insertNode(3, 3);
     TEST_CHECK(testList->getHead()->getId() == 2);
     TEST_CHECK(testList->getHead()->getNext()->getId() == 3);
-    testList->insertNode(1,1);
+    testList->insertNode(1, 1);
     TEST_CHECK(testList->getHead()->getId() == 1);
     TEST_CHECK(testList->getHead()->getNext()->getId() == 2);
     TEST_CHECK(testList->getHead()->getNext()->getNext()->getId() == 3);
@@ -1069,11 +1072,12 @@ void test_payload_insertNode(void){
     delete testList;
 }
 
-void test_payload_deleteNode(void){
+void test_payload_deleteNode(void)
+{
     payload *testList = new payload();
-    testList->insertNode(1,1);
-    testList->insertNode(2,2);
-    testList->insertNode(3,3);
+    testList->insertNode(1, 1);
+    testList->insertNode(2, 2);
+    testList->insertNode(3, 3);
 
     testList->deleteNode(1);
     TEST_CHECK(testList->getHead()->getId() == 2);
@@ -1115,13 +1119,12 @@ TEST_LIST = {
     {"indexList getDistanceFromParent", test_indexList_getDistanceFromParent},
     {"indexList getNode", test_indexList_getNode},
     {"indexList getNext", test_indexList_getNext},
-    //{"lookup_entry_index", test_lookup_entry_index},
-    {"payloadNode Constructor, Getters",test_payloadNode_constructor_getters},
-    {"payloadNode setNext",test_payloadNode_setNext},
-    {"payload Constructor",test_payload_constructor_isEmpty_getHead},
-    {"payload insertNode",test_payload_insertNode},
-    {"payload deleteNode",test_payload_deleteNode},
-    //{"Remove word from index",test_removeFromIndex},
-    //{"Add word to index",test_addToIndex},
-    { NULL, NULL }
-};    
+    {"lookup_entry_index", test_lookup_entry_index},
+    {"payloadNode Constructor, Getters", test_payloadNode_constructor_getters},
+    {"payloadNode setNext", test_payloadNode_setNext},
+    {"payload Constructor", test_payload_constructor_isEmpty_getHead},
+    {"payload insertNode", test_payload_insertNode},
+    {"payload deleteNode", test_payload_deleteNode},
+    {"Remove word from index", test_removeFromIndex},
+    {"Add word to index", test_addToIndex},
+    {NULL, NULL}};
