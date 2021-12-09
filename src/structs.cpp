@@ -54,6 +54,14 @@ const QueryID Query :: getId() const
 {
     return this->id;
 }
+const MatchType Query :: getMatchingType() const                                                             
+{
+    return this->match_type;
+}
+const unsigned int Query :: getMatchingDistance() const                                                             
+{
+    return this->match_dist;
+}
 const word Query :: getWord(int word_num) const                             // array[i][j] --> arrary[i*(MAX_WORD_LENGTH + 1)]                                      
 {
     if (word_num >= MAX_QUERY_WORDS)                                        // out of range   
@@ -100,7 +108,7 @@ Query :: ~Query()
 
 
 
-Document :: Document(char * words, int id)  
+Document :: Document(char * words, QueryID id)  
 {
     if (words == NULL)
     {
@@ -200,7 +208,7 @@ entry :: entry(const word keyword)
     }
     this->keyword = new char[MAX_WORD_LENGTH];
     strcpy(this->keyword, keyword);
-    this->payload = new payloadList();
+    this->payload_list = new payload();
     this->next = NULL;
     //std::cout << "Entry is created!" << std::endl;
 }
@@ -208,9 +216,9 @@ const word entry :: getWord() const
 {
     return this->keyword;
 }
-payloadList* entry :: getPayload() const
+payload* entry :: getPayload() const
 {
-    return this->payload;
+    return this->payload_list;
 }
 entry* entry :: getNext() const
 {
@@ -226,12 +234,13 @@ void entry :: setNext(entry* e)
 entry :: ~entry()
 {
     delete[] this->keyword;
-    delete payload;
+    delete payload_list;
     //std::cout << "Entry is deleted!" << std::endl;
 }
 
-void entry::addPayload(int givenId, int givenThreshold){
-    this->payload->insertNode(givenId,givenThreshold);
+void entry::addPayload(QueryID id, unsigned int threshold)
+{
+    this->payload_list->insertNode(id, threshold);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////

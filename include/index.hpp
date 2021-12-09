@@ -4,34 +4,33 @@
 #include <iostream>
 #include "core.h"
 #include "structs.hpp"
+
 class entry;
 typedef char *word;
 class entry_list;
 class indexList;
 
-class indexNode
-{
-private:
-    MatchType MatchingType;
-    entry **content;
-    indexList *children;
-
-public:
-    indexNode(entry **input, int givenId = 1, int givenThreshold = 0, MatchType matchingMetric = MT_EDIT_DIST);
-    ErrorCode addEntry(entry **input, int givenId, int givenThreshold);
-    int printTree(int depth = 0);
-    entry **getEntry();
-    indexList *getChildren();
-    MatchType getMatchingType();
-    ~indexNode();
+class indexNode {
+    private:
+        MatchType MatchingType;
+        entry** content;
+        indexList* children;
+    public:
+        indexNode(entry** input, QueryID id = 1, unsigned int threshold = 0, MatchType matchingMetric = MT_EDIT_DIST);
+        ErrorCode addEntry(entry** input, QueryID id, unsigned int threshold);
+        int printTree(int depth = 0);
+        entry** getEntry();
+        indexList* getChildren();
+        MatchType getMatchingType();
+        ~indexNode();
 };
 
 //ErrorCode build_entry_index(const entry_list* el, MatchType type, indexNode** ix);
 ErrorCode lookup_entry_index(const word *w, entry_list *result, MatchType queryMatchingType);
-ErrorCode destroy_entry_index(indexNode *ix);
+ErrorCode destroy_entry_index(indexNode* ix);
 ErrorCode InitializeIndex();
-ErrorCode addToIndex(entry **toAdd, int queryId, MatchType queryMatchingType, int threshold);
-ErrorCode removeFromIndex(const word *givenWord, int queryId, MatchType givenType);
+ErrorCode addToIndex(entry** toAdd, QueryID queryId, MatchType queryMatchingType, unsigned int threshold);
+ErrorCode removeFromIndex(const word* givenWord, QueryID queryId, MatchType givenType);
 ////////////////////////////////////////////////////////////////////////////////////
 
 class stackNode
@@ -62,52 +61,47 @@ public:
 
 ////////////////////////////////////////////////////////////////////////////////////
 
-class indexList
-{
-private:
-    int distanceFromParent;
-    indexNode *node;
-    indexList *next;
-
-public:
-    indexList(entry **content, int distance, MatchType matchingMetric, int givenId, int givenThreshold, indexList *next = nullptr);
-    int addToList(entry **content, int distance, int givenId, int givenThreshold); // Insert new entry in the right place in the list
-    int getDistanceFromParent() const;
-    void printList(int depth = 0);
-    indexNode *getNode() const;
-    indexList *getNext() const;
-    ~indexList();
+class indexList {
+    private:
+        unsigned int distanceFromParent;
+        indexNode* node;
+        indexList* next;
+    public:
+        indexList(entry** content, unsigned int distance, MatchType matchingMetric, QueryID id, unsigned int threshold, indexList* next = nullptr);
+        int addToList(entry** content, unsigned int distance, QueryID id, unsigned int threshold);    // Insert new entry in the right place in the list
+        unsigned int getDistanceFromParent() const;
+        void printList(int depth = 0);
+        indexNode* getNode() const ;
+        indexList* getNext() const;
+        ~indexList();
 };
 ////////////////////////////////////////////////////////////////////////////////////
 
-class payloadNode
-{
-private:
-    int id;
-    int threshold;
-    payloadNode *next;
-
-public:
-    payloadNode(int givenId, int givenThreshold, payloadNode *givenNext = NULL);
-    int getId();
-    int getThreshold();
-    payloadNode *getNext();
-    void setNext(payloadNode *newNext);
-    void addNode(int givenId, int givenThreshold);
+class payloadNode {
+    private:
+        QueryID id;
+        unsigned int threshold;
+        payloadNode* next;
+    public:
+        payloadNode(QueryID id, unsigned int threshold, payloadNode* next = NULL);
+        const QueryID getId() const;
+        const unsigned int getThreshold() const;
+        payloadNode* getNext();
+        void setNext(payloadNode* newNext);
+        void addNode(QueryID id, unsigned int threshold);
 };
 
-class payloadList
-{
-private:
-    payloadNode *first;
+class payload {
+    private:
+        payloadNode* head;
+    public:
+        payload();
+        ~payload();
+        void insertNode(QueryID id, unsigned int threshold);
+        void deleteNode(QueryID id);
+        bool isEmpty();
+        payloadNode* getHead();
 
-public:
-    payloadList();
-    ~payloadList();
-    void insertNode(int givenId, int givenThreshold);
-    void deleteNode(int id);
-    bool isEmpty();
-    payloadNode *getFirst();
 };
 
 ////////////////////////////////////////////////////////////////////////////////////
@@ -117,4 +111,8 @@ extern indexNode *editIndex;
 extern indexNode **hammingIndexes;
 extern void *exactHash;
 
-#endif //INDEX
+///////////////////////////////////////////////////////////////////////////////////
+
+
+
+#endif  //INDEX

@@ -30,7 +30,6 @@ class HashTable {
 };
 
 HashTable* DocumentDeduplication(Document* d, HashTable* HT);
-HashTable* QueryDeduplication(Query* q, HashTable* HT);
 int binarySearch(word* words, int left, int right, const word w);
 unsigned long hashFunction(const word str);
 
@@ -55,8 +54,23 @@ class QueryTable {
         ~QueryTable();
 };
 
+int entrybinarySearch(entry** entries, int left, int right, const word w);
+class EntryTable {
+    private:
+        entry*** buckets;
+        int* entriesPerBucket;
+    public:
+        EntryTable();
+        unsigned long addToBucket(unsigned long hash, entry* e);
+        entry** getBucket(unsigned long hash) const;
+        void printBucket(unsigned long hash) const;
+        void printTable() const;
+        const int getEntriesPerBucket(unsigned long hash) const;
+        ~EntryTable();
+};
+
 extern QueryTable* QT;
-//extern HashTable* QHT;
 extern entry_list* EntryList; 
+extern EntryTable* ET;
 
 #endif

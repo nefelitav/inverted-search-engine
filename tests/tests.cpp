@@ -73,8 +73,8 @@ void test_entry(void)
     TEST_CHECK((strcmp(e2->getWord(), "world") == 0));
     TEST_CHECK((e->getNext() == NULL));
     TEST_CHECK((e2->getNext() == NULL));
-    TEST_CHECK((e->getPayload()->getFirst() == NULL));
-    TEST_CHECK((e2->getPayload()->getFirst() == NULL));
+    TEST_CHECK((e->getPayload()->getHead() == NULL));
+    TEST_CHECK((e2->getPayload()->getHead() == NULL));
 
     // entries well destroyed
     errorcode = destroy_entry(e);
@@ -90,11 +90,10 @@ void test_entry_set_get_payload(void)
     entry *testEntry;
     create_entry(&testWord, &testEntry);
 
-    TEST_CHECK(testEntry->getPayload()->getFirst() == NULL);
-    TEST_EXCEPTION(testEntry->addPayload(-1, -1), std::exception);
-    testEntry->addPayload(1, 2);
-    TEST_CHECK(testEntry->getPayload()->getFirst()->getId() == 1);
-    TEST_CHECK(testEntry->getPayload()->getFirst()->getThreshold() == 2);
+    TEST_CHECK( testEntry->getPayload()->getHead() == NULL);
+    testEntry->addPayload( 1, 2);
+    TEST_CHECK( testEntry->getPayload()->getHead()->getId() == 1);
+    TEST_CHECK( testEntry->getPayload()->getHead()->getThreshold() == 2);
 
     destroy_entry(testEntry);
 }
@@ -138,8 +137,8 @@ void test_entrylist(void)
     TEST_CHECK((strcmp(e2->getWord(), "world") == 0));
     TEST_CHECK((e->getNext() == NULL));
     TEST_CHECK((e2->getNext() == NULL));
-    TEST_CHECK((e->getPayload()->getFirst() == NULL));
-    TEST_CHECK((e2->getPayload()->getFirst() == NULL));
+    TEST_CHECK((e->getPayload()->getHead() == NULL));
+    TEST_CHECK((e2->getPayload()->getHead() == NULL));
 
     // entries well added to the entry list
     errorcode = add_entry(el, e);
@@ -225,7 +224,7 @@ void test_hash_table(void)
     delete HT;
 }
 
-void test_doc_deduplication(void)
+void test_deduplication(void)
 {
     char *d_words = new char[MAX_DOC_LENGTH]();
     strcpy(d_words, "hello world lorem ipsum hello world lorem ipsum");
@@ -237,17 +236,6 @@ void test_doc_deduplication(void)
     delete[] d_words;
 }
 
-void test_query_deduplication(void)
-{
-    char *q_words = new char[MAX_QUERY_LENGTH]();
-    strcpy(q_words, "hello world lorem hello world");
-    Query q(1, q_words, MT_EXACT_MATCH, 0);
-    HashTable *HT = new HashTable();
-    QueryDeduplication(&q, HT);
-    TEST_EXCEPTION(QueryDeduplication(NULL, HT), std::exception);
-    delete HT;
-    delete[] q_words;
-}
 void test_hash_function(void)
 {
     TEST_CHECK(hashFunction((char *)"hello") == hashFunction((char *)"hello"));
@@ -622,9 +610,8 @@ void test_indexList_constructor(void)
 
     // Test indexList Constructor Edge Cases
     TEST_EXCEPTION(testList = new indexList(&nullTestEntry, 1, MT_EDIT_DIST, 1, 1), std::exception);
-    TEST_EXCEPTION(testList = new indexList(&testEntry1, 1, MT_EXACT_MATCH, 1, 1), std::exception);
-    TEST_EXCEPTION(testList = new indexList(&testEntry1, 0, MT_EDIT_DIST, 1, 1), std::exception);
-    TEST_EXCEPTION(testList = new indexList(&testEntry1, -1, MT_EDIT_DIST, 1, 1), std::exception);
+    TEST_EXCEPTION(testList = new indexList(&testEntry1, 1,  MT_EXACT_MATCH, 1, 1), std::exception);
+    TEST_EXCEPTION(testList = new indexList(&testEntry1, 0,  MT_EDIT_DIST, 1, 1), std::exception);
 
     testList = new indexList(&testEntry1, 1, MT_EDIT_DIST, 1, 1);
     TEST_CHECK(testList != NULL);
@@ -857,7 +844,6 @@ void test_lookup_entry_index(void)
     DestroyIndex();
     destroy_entry_list(test_list);
 }
-
 void test_addToIndex(void)
 {
     char *testWord1 = (char *)"TESTWORD1"; // Parent
@@ -984,7 +970,6 @@ void test_removeFromIndex(void)
 
     // ADD CASES HERE
     const word textToRemove = (char *)"TESTWORD1\0";
-    TEST_EXCEPTION(removeFromIndex(&textToRemove, -1, MT_EDIT_DIST), std::exception);
     removeFromIndex(&textToRemove, 1, MT_EDIT_DIST);
 
     // This word does not exist, but there are several words with a distance 1 to it
@@ -1029,6 +1014,7 @@ void test_removeFromIndex(void)
     destroy_entry_list(test_list);
 }
 
+
 //////////////////////////// Payload List-Node ////////////////////////////
 
 void test_payloadNode_constructor_getters(void)
@@ -1061,43 +1047,40 @@ void test_payloadNode_setNext(void)
     delete testNode2;
 }
 
-void test_payloadList_constructor_isEmpty_getFirst(void)
-{
-    payloadList *testList = new payloadList();
-    TEST_CHECK(testList->getFirst() == NULL);
+void test_payload_constructor_isEmpty_getHead(void){
+    payload* testList = new payload();
+    TEST_CHECK(testList->getHead() == NULL);
     TEST_CHECK(testList->isEmpty() == true);
     delete testList;
 }
 
-void test_payloadList_insertNode(void)
-{
-    payloadList *testList = new payloadList();
-    testList->insertNode(2, 2);
-    TEST_CHECK(testList->getFirst()->getId() == 2);
-    testList->insertNode(3, 3);
-    TEST_CHECK(testList->getFirst()->getId() == 2);
-    TEST_CHECK(testList->getFirst()->getNext()->getId() == 3);
-    testList->insertNode(1, 1);
-    TEST_CHECK(testList->getFirst()->getId() == 1);
-    TEST_CHECK(testList->getFirst()->getNext()->getId() == 2);
-    TEST_CHECK(testList->getFirst()->getNext()->getNext()->getId() == 3);
+void test_payload_insertNode(void){
+    payload *testList = new payload();
+    testList->insertNode(2,2);
+    TEST_CHECK(testList->getHead()->getId() == 2);
+    testList->insertNode(3,3);
+    TEST_CHECK(testList->getHead()->getId() == 2);
+    TEST_CHECK(testList->getHead()->getNext()->getId() == 3);
+    testList->insertNode(1,1);
+    TEST_CHECK(testList->getHead()->getId() == 1);
+    TEST_CHECK(testList->getHead()->getNext()->getId() == 2);
+    TEST_CHECK(testList->getHead()->getNext()->getNext()->getId() == 3);
 
     delete testList;
 }
 
-void test_payloadList_deleteNode(void)
-{
-    payloadList *testList = new payloadList();
-    testList->insertNode(1, 1);
-    testList->insertNode(2, 2);
-    testList->insertNode(3, 3);
+void test_payload_deleteNode(void){
+    payload *testList = new payload();
+    testList->insertNode(1,1);
+    testList->insertNode(2,2);
+    testList->insertNode(3,3);
 
     testList->deleteNode(1);
-    TEST_CHECK(testList->getFirst()->getId() == 2);
-    TEST_CHECK(testList->getFirst()->getNext()->getId() == 3);
+    TEST_CHECK(testList->getHead()->getId() == 2);
+    TEST_CHECK(testList->getHead()->getNext()->getId() == 3);
 
     testList->deleteNode(2);
-    TEST_CHECK(testList->getFirst()->getId() == 3);
+    TEST_CHECK(testList->getHead()->getId() == 3);
 
     testList->deleteNode(3);
     TEST_CHECK(testList->isEmpty());
@@ -1113,8 +1096,7 @@ TEST_LIST = {
     {"Binary Search", test_binary_search},
     {"Query Binary Search", test_query_binary_search},
     {"Hash Function", test_hash_function},
-    {"Document Deduplication", test_doc_deduplication},
-    {"Query Deduplication", test_query_deduplication},
+    {"Document Deduplication", test_deduplication},
     {"Start Query", test_start_query},
     {"Hash Table", test_hash_table},
     {"Exact Match", test_exact_match},
@@ -1133,12 +1115,13 @@ TEST_LIST = {
     {"indexList getDistanceFromParent", test_indexList_getDistanceFromParent},
     {"indexList getNode", test_indexList_getNode},
     {"indexList getNext", test_indexList_getNext},
-    {"lookup_entry_index", test_lookup_entry_index},
-    {"payloadNode Constructor, Getters", test_payloadNode_constructor_getters},
-    {"payloadNode setNext", test_payloadNode_setNext},
-    {"payloadList Constructor", test_payloadList_constructor_isEmpty_getFirst},
-    {"payloadList insertNode", test_payloadList_insertNode},
-    {"payloadList deleteNode", test_payloadList_deleteNode},
-    {"Remove word from index", test_removeFromIndex},
-    {"Add word to index", test_addToIndex},
-    {NULL, NULL}};
+    //{"lookup_entry_index", test_lookup_entry_index},
+    {"payloadNode Constructor, Getters",test_payloadNode_constructor_getters},
+    {"payloadNode setNext",test_payloadNode_setNext},
+    {"payload Constructor",test_payload_constructor_isEmpty_getHead},
+    {"payload insertNode",test_payload_insertNode},
+    {"payload deleteNode",test_payload_deleteNode},
+    //{"Remove word from index",test_removeFromIndex},
+    //{"Add word to index",test_addToIndex},
+    { NULL, NULL }
+};    

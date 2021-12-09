@@ -52,7 +52,8 @@ extern "C" {
     #define NUM_DOCS 2 //
     #define WORDS_PER_BUCKET 100
     #define QUERIES_PER_BUCKET 10
-
+    #define MAX_ENTRY_BUCKETS  ((int)sqrt(MAX_DOC_WORDS / 0.75)) // 5
+    #define ENTRIES_PER_BUCKET  3// 100 // 5
 
     typedef unsigned int QueryID;
     typedef unsigned int DocID;

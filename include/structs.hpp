@@ -7,7 +7,7 @@
 #include "index.hpp"
 
 typedef char* word;
-class payloadList;
+class payload;
 class Query {
     private:
         char* words;                 // saving words in a 1d array instead of a 2d to save time (contiguous allocation)            
@@ -21,6 +21,8 @@ class Query {
         const char* getText() const;
         const QueryID getId() const;                                                             
         const int get_word_num() const;
+        const MatchType getMatchingType() const;                                                             
+        const unsigned int getMatchingDistance() const;                                                             
         ~Query();
           
 };
@@ -30,7 +32,7 @@ class Document {
         char* text;                 // saving words in a 1d array instead of a 2d to save time (contiguous allocation)   
         DocID id;
     public:
-        Document(char * words, int id); 
+        Document(char * words, QueryID id); 
         void printDocument() const;
         const word getWord(int word_num) const;                      
         char* getText() const;
@@ -41,15 +43,15 @@ class Document {
 class entry {
     private:
         word keyword;
-        payloadList* payload;
+        payload* payload_list;
         entry* next;
     public:
         entry(const word keyword);
         const word getWord() const;
-        payloadList* getPayload() const;
+        payload* getPayload() const;
         entry* getNext() const;
         void setNext(entry* e);
-        void addPayload(int givenId, int givenThreshold);
+        void addPayload(QueryID id, unsigned int threshold);
         ~entry();
 };
 

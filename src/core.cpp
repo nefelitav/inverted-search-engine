@@ -9,11 +9,12 @@ QueryTable* QT;
 indexNode* editIndex;
 indexNode** hammingIndexes;
 void* exactHash;
-
+EntryTable* ET;
 ErrorCode InitializeIndex(){
     try{
         create_entry_list(&EntryList);
         QT = new QueryTable();
+        ET = new EntryTable();
         editIndex = new indexNode(NULL);
         hammingIndexes = new indexNode*[27];
         for (int i = 0; i < 27; i++) {
@@ -30,13 +31,8 @@ ErrorCode InitializeIndex(){
 ErrorCode StartQuery(QueryID query_id, const char* query_str, MatchType match_type, unsigned int match_dist)
 {
     try {
-        //HashTable* QHT;
-        //QHT = new HashTable();
         Query* q = new Query(query_id, (char*)query_str, match_type, match_dist);
         QT->addToBucket(hashFunctionById(query_id), q);
-        //QueryDeduplication(q, QHT);
-        //QHT->addWordsToIndex();
-        //QHT->printTable();
         int i = 0;
         entry* e = NULL;
         word w = q->getWord(0);
@@ -47,13 +43,11 @@ ErrorCode StartQuery(QueryID query_id, const char* query_str, MatchType match_ty
         while (w != NULL)
         {   
             create_entry(&w, &e);
-            add_entry(EntryList, e);
-            //add entry to index    
-            addToIndex(&e, query_id, match_type, match_dist);
+            add_entry(EntryList, e);    
+            addToIndex(&e, query_id, match_type, match_dist); // add entry to index
             i++;
             w = q->getWord(i);
         }
-        //delete QHT;
         //delete q;                       // delete querytable instead
         return EC_SUCCESS;
     } catch (const std::exception& _) {
@@ -66,12 +60,13 @@ ErrorCode DestroyIndex()
 {
     try {
         delete editIndex;
-        for ( int i = 0; i< 27; i++){
+        for (int i = 0; i < 27; i++) {
             delete hammingIndexes[i];
         }
         delete[] hammingIndexes;
-        delete QT;
         destroy_entry_list(EntryList);
+        delete QT;
+        delete ET;
         return EC_SUCCESS;
     } catch (const std::exception& _) {
         return EC_FAIL;
