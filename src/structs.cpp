@@ -279,7 +279,9 @@ void entry :: deletePayloadNode(QueryID id)
             {
                 curr = payload->getNext();
                 temp = this->payload;
-            } else {
+            } 
+            else 
+            {
                 curr = NULL;
             }
         }
@@ -292,7 +294,9 @@ void entry :: deletePayloadNode(QueryID id)
             delete curr;
             curr = temp->getNext();
             break;
-        } else {
+        } 
+        else 
+        {
             temp = curr;
             curr = curr->getNext();
         }
@@ -349,7 +353,6 @@ void entry_list :: addEntry(entry * new_entry)
         //cout << this->head->getNext()->getWord() << endl;
     }
     this->entryNum++;
-
 }
 void entry_list :: printList()                        
 {
@@ -367,6 +370,31 @@ void entry_list :: printList()
 entry* entry_list :: getNext(entry* e) const
 {
     return e->getNext();
+}
+
+void entry_list :: removeEntry(entry * toRemove)
+{
+    entry * curr = this->head;                               
+    entry * next = NULL;
+
+    if (curr == toRemove)
+    {
+        delete toRemove;
+        toRemove = NULL;
+    }
+    while (curr != NULL)                                        
+    {
+        next = curr->getNext();                                 // save next entry
+        if (next == toRemove)                                    
+        {
+            curr->setNext(next->getNext());
+            delete next;
+            next = NULL;
+            return;
+        }
+        curr = next;                                            // go to next entry
+    }
+
 }
 entry_list :: ~entry_list()
 {

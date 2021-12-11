@@ -125,8 +125,8 @@ indexNode :: ~indexNode()
 
 ErrorCode lookup_entry_index(const word *w, entry_list *result, MatchType queryMatchingType)
 {
-    int threshold = 3;
-    int distance;
+    unsigned int threshold = 3;
+    unsigned int distance;
     indexNode *ix;
 
     // Check input
@@ -198,7 +198,7 @@ ErrorCode lookup_entry_index(const word *w, entry_list *result, MatchType queryM
                 currPayloadNode = (*currNode->getEntry())->getPayload();
                 while (currPayloadNode != NULL)
                 {
-                    if ((int)currPayloadNode->getThreshold() >= distance)
+                    if ((unsigned int)currPayloadNode->getThreshold() >= distance)
                     {
                         if (tempEntry == NULL)
                         {
@@ -224,12 +224,12 @@ ErrorCode lookup_entry_index(const word *w, entry_list *result, MatchType queryM
             while (currChild)
             {
                 // If the child meets the criteria, add it to the stack
-                if ((int)(currChild->getDistanceFromParent()) >= distance - threshold && (int)(currChild->getDistanceFromParent()) <= distance + threshold)
+                if ((unsigned int)(currChild->getDistanceFromParent()) >= distance - threshold && (unsigned int)(currChild->getDistanceFromParent()) <= distance + threshold)
                 {
                     toadd = currChild->getNode();
                     stack->add(&toadd);
                 }
-                else if ((int)(currChild->getDistanceFromParent()) > distance + threshold)
+                else if ((unsigned int)(currChild->getDistanceFromParent()) > distance + threshold)
                 {
                     // Children are ordered by distance, if one in not acceptable we can skip the rest
                     break;
@@ -300,11 +300,11 @@ ErrorCode addToIndex(entry **toAdd, QueryID queryId, MatchType queryMatchingType
     }
 }
 
-ErrorCode removeFromIndex(const word *givenWord, QueryID queryId, MatchType givenType)
+ErrorCode removeFromIndex(const word givenWord, const QueryID queryId, const MatchType givenType)
 {
 
     // Check input
-    if (givenWord == NULL || *givenWord == NULL)
+    if (givenWord == NULL)
     {
         throw std::invalid_argument("Got NULL pointer to word");
     }
@@ -314,24 +314,24 @@ ErrorCode removeFromIndex(const word *givenWord, QueryID queryId, MatchType give
         throw std::invalid_argument("Invalid Matching Type");
     }
 
-    int distance;
-    int threshold = 0;
+    unsigned int distance;
+    unsigned int threshold = 0;
     indexNode *ix;
 
     try
     {
-
         if (givenType == MT_EDIT_DIST)
         {
             ix = editIndex;
         }
         else if (givenType == MT_HAMMING_DIST)
         {
-            ix = hammingIndexes[strlen(*givenWord) - 4];
+            ix = hammingIndexes[strlen(givenWord) - 4];
         }
         else if (givenType == MT_EXACT_MATCH)
         {
-            // TODO
+            ET->deleteQueryId(givenWord, queryId);
+            return EC_SUCCESS;
         }
         else
         {
@@ -354,11 +354,11 @@ ErrorCode removeFromIndex(const word *givenWord, QueryID queryId, MatchType give
             // Calculate distance from target word
             if (currNode->getMatchingType() == MT_HAMMING_DIST)
             {
-                distance = hammingDistance((*currNode->getEntry())->getWord(), *givenWord);
+                distance = hammingDistance((*currNode->getEntry())->getWord(), givenWord);
             }
             else if (currNode->getMatchingType() == MT_EDIT_DIST)
             {
-                distance = editDistance((*currNode->getEntry())->getWord(), *givenWord);
+                distance = editDistance((*currNode->getEntry())->getWord(), givenWord);
             }
             else if (currNode->getMatchingType() == MT_EXACT_MATCH)
             {
@@ -381,12 +381,12 @@ ErrorCode removeFromIndex(const word *givenWord, QueryID queryId, MatchType give
             while (currChild)
             {
                 // If the child meets the criteria, add it to the stack
-                if ((int)(currChild->getDistanceFromParent()) >= distance - threshold && (int)(currChild->getDistanceFromParent()) <= distance + threshold)
+                if ((unsigned int)(currChild->getDistanceFromParent()) >= distance - threshold && (unsigned int)(currChild->getDistanceFromParent()) <= distance + threshold)
                 {
                     toadd = currChild->getNode();
                     stack->add(&toadd);
                 }
-                else if ((int)(currChild->getDistanceFromParent()) > distance + threshold)
+                else if ((unsigned int)(currChild->getDistanceFromParent()) > distance + threshold)
                 {
                     // Children are ordered by distance, if one in not acceptable we can skip the rest
                     break;

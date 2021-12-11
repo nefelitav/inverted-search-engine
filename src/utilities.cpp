@@ -457,10 +457,16 @@ void QueryTable :: deleteQuery(QueryID id) const
 {
     unsigned long hash = hashFunctionById(id); 
     int pos = FindQuery(this->buckets[hash], 0, this->QueriesPerBucket[hash] - 1, id);
-    // for (int i = 0; i < MAX_QUERY_WORDS; i++) // remove every entry of this query from index
-    // {
-    //     removeFromIndex(this->buckets[hash][pos]->getWord(i), id,  this->buckets[hash][pos]->getMatchingType());
-    // }
+    // std::cout << hash << " " << pos << std::endl;
+    for (int i = 0; i < MAX_QUERY_WORDS; i++) // remove every entry of this query from index
+    {
+        if (this->buckets[hash][pos]->getWord(i) != NULL)
+        {
+            // std::cout << this->buckets[hash][pos]->getWord(i) <<  std::endl;
+            removeFromIndex(this->buckets[hash][pos]->getWord(i), id, this->buckets[hash][pos]->getMatchingType());
+        }
+    }
+    //ET->printTable();
     delete this->buckets[hash][pos];
     if (this->QueriesPerBucket[hash] >= pos)                             // in the middle of the array
     {
@@ -470,7 +476,6 @@ void QueryTable :: deleteQuery(QueryID id) const
         }
     }
     this->QueriesPerBucket[hash]--;
-
 }
 void QueryTable :: printBucket(unsigned long hash) const
 {
@@ -525,7 +530,32 @@ unsigned long hashFunctionById(QueryID id)                                      
     return hash % MAX_QUERY_BUCKETS;
 }
 
+/////////////////////////////////////////////////////////////////////////////
 
+int FindEntry(entry** entries, int left, int right, const word w)
+{
+    if (entries == NULL || w == NULL)
+    {
+        throw std::invalid_argument("Got NULL pointer");
+    }                                                         
+    if (right >= left)
+    {
+        int mid = left + (right - left) / 2;
+        int cmp = strcmp(w, entries[mid]->getWord());
+        if (cmp == 0)
+        {
+            return mid;
+        }
+        if (cmp > 0)
+        {
+            return FindEntry(entries, left, mid - 1, w);
+        }
+        return FindEntry(entries, mid + 1, right, w);
+    }
+    // not in array
+    return -1;
+
+}
 
 
 int entrybinarySearch(entry** entries, int left, int right, const word w)
@@ -603,15 +633,16 @@ unsigned long EntryTable :: addToBucket(unsigned long hash, entry* e)
     {
         return hash;
     }
-    std::cout << pos << std::endl;
+    //std::cout << e->getWord() << "pos = "<< pos << std::endl;
+
+    if (strcmp(this->buckets[hash][pos]->getWord(), e->getWord()) == 0)
+    {
+        this->buckets[hash][pos]->addToPayload(e->getPayload()->getId(), e->getPayload()->getThreshold());
+        return hash;
+    }
 
     if (this->entriesPerBucket[hash] >= pos)                             // in the middle of the array
     {
-        // if (stcrmp(this->buckets[hash][pos]->getWord(), e->getWord()) == 0)
-        // {
-        //     this->buckets[hash][pos]->addToPayload(e->getpayload())
-        //     return hash;
-        // }
         for (i = this->entriesPerBucket[hash]; i > pos; i--)
         {
             this->buckets[hash][i] = this->buckets[hash][i-1]; 
@@ -633,16 +664,25 @@ entry** EntryTable :: getBucket(unsigned long hash) const
 }
 void EntryTable :: printBucket(unsigned long hash) const
 {
+    payloadNode *curr;
     std::cout << "Bucket no " << hash << std::endl;
     for (int i = 0; i < this->entriesPerBucket[hash]; i++)
     {
         std::cout << this->buckets[hash][i]->getWord() << std::endl;
+        std::cout << "Query IDs :" << std::endl;
+        curr = this->buckets[hash][i]->getPayload();
+        while (curr != NULL) 
+        {
+            std::cout << " - "<< curr->getId() << std::endl;
+            curr = curr->getNext();
+        }
     }
     std::cout << "######################" << std::endl;
 } 
 
 void EntryTable :: printTable() const
 {
+    payloadNode *curr;
     for (int bucket = 0; bucket < MAX_ENTRY_BUCKETS; bucket++)
     {
         if (this->entriesPerBucket[bucket] > 0)
@@ -651,10 +691,40 @@ void EntryTable :: printTable() const
             for (int e = 0; e < this->entriesPerBucket[bucket]; e++) 
             {
                 std::cout << this->buckets[bucket][e]->getWord() << std::endl;
+                std::cout << "Query IDs :" << std::endl;
+                curr = this->buckets[bucket][e]->getPayload();
+                while (curr != NULL) 
+                {
+                    std::cout << " - "<< curr->getId() << std::endl;
+                    curr = curr->getNext();
+                }
             }
             std::cout << "######################" << std::endl;
         }
     }
+}
+void EntryTable :: deleteQueryId(word givenWord, const QueryID queryId)
+{
+    unsigned long hash = hashFunction(givenWord);  // find bucket
+    // std::cout << givenWord << " " << hash << std::endl;
+    int pos = FindEntry(this->buckets[hash], 0, this->entriesPerBucket[hash] - 1, givenWord); // find record
+    // std::cout << "pos = " << pos << std::endl;
+    this->buckets[hash][pos]->deletePayloadNode(queryId);  // delete queryid from payload
+    // if (this->buckets[hash][pos]->EmptyPayload())
+    // {
+    //     // std::cout << "-------------" << std::endl;
+    //     EntryList->removeEntry(this->buckets[hash][pos]);
+    // //     this->buckets[hash][pos] = NULL;
+    // //     if (this->entriesPerBucket[hash] >= pos)                             // in the middle of the array
+    // //     {
+    // //         for (int i = pos; i < this->entriesPerBucket[hash]; i++)
+    // //         {
+    // //             this->buckets[hash][i] = this->buckets[hash][i+1]; 
+    // //         }
+    // //     }
+    // //     this->entriesPerBucket[hash]--;
+    // }
+
 }
 EntryTable :: ~EntryTable()
 {

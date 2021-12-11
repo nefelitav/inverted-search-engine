@@ -50,6 +50,7 @@ ErrorCode StartQuery(QueryID query_id, const char* query_str, MatchType match_ty
         while (w != NULL)
         {   
             create_entry(&w, &e);
+            e->addToPayload(query_id, match_dist);
             add_entry(EntryList, e);    
             addToIndex(&e, query_id, match_type, match_dist); // add entry to index
             i++;
@@ -91,9 +92,10 @@ ErrorCode EndQuery(QueryID query_id)
 {
     try 
     {
-        QT->deleteQuery(query_id);
+        QT->deleteQuery(query_id);   // delete from query table, delete its entries from index
         return EC_SUCCESS;
-    } catch (const std::exception& _) 
+    } 
+    catch (const std::exception& _) 
     {
         return EC_FAIL;
     }

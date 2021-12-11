@@ -52,6 +52,7 @@ class QueryTable {
         ~QueryTable();
 };
 
+int FindQuery(Query** queries, int left, int right, const QueryID id);
 unsigned long hashFunctionById(QueryID id);
 int QuerybinarySearch(Query** queries, int left, int right, const QueryID id);
 
@@ -66,9 +67,10 @@ class EntryTable {
         void printBucket(unsigned long hash) const;
         void printTable() const;
         const int getEntriesPerBucket(unsigned long hash) const;
+        void deleteQueryId(word givenWord, const QueryID queryId);
         ~EntryTable();
 };
-
+int FindEntry(entry** entries, int left, int right, const word w);
 int entrybinarySearch(entry** entries, int left, int right, const word w);
 
 extern QueryTable* QT;

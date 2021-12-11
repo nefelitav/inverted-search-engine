@@ -68,7 +68,8 @@ class entry_list {
         entry* getHead() const;
         void addEntry(entry * new_entry);
         entry* getNext(entry* e) const;
-        void printList();                        
+        void printList();    
+        void removeEntry(entry * toRemove);
         ~entry_list();
 };
 
