@@ -91,18 +91,6 @@ class payloadNode {
         void addNode(QueryID id, unsigned int threshold);
 };
 
-class payload {
-    private:
-        payloadNode* head;
-    public:
-        payload();
-        ~payload();
-        void insertNode(QueryID id, unsigned int threshold);
-        void deleteNode(QueryID id);
-        bool isEmpty();
-        payloadNode* getHead();
-
-};
 
 ////////////////////////////////////////////////////////////////////////////////////
 

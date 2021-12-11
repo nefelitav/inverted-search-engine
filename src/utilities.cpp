@@ -3,28 +3,35 @@
 
 
 
-bool exactMatch(const word word1, const word word2) {
-    if (word1 == NULL || word2 == NULL) {
-        throw std::invalid_argument( "Got NULL pointer");
+bool exactMatch(const word word1, const word word2) 
+{
+    if (word1 == NULL || word2 == NULL) 
+    {
+        throw std::invalid_argument("Got NULL pointer");
     }
     return (strcmp(word1,word2) == 0);
 }
 
-int hammingDistance(const word word1, const word word2) {
-    if (word1 == NULL || word2 == NULL) {
-        throw std::invalid_argument( "Got NULL pointer");
+int hammingDistance(const word word1, const word word2) 
+{
+    if (word1 == NULL || word2 == NULL) 
+    {
+        throw std::invalid_argument("Got NULL pointer");
     }
     int i = 0;
 
     // If words have different length raise exception
     int diff = abs((int)strlen(word1) - (int)strlen(word2));
-    if ( diff != 0 ){
-        throw std::invalid_argument( "Words Have Different Length");
+    if (diff != 0) 
+    {
+        throw std::invalid_argument("Words Have Different Length");
     }
 
     // Difference in the common part of the words
-    while (word1[i] != '\0' && word2[i] != '\0' ) {
-        if (word1[i] != word2[i]) {
+    while (word1[i] != '\0' && word2[i] != '\0' ) 
+    {
+        if (word1[i] != word2[i]) 
+        {
             diff++;
         }
         i++;
@@ -34,9 +41,11 @@ int hammingDistance(const word word1, const word word2) {
     return diff;
 }
 
-int editDistance(const word word1,const word word2) {
-    if (word1 == NULL || word2 == NULL) {
-        throw std::invalid_argument( "Got NULL pointer");
+int editDistance(const word word1, const word word2) 
+{
+    if (word1 == NULL || word2 == NULL) 
+    {
+        throw std::invalid_argument("Got NULL pointer");
     }
     int final_distance;
     int size1 = 0;
@@ -45,7 +54,8 @@ int editDistance(const word word1,const word word2) {
     int **d;
 
     // if equal, just stop
-    if (strcmp(word1, word2) == 0) {
+    if (strcmp(word1, word2) == 0) 
+    {
         return 0;
     }
     
@@ -55,22 +65,28 @@ int editDistance(const word word1,const word word2) {
 
     // Allocate the matrix with dims Size1*Size2
     d = new int*[size1 + 1];
-    for (int i = 0; i < size1 + 1; i++) {
+    for (int i = 0; i < size1 + 1; i++) 
+    {
         d[i] = new int[size2 + 1]();
     }
 
     // Initialize border elements
-    for (int i = 0; i < size2; i++) {
+    for (int i = 0; i < size2; i++) 
+    {
         d[0][i] = i;
     }
-    for (int i = 0; i < size1; i++) { 
+    for (int i = 0; i < size1; i++) 
+    { 
         d[i][0] = i;
     }
     
     // Calculate the minimum number of differences with the full-matrix iterative method
-    for (int j = 1; j < size2 + 1; j++) {
-        for (int i = 1; i < size1 + 1; i++) {
-            if (word1[i-1] == word2[j-1]) {
+    for (int j = 1; j < size2 + 1; j++) 
+    {
+        for (int i = 1; i < size1 + 1; i++)
+        {
+            if (word1[i-1] == word2[j-1]) 
+            {
                 substitution = 0;
             } else {
                 substitution = 1;
@@ -81,7 +97,8 @@ int editDistance(const word word1,const word word2) {
     final_distance = d[size1][size2];
 
     // Delete the matrix
-    for (int i = 0; i < size1 + 1; i++) {
+    for (int i = 0; i < size1 + 1; i++) 
+    {
         delete[] d[i];
     }
     delete[] d;
@@ -96,7 +113,7 @@ int binarySearch(word* words, int left, int right, const word w)
 {
     if (words == NULL || w == NULL)
     {
-        throw std::invalid_argument( "Got NULL pointer");
+        throw std::invalid_argument("Got NULL pointer");
     }
     int mid, cmp;
     while (left < right) 
@@ -140,7 +157,7 @@ unsigned long HashTable :: addToBucket(unsigned long hash, const word w)
     //cout << "hash = " << hash << endl;
     if (w == NULL)
     {
-        throw std::invalid_argument( "Got NULL pointer");
+        throw std::invalid_argument("Got NULL pointer");
     }
     int i;
     if (this->buckets[hash] == NULL)
@@ -267,7 +284,7 @@ unsigned long hashFunction(word str)                                        // a
 {
     if (str == NULL || strcmp(str, " ") == 0)
     {
-        throw std::invalid_argument( "Got NULL pointer");
+        throw std::invalid_argument("Got NULL pointer");
     }
     unsigned long hash = 5381;
     int character;
@@ -285,13 +302,13 @@ HashTable* DocumentDeduplication(Document* d, HashTable* HT)
 {
     if (d == NULL)
     {
-        throw std::invalid_argument( "Got NULL pointer");
+        throw std::invalid_argument("Got NULL pointer");
     }
     for (int i = 0; i < MAX_DOC_WORDS; i ++)                            // push each word to hash table
     {
         const word w = d->getWord(i);
         //cout << w << endl;
-        if ( w == NULL)
+        if (w == NULL)
         {
             break;
         }
@@ -307,7 +324,7 @@ int FindQuery(Query** queries, int left, int right, const QueryID id)
 {
     if (queries == NULL)
     {
-        throw std::invalid_argument( "Got NULL pointer");
+        throw std::invalid_argument("Got NULL pointer");
     }                                                         
     if (right >= left)
     {
@@ -331,7 +348,7 @@ int QuerybinarySearch(Query** queries, int left, int right, const QueryID id)
 {
     if (queries == NULL)
     {
-        throw std::invalid_argument( "Got NULL pointer");
+        throw std::invalid_argument("Got NULL pointer");
     }
     int mid, cmp;
     while (left < right) 
@@ -374,7 +391,7 @@ unsigned long QueryTable :: addToBucket(unsigned long hash, Query* q)
 {
     if (q == NULL)
     {
-        throw std::invalid_argument( "Got NULL pointer");
+        throw std::invalid_argument("Got NULL pointer");
     }
     int i;
     if (this->buckets[hash] == NULL)
@@ -515,7 +532,7 @@ int entrybinarySearch(entry** entries, int left, int right, const word w)
 {
     if (entries == NULL || w == NULL)
     {
-        throw std::invalid_argument( "Got NULL pointer");
+        throw std::invalid_argument("Got NULL pointer");
     }
     int mid, cmp;
     while (left < right) 
@@ -524,7 +541,7 @@ int entrybinarySearch(entry** entries, int left, int right, const word w)
         cmp = strcmp(w, entries[mid]->getWord());
         if (cmp == 0)
         {
-            return -1;                                                      // entry already in array -> continue
+            return mid;                                                      // entry already in array -> add queryid to payload
         }
         else if (cmp > 0)                                                   // entry should go after mid
         {
@@ -540,11 +557,10 @@ int entrybinarySearch(entry** entries, int left, int right, const word w)
     {
         return left + 1;
     }
-    else if (cmp < 0)
+    else 
     {
         return left;
     }
-    return -1;                                                              // entry already in array -> continue
 }
 
 EntryTable :: EntryTable()
@@ -558,7 +574,7 @@ unsigned long EntryTable :: addToBucket(unsigned long hash, entry* e)
     // std::cout << "----------hash = " << hash << std::endl;
     if (e == NULL)
     {
-        throw std::invalid_argument( "Got NULL pointer");
+        throw std::invalid_argument("Got NULL pointer");
     }
     int i;
     if (this->buckets[hash] == NULL)
@@ -591,6 +607,11 @@ unsigned long EntryTable :: addToBucket(unsigned long hash, entry* e)
 
     if (this->entriesPerBucket[hash] >= pos)                             // in the middle of the array
     {
+        // if (stcrmp(this->buckets[hash][pos]->getWord(), e->getWord()) == 0)
+        // {
+        //     this->buckets[hash][pos]->addToPayload(e->getpayload())
+        //     return hash;
+        // }
         for (i = this->entriesPerBucket[hash]; i > pos; i--)
         {
             this->buckets[hash][i] = this->buckets[hash][i-1]; 

@@ -38,9 +38,9 @@ void test_build_entry_index(void);
 void test_lookup_entry_index(void);
 void test_payloadNode_constructor_getters(void);
 void test_payloadNode_setNext(void);
-void test_payload_constructor_isEmpty_getHead(void);
-void test_payload_insertNode(void);
-void test_payload_deleteNode(void);
+void test_payload_constructor_EmptyPayload_getPayload(void);
+void test_payload_addToPayload(void);
+void test_payload_deletePayloadNode(void);
 void test_removeFromIndex(void);
 void test_addToIndex(void);
 

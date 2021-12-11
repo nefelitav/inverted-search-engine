@@ -10,19 +10,25 @@ indexNode* editIndex;
 indexNode** hammingIndexes;
 void* exactHash;
 EntryTable* ET;
-ErrorCode InitializeIndex(){
-    try{
+
+ErrorCode InitializeIndex() 
+{
+    try 
+    {
         create_entry_list(&EntryList);
         QT = new QueryTable();
         ET = new EntryTable();
         editIndex = new indexNode(NULL);
         hammingIndexes = new indexNode*[27];
-        for (int i = 0; i < 27; i++) {
+        for (int i = 0; i < 27; i++) 
+        {
             hammingIndexes[i] = new indexNode(NULL, MT_HAMMING_DIST);
         }
         exactHash = NULL;
         return EC_SUCCESS;
-    } catch (const std::exception& _) {
+    } 
+    catch (const std::exception& _) 
+    {
         return EC_FAIL;
     }
     
@@ -30,7 +36,8 @@ ErrorCode InitializeIndex(){
 
 ErrorCode StartQuery(QueryID query_id, const char* query_str, MatchType match_type, unsigned int match_dist)
 {
-    try {
+    try 
+    {
         Query* q = new Query(query_id, (char*)query_str, match_type, match_dist);
         QT->addToBucket(hashFunctionById(query_id), q);
         int i = 0;
@@ -50,7 +57,9 @@ ErrorCode StartQuery(QueryID query_id, const char* query_str, MatchType match_ty
         }
         //delete q;                       // delete querytable instead
         return EC_SUCCESS;
-    } catch (const std::exception& _) {
+    } 
+    catch (const std::exception& _) 
+    {
         return EC_FAIL;
     }
     return EC_NO_AVAIL_RES;
@@ -58,9 +67,11 @@ ErrorCode StartQuery(QueryID query_id, const char* query_str, MatchType match_ty
                 
 ErrorCode DestroyIndex()
 {
-    try {
+    try 
+    {
         delete editIndex;
-        for (int i = 0; i < 27; i++) {
+        for (int i = 0; i < 27; i++) 
+        {
             delete hammingIndexes[i];
         }
         delete[] hammingIndexes;
@@ -68,7 +79,9 @@ ErrorCode DestroyIndex()
         delete QT;
         delete ET;
         return EC_SUCCESS;
-    } catch (const std::exception& _) {
+    } 
+    catch (const std::exception& _) 
+    {
         return EC_FAIL;
     }
     return EC_NO_AVAIL_RES;
@@ -76,10 +89,12 @@ ErrorCode DestroyIndex()
 
 ErrorCode EndQuery(QueryID query_id)
 {
-    try {
+    try 
+    {
         QT->deleteQuery(query_id);
         return EC_SUCCESS;
-    } catch (const std::exception& _) {
+    } catch (const std::exception& _) 
+    {
         return EC_FAIL;
     }
     return EC_NO_AVAIL_RES;

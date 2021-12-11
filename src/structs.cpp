@@ -3,7 +3,7 @@ Query :: Query(QueryID id, char * words, MatchType match_type, unsigned int matc
 {
     if (words == NULL)
     {
-        throw std::invalid_argument( "Got NULL pointer");
+        throw std::invalid_argument("Got NULL pointer");
     }
     this->words = new char[MAX_QUERY_LENGTH]();                                // allocate memory and set to zero, to avoid junk
     int i = 0, length = 0;
@@ -112,7 +112,7 @@ Document :: Document(char * words, QueryID id)
 {
     if (words == NULL)
     {
-        throw std::invalid_argument( "Got NULL pointer");
+        throw std::invalid_argument("Got NULL pointer");
     }
     this->text = new char[MAX_DOC_LENGTH]();                                // allocate memory and set to zero, to avoid junk
     int i = 0, length = 0;
@@ -204,26 +204,25 @@ entry :: entry(const word keyword)
 {
     if (keyword == NULL)
     {
-        throw std::invalid_argument( "Got NULL pointer");
+        throw std::invalid_argument("Got NULL pointer");
     }
     this->keyword = new char[MAX_WORD_LENGTH];
     strcpy(this->keyword, keyword);
-    this->payload_list = new payload();
+    this->payload = NULL;
     this->next = NULL;
     //std::cout << "Entry is created!" << std::endl;
 }
+
 const word entry :: getWord() const
 {
     return this->keyword;
 }
-payload* entry :: getPayload() const
-{
-    return this->payload_list;
-}
+
 entry* entry :: getNext() const
 {
     return this->next;
 }
+
 void entry :: setNext(entry* e)
 {
     if (this->next == NULL)
@@ -231,16 +230,87 @@ void entry :: setNext(entry* e)
         this->next = e;
     }
 }
-entry :: ~entry()
+
+payloadNode* entry :: getPayload() const
 {
-    delete[] this->keyword;
-    delete payload_list;
-    //std::cout << "Entry is deleted!" << std::endl;
+    return this->payload;
 }
 
-void entry::addPayload(QueryID id, unsigned int threshold)
+void entry :: addToPayload(QueryID id, unsigned int threshold)
 {
-    this->payload_list->insertNode(id, threshold);
+    payloadNode* temp;
+    if (this->EmptyPayload()) 
+    {
+        this->payload = new payloadNode(id, threshold);
+    } 
+    else if (this->payload->getId() > id) 
+    {
+        temp = this->payload;
+        this->payload = new payloadNode(id, threshold, temp);
+    } 
+    else if (this->payload->getId() == id) 
+    {
+        throw std::invalid_argument("Query already in payload");
+    } 
+    else {
+        this->payload->addNode(id,threshold);
+    }
+}
+
+bool entry :: EmptyPayload() 
+{
+    return (this->payload == NULL);
+}
+
+void entry :: deletePayloadNode(QueryID id) 
+{
+    payloadNode* temp, *curr = this->payload;
+    if (this->payload == NULL) 
+    {
+        std::cout<<"ID NOT FOUND\n";
+    } else if (this->payload != NULL) 
+    {
+        if (payload->getId() == id) 
+        {
+            temp = this->payload;
+            this->payload = temp->getNext();
+            delete temp;
+            if (this->payload != NULL) 
+            {
+                curr = payload->getNext();
+                temp = this->payload;
+            } else {
+                curr = NULL;
+            }
+        }
+    }
+    while (curr != NULL) 
+    {
+        if (curr->getId() == id) 
+        {
+            temp->setNext(curr->getNext());
+            delete curr;
+            curr = temp->getNext();
+            break;
+        } else {
+            temp = curr;
+            curr = curr->getNext();
+        }
+    }
+}
+
+entry :: ~entry()
+{
+    payloadNode *prev,*curr = this->payload;
+    while (curr != NULL) 
+    {
+        prev = curr;
+        curr = curr->getNext();
+        delete prev;
+        prev = NULL;
+    }
+    delete[] this->keyword;
+    //std::cout << "Entry is deleted!" << std::endl;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////
@@ -264,7 +334,7 @@ void entry_list :: addEntry(entry * new_entry)
 {
     if (new_entry == NULL)
     {
-        throw std::invalid_argument( "Got NULL pointer");
+        throw std::invalid_argument("Got NULL pointer");
     }
     if (this->head == NULL)
     {
@@ -309,11 +379,14 @@ entry_list :: ~entry_list()
 
 ErrorCode create_entry(const word* w, entry** e)
 {
-    try {
+    try 
+    {
         *e = new entry(*w);
         //cout << (**e).getWord() << endl;
         return EC_SUCCESS;
-    } catch (const std::exception& _) {
+    } 
+    catch (const std::exception& _) 
+    {
         return EC_FAIL;
     }
     return EC_NO_AVAIL_RES;
@@ -321,14 +394,17 @@ ErrorCode create_entry(const word* w, entry** e)
 
 ErrorCode destroy_entry(entry *e)
 {
-    try {
+    try 
+    {
         if (e != NULL)
         {
             delete e;
             e = NULL;
         }
         return EC_SUCCESS;
-    } catch (const std::exception& _) {
+    } 
+    catch (const std::exception& _) 
+    {
         return EC_FAIL;
     }
     return EC_NO_AVAIL_RES;
@@ -336,10 +412,13 @@ ErrorCode destroy_entry(entry *e)
 
 ErrorCode create_entry_list(entry_list** el)
 {
-    try {
+    try 
+    {
         *el = new entry_list();
         return EC_SUCCESS;
-    } catch (const std::exception& _) {
+    } 
+    catch (const std::exception& _) 
+    {
         return EC_FAIL;
     }
     return EC_NO_AVAIL_RES;
@@ -347,7 +426,8 @@ ErrorCode create_entry_list(entry_list** el)
 
 ErrorCode destroy_entry_list(entry_list* el)                        // first delete entries and then list
 {
-    try {
+    try 
+    {
         entry * curr = el->getHead();                               // pointer to head of list
         entry * next = NULL;
 
@@ -360,7 +440,9 @@ ErrorCode destroy_entry_list(entry_list* el)                        // first del
         delete el;                                                  // delete entrylist
         el = NULL;
         return EC_SUCCESS;
-    } catch (const std::exception& _) {
+    } 
+    catch (const std::exception& _) 
+    {
         return EC_FAIL;
     }
     return EC_NO_AVAIL_RES;
@@ -373,10 +455,13 @@ unsigned int get_number_entries(const entry_list* el)
 
 ErrorCode add_entry(entry_list* el, entry* e)
 {
-    try {
+    try 
+    {
         el->addEntry(e);
         return EC_SUCCESS;
-    } catch (const std::exception& _) {
+    } 
+    catch (const std::exception& _) 
+    {
         return EC_FAIL;
     }
     return EC_NO_AVAIL_RES;

@@ -73,8 +73,8 @@ void test_entry(void)
     TEST_CHECK((strcmp(e2->getWord(), "world") == 0));
     TEST_CHECK((e->getNext() == NULL));
     TEST_CHECK((e2->getNext() == NULL));
-    TEST_CHECK((e->getPayload()->getHead() == NULL));
-    TEST_CHECK((e2->getPayload()->getHead() == NULL));
+    TEST_CHECK((e->getPayload() == NULL));
+    TEST_CHECK((e2->getPayload() == NULL));
 
     // entries well destroyed
     errorcode = destroy_entry(e);
@@ -86,14 +86,14 @@ void test_entry(void)
 
 void test_entry_set_get_payload(void)
 {
-    word testWord = (word) "TESTWORD1";
+    word testWord = (word)"TESTWORD1";
     entry *testEntry;
     create_entry(&testWord, &testEntry);
 
-    TEST_CHECK(testEntry->getPayload()->getHead() == NULL);
-    testEntry->addPayload(1, 2);
-    TEST_CHECK(testEntry->getPayload()->getHead()->getId() == 1);
-    TEST_CHECK(testEntry->getPayload()->getHead()->getThreshold() == 2);
+    TEST_CHECK(testEntry->getPayload() == NULL);
+    testEntry->addToPayload(1, 2);
+    TEST_CHECK(testEntry->getPayload()->getId() == 1);
+    TEST_CHECK(testEntry->getPayload()->getThreshold() == 2);
 
     destroy_entry(testEntry);
 }
@@ -137,8 +137,8 @@ void test_entrylist(void)
     TEST_CHECK((strcmp(e2->getWord(), "world") == 0));
     TEST_CHECK((e->getNext() == NULL));
     TEST_CHECK((e2->getNext() == NULL));
-    TEST_CHECK((e->getPayload()->getHead() == NULL));
-    TEST_CHECK((e2->getPayload()->getHead() == NULL));
+    TEST_CHECK((e->getPayload() == NULL));
+    TEST_CHECK((e2->getPayload() == NULL));
 
     // entries well added to the entry list
     errorcode = add_entry(el, e);
@@ -1026,76 +1026,72 @@ void test_payloadNode_constructor_getters(void)
     TEST_CHECK(testNode->getNext() == NULL);
     delete testNode;
 }
-
 void test_payloadNode_setNext(void)
 {
     payloadNode *testNode1 = new payloadNode(1, 1);
     payloadNode *testNode2 = new payloadNode(2, 2);
-
     // Check Initial State is NULL
     TEST_CHECK(testNode1->getNext() == NULL);
     TEST_CHECK(testNode2->getNext() == NULL);
-
     // Test Setting to another Node
     testNode1->setNext(testNode2);
     TEST_CHECK(testNode1->getNext() == testNode2);
-
     // Test Setting to NULL
     testNode1->setNext(NULL);
     TEST_CHECK(testNode1->getNext() == NULL);
-
     delete testNode1;
     delete testNode2;
 }
-
-void test_payload_constructor_isEmpty_getHead(void)
+void test_payload_constructor_EmptyPayload_getPayload(void) 
 {
-    payload *testList = new payload();
-    TEST_CHECK(testList->getHead() == NULL);
-    TEST_CHECK(testList->isEmpty() == true);
-    delete testList;
+    char *testWord1 = (char *)"TESTWORD1";
+    entry *testEntry1;
+    create_entry(&testWord1, &testEntry1);
+    TEST_CHECK(testEntry1->getPayload() == NULL);
+    TEST_CHECK(testEntry1->EmptyPayload() == true);
+    destroy_entry(testEntry1);
 }
 
-void test_payload_insertNode(void)
+void test_payload_addToPayload(void) 
 {
-    payload *testList = new payload();
-    testList->insertNode(2, 2);
-    TEST_CHECK(testList->getHead()->getId() == 2);
-    testList->insertNode(3, 3);
-    TEST_CHECK(testList->getHead()->getId() == 2);
-    TEST_CHECK(testList->getHead()->getNext()->getId() == 3);
-    testList->insertNode(1, 1);
-    TEST_CHECK(testList->getHead()->getId() == 1);
-    TEST_CHECK(testList->getHead()->getNext()->getId() == 2);
-    TEST_CHECK(testList->getHead()->getNext()->getNext()->getId() == 3);
-
-    delete testList;
+    char *testWord1 = (char *)"TESTWORD1";
+    entry *testEntry1;
+    create_entry(&testWord1, &testEntry1);
+    testEntry1->addToPayload(2,2);
+    TEST_CHECK(testEntry1->getPayload()->getId() == 2);
+    testEntry1->addToPayload(3,3);
+    TEST_CHECK(testEntry1->getPayload()->getId() == 2);
+    TEST_CHECK(testEntry1->getPayload()->getNext()->getId() == 3);
+    testEntry1->addToPayload(1,1);
+    TEST_CHECK(testEntry1->getPayload()->getId() == 1);
+    TEST_CHECK(testEntry1->getPayload()->getNext()->getId() == 2);
+    TEST_CHECK(testEntry1->getPayload()->getNext()->getNext()->getId() == 3);
+    destroy_entry(testEntry1);
 }
-
-void test_payload_deleteNode(void)
+void test_payload_deletePayloadNode(void) 
 {
-    payload *testList = new payload();
-    testList->insertNode(1, 1);
-    testList->insertNode(2, 2);
-    testList->insertNode(3, 3);
+    char *testWord1 = (char *)"TESTWORD1";
+    entry *testEntry1;
+    create_entry(&testWord1, &testEntry1);
+    testEntry1->addToPayload(1,1);
+    testEntry1->addToPayload(2,2);
+    testEntry1->addToPayload(3,3);
 
-    testList->deleteNode(1);
-    TEST_CHECK(testList->getHead()->getId() == 2);
-    TEST_CHECK(testList->getHead()->getNext()->getId() == 3);
-
-    testList->deleteNode(2);
-    TEST_CHECK(testList->getHead()->getId() == 3);
-
-    testList->deleteNode(3);
-    TEST_CHECK(testList->isEmpty());
-    delete testList;
+    testEntry1->deletePayloadNode(1);
+    TEST_CHECK(testEntry1->getPayload()->getId() == 2);
+    TEST_CHECK(testEntry1->getPayload()->getNext()->getId() == 3);
+    testEntry1->deletePayloadNode(2);
+    TEST_CHECK(testEntry1->getPayload()->getId() == 3);
+    testEntry1->deletePayloadNode(3);
+    TEST_CHECK(testEntry1->EmptyPayload());
+    destroy_entry(testEntry1);
 }
 
 TEST_LIST = {
     {"Query", test_query},
     {"Document", test_document},
     {"Entry", test_entry},
-    {"Entry Payload Set and Get", test_entry_set_get_payload},
+    {"Entry payload Set and Get", test_entry_set_get_payload},
     {"EntryList", test_entrylist},
     {"Binary Search", test_binary_search},
     {"Query Binary Search", test_query_binary_search},
@@ -1122,9 +1118,9 @@ TEST_LIST = {
     {"lookup_entry_index", test_lookup_entry_index},
     {"payloadNode Constructor, Getters", test_payloadNode_constructor_getters},
     {"payloadNode setNext", test_payloadNode_setNext},
-    {"payload Constructor", test_payload_constructor_isEmpty_getHead},
-    {"payload insertNode", test_payload_insertNode},
-    {"payload deleteNode", test_payload_deleteNode},
+    {"payload Constructor", test_payload_constructor_EmptyPayload_getPayload},
+    {"payload addToPayload", test_payload_addToPayload},
+    {"payload deleteNode", test_payload_deletePayloadNode},
     {"Remove word from index", test_removeFromIndex},
     {"Add word to index", test_addToIndex},
     {NULL, NULL}};

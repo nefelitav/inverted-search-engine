@@ -36,8 +36,6 @@ unsigned long hashFunction(const word str);
 ////////////////////////////////////////////////////////////////////
 
 
-unsigned long hashFunctionById(QueryID id);
-int QuerybinarySearch(Query** queries, int left, int right, const QueryID id);
 class QueryTable {
     private:
         Query*** buckets;
@@ -54,7 +52,9 @@ class QueryTable {
         ~QueryTable();
 };
 
-int entrybinarySearch(entry** entries, int left, int right, const word w);
+unsigned long hashFunctionById(QueryID id);
+int QuerybinarySearch(Query** queries, int left, int right, const QueryID id);
+
 class EntryTable {
     private:
         entry*** buckets;
@@ -68,6 +68,8 @@ class EntryTable {
         const int getEntriesPerBucket(unsigned long hash) const;
         ~EntryTable();
 };
+
+int entrybinarySearch(entry** entries, int left, int right, const word w);
 
 extern QueryTable* QT;
 extern entry_list* EntryList; 
