@@ -59,14 +59,14 @@ extern "C" {
     typedef unsigned int DocID;
     
 
-    typedef enum{
+    typedef enum {
         MT_EXACT_MATCH,
         MT_HAMMING_DIST,
         MT_EDIT_DIST
     }
     MatchType;
     
-    typedef enum{
+    typedef enum {
         EC_SUCCESS,
         EC_NO_AVAIL_RES,
         EC_FAIL

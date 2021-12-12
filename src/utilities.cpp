@@ -109,6 +109,88 @@ int editDistance(const word word1, const word word2)
 
 ////////////////////////////////////////////////////////////////////////////////////
 
+matchedQuery :: matchedQuery(QueryID id)
+{
+    this->id = id;
+    this->next = NULL;
+}
+
+void matchedQuery :: setNext(matchedQuery* next)
+{
+    this->next = next;
+}
+matchedQuery* matchedQuery :: getNext()
+{
+    return this->next;
+}
+QueryID matchedQuery :: getId()
+{
+    return this->id;
+}
+
+matchedQueryList :: matchedQueryList()
+{
+    this->head = NULL;
+}
+void matchedQueryList :: addToList(QueryID id)
+{
+    if (this->head == NULL)
+    {
+        this->head = new matchedQuery(id);
+    }
+    else
+    {
+        matchedQuery* new_head = new matchedQuery(id);
+        matchedQuery* old_head = this->head;
+        new_head->setNext(old_head);
+        this->head = new_head;
+    }
+}
+void matchedQueryList :: printList()
+{
+    matchedQuery* curr = this->head;
+    while (curr != NULL)
+    {
+        std::cout << curr->getId() << std::endl;
+        curr = curr->getNext();
+    }
+}
+matchedQuery* matchedQueryList :: getHead()
+{
+    return this->head;
+}
+void matchedQueryList :: removeQuery(matchedQuery* toRemove)
+{
+    matchedQuery *curr = this->head;
+    if (curr == toRemove)
+    {
+        delete curr;
+        return;
+    }
+    while (curr != NULL)
+    {
+        if (curr->getNext() == toRemove)
+        {
+            curr->setNext(curr->getNext()->getNext());
+            delete toRemove;
+            return;
+        }
+        curr = curr->getNext();
+    }
+}
+matchedQueryList :: ~matchedQueryList()
+{
+    matchedQuery* prev, *curr = this->head;
+    while (curr != NULL)
+    {
+        prev = curr;
+        curr = curr->getNext();
+        delete prev;
+    }
+}
+
+///////////////////////////////////////////////////////////////////////////////////
+
 int binarySearch(word* words, int left, int right, const word w)
 {
     if (words == NULL || w == NULL)
@@ -146,13 +228,13 @@ int binarySearch(word* words, int left, int right, const word w)
     return -1;                                                              // word already in array -> continue
 }
 
-HashTable :: HashTable()
+DocTable :: DocTable()
 {
     this->buckets = new word*[MAX_BUCKETS]();                               // pointers to buckets
     this->wordsPerBucket = new int[MAX_BUCKETS]();                         
     //std::cout << "Hash Table is created!" << std::endl;
 }
-unsigned long HashTable :: addToBucket(unsigned long hash, const word w)
+unsigned long DocTable :: addToBucket(unsigned long hash, const word w)
 {
     //cout << "hash = " << hash << endl;
     if (w == NULL)
@@ -207,31 +289,77 @@ unsigned long HashTable :: addToBucket(unsigned long hash, const word w)
     this->wordsPerBucket[hash]++; 
     return hash;
 }
-void HashTable :: addWordsToIndex()
+void DocTable :: wordLookup()
 {
+    entry_list* result = NULL;
+    create_entry_list(&result);
     for (int bucket = 0; bucket < MAX_BUCKETS; bucket++)            // each bucket
     {
         if (this->wordsPerBucket[bucket] > 0)
         {
             for (int word = 0; word < this->wordsPerBucket[bucket]; word++) 
             {
-                //add words to index   // lookup
+                //std::cout << this->buckets[bucket][word] << std::endl;
+                //ET->wordLookup(this->buckets[bucket][word], result);
+                //lookup_entry_index(this->buckets[bucket][word], result, MT_EXACT_MATCH);
+                //lookup_entry_index(this->buckets[bucket][word], result, MT_EDIT_DIST);
+                lookup_entry_index(this->buckets[bucket][word], result, MT_HAMMING_DIST);
             }
         }
     }
+    //result->printList();
+    entry* curr_entry = result->getHead();
+    payloadNode* curr_payloadnode = NULL;
+    matchedQueryList* matchedList = new matchedQueryList();
+    while (curr_entry != NULL)
+    {
+        std::cout << curr_entry->getWord() << std::endl;
+        curr_payloadnode = curr_entry->getPayload();
+        while (curr_payloadnode != NULL)
+        {
+            //std::cout << curr_payloadnode->getId() << std::endl;
+            QT->getQuery(curr_payloadnode->getId())->setTrue(curr_entry->getWord());
+            matchedList->addToList(curr_payloadnode->getId());
+            //QT->getQuery(curr_payloadnode->getId())->printMatchedEntries();
+            curr_payloadnode = curr_payloadnode->getNext();
+        }
+        curr_entry = curr_entry->getNext();
+    }
+    //matchedList->printList();
+    matchedQuery* curr = matchedList->getHead();
+    while (curr != NULL)
+    {
+        //QT->getQuery(curr->getId())->printMatchedEntries();
+        if (!QT->getQuery(curr->getId())->matched())
+        {
+            QT->getQuery(curr->getId())->setFalse();
+            matchedList->removeQuery(curr);
+        }
+        else
+        {
+            // add query id "curr->getId()" to document list    
+            // break;
+        }
+        curr = curr->getNext();
+    }
+    //matchedList->printList();
+
+    delete matchedList;
+    destroy_entry_list(result);
+
     //EntryList->printList();
 
 }
-const int HashTable :: getWordsPerBucket(unsigned long hash) const
+const int DocTable :: getWordsPerBucket(unsigned long hash) const
 {
     return this->wordsPerBucket[hash];
 }
 
-const word* HashTable :: getBucket(unsigned long hash) const
+const word* DocTable :: getBucket(unsigned long hash) const
 {
     return this->buckets[hash];
 }
-void HashTable :: printBucket(unsigned long hash) const
+void DocTable :: printBucket(unsigned long hash) const
 {
     std::cout << "Bucket no " << hash << std::endl;
     for (int i = 0; i < this->wordsPerBucket[hash]; i++)
@@ -241,7 +369,7 @@ void HashTable :: printBucket(unsigned long hash) const
     std::cout << "######################" << std::endl;
 } 
 
-void HashTable :: printTable() const
+void DocTable :: printTable() const
 {
     for (int bucket = 0; bucket < MAX_BUCKETS; bucket++)
     {
@@ -256,7 +384,7 @@ void HashTable :: printTable() const
         }
     }
 }
-HashTable :: ~HashTable()
+DocTable :: ~DocTable()
 {
     for (int bucket = 0; bucket < MAX_BUCKETS; bucket++)
     {
@@ -298,7 +426,7 @@ unsigned long hashFunction(word str)                                        // a
 
 ////////////////////////////////////////////////////////////////////////////////////
 
-HashTable* DocumentDeduplication(Document* d, HashTable* HT)
+DocTable* DocumentDeduplication(Document* d, DocTable* HT)
 {
     if (d == NULL)
     {
@@ -320,7 +448,7 @@ HashTable* DocumentDeduplication(Document* d, HashTable* HT)
 
 //////////////////////////////////////////////////////////////////////////
 
-int FindQuery(Query** queries, int left, int right, const QueryID id)
+int findQuery(Query** queries, int left, int right, const QueryID id)
 {
     if (queries == NULL)
     {
@@ -335,9 +463,9 @@ int FindQuery(Query** queries, int left, int right, const QueryID id)
         }
         if (queries[mid]->getId() > id)
         {
-            return FindQuery(queries, left, mid - 1, id);
+            return findQuery(queries, left, mid - 1, id);
         }
-        return FindQuery(queries, mid + 1, right, id);
+        return findQuery(queries, mid + 1, right, id);
     }
     // not in array
     return -1;
@@ -444,10 +572,10 @@ Query** QueryTable :: getBucket(unsigned long hash) const
     return this->buckets[hash];
 }
 
-const Query* QueryTable :: getQuery(QueryID id) const
+Query* QueryTable :: getQuery(QueryID id)
 {
     unsigned long hash = hashFunctionById(id); 
-    int pos = FindQuery(this->buckets[hash], 0, this->QueriesPerBucket[hash] - 1, id);
+    int pos = findQuery(this->buckets[hash], 0, this->QueriesPerBucket[hash] - 1, id);
     if (pos == -1)
         return NULL;
     return this->buckets[hash][pos];
@@ -456,7 +584,7 @@ const Query* QueryTable :: getQuery(QueryID id) const
 void QueryTable :: deleteQuery(QueryID id) const
 {
     unsigned long hash = hashFunctionById(id); 
-    int pos = FindQuery(this->buckets[hash], 0, this->QueriesPerBucket[hash] - 1, id);
+    int pos = findQuery(this->buckets[hash], 0, this->QueriesPerBucket[hash] - 1, id);
     // std::cout << hash << " " << pos << std::endl;
     for (int i = 0; i < MAX_QUERY_WORDS; i++) // remove every entry of this query from index
     {
@@ -532,7 +660,7 @@ unsigned long hashFunctionById(QueryID id)                                      
 
 /////////////////////////////////////////////////////////////////////////////
 
-int FindEntry(entry** entries, int left, int right, const word w)
+int findEntry(entry** entries, int left, int right, const word w)
 {
     if (entries == NULL || w == NULL)
     {
@@ -548,13 +676,12 @@ int FindEntry(entry** entries, int left, int right, const word w)
         }
         if (cmp > 0)
         {
-            return FindEntry(entries, left, mid - 1, w);
+            return findEntry(entries, left, mid - 1, w);
         }
-        return FindEntry(entries, mid + 1, right, w);
+        return findEntry(entries, mid + 1, right, w);
     }
     // not in array
     return -1;
-
 }
 
 
@@ -653,6 +780,25 @@ unsigned long EntryTable :: addToBucket(unsigned long hash, entry* e)
     return hash;
 }
 
+void EntryTable :: wordLookup(const word w, entry_list* result)
+{
+    //unsigned long hash = hashFunction(w); 
+    //entry *tempEntry;
+    //int pos = findEntry(this->buckets[hash], 0, this->entriesPerBucket[hash] - 1, w);
+    //if (pos == -1)
+    //{
+    //    return;
+    //}
+    //std::cout << pos << std::endl;
+    // if (this->buckets[hash][pos] != NULL && this->buckets[hash][pos]->getPayload() != NULL)
+    // {
+    //     std::cout << "add " << this->buckets[hash][pos]->getWord() << std::endl;
+    //     create_entry(&w, &tempEntry);
+    //     tempEntry->addToPayload(this->buckets[hash][pos]->getPayload()->getId(), this->buckets[hash][pos]->getPayload()->getThreshold());
+    //     result->addEntry(tempEntry);
+    //     tempEntry = NULL;
+    // }
+}
 const int EntryTable :: getEntriesPerBucket(unsigned long hash) const
 {
     return this->entriesPerBucket[hash];
@@ -682,7 +828,6 @@ void EntryTable :: printBucket(unsigned long hash) const
 
 void EntryTable :: printTable() const
 {
-    payloadNode *curr;
     for (int bucket = 0; bucket < MAX_ENTRY_BUCKETS; bucket++)
     {
         if (this->entriesPerBucket[bucket] > 0)
@@ -692,12 +837,7 @@ void EntryTable :: printTable() const
             {
                 std::cout << this->buckets[bucket][e]->getWord() << std::endl;
                 std::cout << "Query IDs :" << std::endl;
-                curr = this->buckets[bucket][e]->getPayload();
-                while (curr != NULL) 
-                {
-                    std::cout << " - "<< curr->getId() << std::endl;
-                    curr = curr->getNext();
-                }
+                this->buckets[bucket][e]->printPayload();
             }
             std::cout << "######################" << std::endl;
         }
@@ -707,24 +847,9 @@ void EntryTable :: deleteQueryId(word givenWord, const QueryID queryId)
 {
     unsigned long hash = hashFunction(givenWord);  // find bucket
     // std::cout << givenWord << " " << hash << std::endl;
-    int pos = FindEntry(this->buckets[hash], 0, this->entriesPerBucket[hash] - 1, givenWord); // find record
+    int pos = findEntry(this->buckets[hash], 0, this->entriesPerBucket[hash] - 1, givenWord); // find record
     // std::cout << "pos = " << pos << std::endl;
     this->buckets[hash][pos]->deletePayloadNode(queryId);  // delete queryid from payload
-    // if (this->buckets[hash][pos]->EmptyPayload())
-    // {
-    //     // std::cout << "-------------" << std::endl;
-    //     EntryList->removeEntry(this->buckets[hash][pos]);
-    // //     this->buckets[hash][pos] = NULL;
-    // //     if (this->entriesPerBucket[hash] >= pos)                             // in the middle of the array
-    // //     {
-    // //         for (int i = pos; i < this->entriesPerBucket[hash]; i++)
-    // //         {
-    // //             this->buckets[hash][i] = this->buckets[hash][i+1]; 
-    // //         }
-    // //     }
-    // //     this->entriesPerBucket[hash]--;
-    // }
-
 }
 EntryTable :: ~EntryTable()
 {
@@ -741,3 +866,4 @@ EntryTable :: ~EntryTable()
     // std::cout << "Hash Table is deleted!" << std::endl;
 }
 
+///////////////////////////////////////////////////////////////////////

@@ -29,6 +29,13 @@ Query :: Query(QueryID id, char * words, MatchType match_type, unsigned int matc
         }
         token = strtok(NULL, c);
     }
+    this->entriesNum = i+1;
+    this->matchedEntries = new bool[this->entriesNum];
+
+    for (i = 0; i < this->entriesNum; i++)
+    {
+        this->matchedEntries[i] = false;
+    }
     this->id = id;
     this->match_type = match_type;
     this->match_dist = match_dist;
@@ -64,7 +71,7 @@ const unsigned int Query :: getMatchingDistance() const
 }
 const word Query :: getWord(int word_num) const                             // array[i][j] --> arrary[i*(MAX_WORD_LENGTH + 1)]                                      
 {
-    if (word_num >= MAX_QUERY_WORDS)                                        // out of range   
+    if (word_num >= this->entriesNum)                                        // out of range   
     {
         //std::cout << "Sorry, index out of range." << std::endl;
         return NULL;
@@ -77,20 +84,48 @@ const word Query :: getWord(int word_num) const                             // a
     }
     return ptr;
 }
+void Query :: setTrue(const word entry_word)
+{
+    for (int i = 0; i < this->entriesNum; i++)
+    {
+        if (strcmp(this->getWord(i), entry_word) == 0)
+        {
+            this->matchedEntries[i] = true;
+            break;
+        }
+    }
+}
+void Query :: setFalse()
+{
+    for (int i = 0; i < this->entriesNum; i++)
+    {
+        this->matchedEntries[i] = false;
+    }
+}
+bool Query :: matched()
+{
+    int sum = 0;
+    for (int i = 0; i < this->entriesNum; i++)
+    {
+        sum += this->matchedEntries[i];
+    }
+    return (sum == this->entriesNum);
+}
+void Query :: printMatchedEntries()
+{
+    for (int i = 0; i < this->entriesNum; i++)
+    {
+        std::cout << this->matchedEntries[i] << std::endl;
+    }
+}
+bool* Query :: getMatchedEntries()
+{
+    return this->matchedEntries;
+}
 
 const int Query :: get_word_num() const
 {
-    int count = 0;
-    for (int i = 0; i < MAX_QUERY_WORDS; i++)
-    {
-        if (*(this->words + (MAX_WORD_LENGTH + 1) * i) == '\0')
-        {
-            return count;
-        }
-        count++;
-        
-    }
-    return count;
+    return this->entriesNum;
 }
 
 const char* Query :: getText() const                                        // for debugging reasons
@@ -99,6 +134,7 @@ const char* Query :: getText() const                                        // f
 }
 Query :: ~Query()
 {
+    delete[] this->matchedEntries;
     delete[] this->words;
     //std::cout << "Query with id = " << this->id << " is deleted!" << std::endl;
 }    
@@ -108,7 +144,7 @@ Query :: ~Query()
 
 
 
-Document :: Document(char * words, QueryID id)  
+Document :: Document(DocID id, char * words)  
 {
     if (words == NULL)
     {
@@ -257,6 +293,16 @@ void entry :: addToPayload(QueryID id, unsigned int threshold)
     }
 }
 
+void entry :: printPayload()
+{
+    payloadNode* curr = this->payload;
+    while (curr != NULL) 
+    {
+        std::cout << curr->getId() << " ";
+        curr = curr->getNext();
+    }
+    std::cout << std::endl;
+}
 bool entry :: EmptyPayload() 
 {
     return (this->payload == NULL);
@@ -267,8 +313,9 @@ void entry :: deletePayloadNode(QueryID id)
     payloadNode* temp, *curr = this->payload;
     if (this->payload == NULL) 
     {
-        std::cout<<"ID NOT FOUND\n";
-    } else if (this->payload != NULL) 
+        std::cout << "ID NOT FOUND\n";
+    } 
+    else 
     {
         if (payload->getId() == id) 
         {
@@ -305,6 +352,7 @@ void entry :: deletePayloadNode(QueryID id)
 
 entry :: ~entry()
 {
+    //std::cout <<"------------------------------" << this->keyword << std::endl;
     payloadNode *prev,*curr = this->payload;
     while (curr != NULL) 
     {

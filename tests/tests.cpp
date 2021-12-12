@@ -11,7 +11,6 @@ void test_query(void)
 
     TEST_CHECK((q.getText() != NULL));   // well created query
     TEST_CHECK((*(q.getText()) == 'h')); // first letter
-    TEST_CHECK((q.get_word_num() == 4)); // 4 words coz the rest are too small or too large
     TEST_CHECK(strcmp(q.getWord(0), "hello") == 0);
     TEST_CHECK(strcmp(q.getWord(2), "things") == 0);
     TEST_CHECK((q.getWord(6) == NULL)); // max query length = 5
@@ -27,7 +26,7 @@ void test_document(void)
     // too big/small word in the input
     char *d_words = new char[MAX_DOC_LENGTH]();
     strcpy(d_words, "hello people    how hellopeoplehellopeoplehellopeople things people how");
-    Document d(d_words, 0);
+    Document d(0, d_words);
     //d.printDocument();
 
     TEST_CHECK((d.getText() != NULL));
@@ -40,14 +39,14 @@ void test_document(void)
     delete[] d_words;
 
     // empty input
-    TEST_EXCEPTION(Document d2(NULL, 1), std::exception);
+    TEST_EXCEPTION(Document d2(1, NULL), std::exception);
 }
 
 void test_entry(void)
 {
     char *d_words = new char[MAX_DOC_LENGTH]();
     strcpy(d_words, "hello world lorem ipsum");
-    Document d(d_words, 2);
+    Document d(2, d_words);
 
     const word w = d.getWord(0);
     const word w2 = d.getWord(1);
@@ -102,7 +101,7 @@ void test_entrylist(void)
 {
     char *d_words = new char[MAX_DOC_LENGTH]();
     strcpy(d_words, "hello world lorem ipsum");
-    Document d(d_words, 2);
+    Document d(2, d_words);
 
     const word w = d.getWord(0);
     const word w2 = d.getWord(1);
@@ -203,7 +202,7 @@ void test_query_binary_search(void)
 }
 void test_hash_table(void)
 {
-    HashTable *HT = new HashTable; // create hash table
+    DocTable *HT = new DocTable; // create hash table
     const word w = new char[MAX_WORD_LENGTH];
     strcpy(w, "hello");
     unsigned long hash = HT->addToBucket(hashFunction(w), w); // add word to hash table
@@ -228,8 +227,8 @@ void test_deduplication(void)
 {
     char *d_words = new char[MAX_DOC_LENGTH]();
     strcpy(d_words, "hello world lorem ipsum hello world lorem ipsum");
-    Document d(d_words, 3);
-    HashTable *HT = new HashTable();
+    Document d(3, d_words);
+    DocTable *HT = new DocTable();
     DocumentDeduplication(&d, HT);
     TEST_EXCEPTION(DocumentDeduplication(NULL, HT), std::exception);
     delete HT;
@@ -327,9 +326,9 @@ void test_add(void)
     create_entry(&testWord1, &testEntry1);
     create_entry(&testWord2, &testEntry2);
     create_entry(&testWord3, &testEntry3);
-    indexNode *testIndex1 = new indexNode(&testEntry1);
-    indexNode *testIndex2 = new indexNode(&testEntry2);
-    indexNode *testIndex3 = new indexNode(&testEntry3);
+    indexNode *testIndex1 = new indexNode(testEntry1);
+    indexNode *testIndex2 = new indexNode(testEntry2);
+    indexNode *testIndex3 = new indexNode(testEntry3);
 
     // Try to add NULL
     TEST_EXCEPTION(testStack.add(NULL), std::exception);
@@ -375,9 +374,9 @@ void test_pop(void)
     create_entry(&testWord1, &testEntry1);
     create_entry(&testWord2, &testEntry2);
     create_entry(&testWord3, &testEntry3);
-    indexNode *testIndex1 = new indexNode(&testEntry1);
-    indexNode *testIndex2 = new indexNode(&testEntry2);
-    indexNode *testIndex3 = new indexNode(&testEntry3);
+    indexNode *testIndex1 = new indexNode(testEntry1);
+    indexNode *testIndex2 = new indexNode(testEntry2);
+    indexNode *testIndex3 = new indexNode(testEntry3);
 
     // Test empty stack
     nodeToReturn = testStack.pop();
@@ -420,8 +419,8 @@ void test_stackNode_create(void)
     entry *testEntry2;
     create_entry(&testWord1, &testEntry1);
     create_entry(&testWord2, &testEntry2);
-    indexNode *testIndex1 = new indexNode(&testEntry1);
-    indexNode *testIndex2 = new indexNode(&testEntry2);
+    indexNode *testIndex1 = new indexNode(testEntry1);
+    indexNode *testIndex2 = new indexNode(testEntry2);
     stackNode *testNode1 = NULL;
     stackNode *testNode2 = NULL;
 
@@ -456,8 +455,8 @@ void test_stackNode_pop(void)
     entry *testEntry2;
     create_entry(&testWord1, &testEntry1);
     create_entry(&testWord2, &testEntry2);
-    indexNode *testIndex1 = new indexNode(&testEntry1);
-    indexNode *testIndex2 = new indexNode(&testEntry2);
+    indexNode *testIndex1 = new indexNode(testEntry1);
+    indexNode *testIndex2 = new indexNode(testEntry2);
     stackNode *testNode1 = NULL;
     stackNode *testNode2 = NULL;
     stackNode *childNodeToReturn;
@@ -504,16 +503,14 @@ void test_indexNode_constructor_addEntry(void)
     indexNode *head;
 
     // Test creating with exact match (considered invalid for tree creation)
-    TEST_EXCEPTION(head = new indexNode(&testEntry1, 1, 1, MT_EXACT_MATCH), std::exception);
+    TEST_EXCEPTION(head = new indexNode(testEntry1, 1, 1, MT_EXACT_MATCH), std::exception);
 
     // Test insertion and exceptions when adding duplicates
-    head = new indexNode(&testEntry1);
-    TEST_CHECK(head->addEntry(&testEntry2, 1, 1) == EC_SUCCESS);
-    TEST_CHECK(head->addEntry(&testEntry3, 1, 1) == EC_SUCCESS);
-    TEST_EXCEPTION(head->addEntry(&testEntry3, 1, 1), std::exception);
-    TEST_CHECK(head->addEntry(&testEntry3, 2, 1) == EC_SUCCESS);
-    TEST_CHECK(head->addEntry(&testEntry4, 1, 1) == EC_SUCCESS);
-    TEST_EXCEPTION(head->addEntry(&testEntry4, 1, 1), std::exception);
+    head = new indexNode(testEntry1);
+    TEST_CHECK(head->addEntry(testEntry2, 1, 1) == EC_SUCCESS);
+    TEST_CHECK(head->addEntry(testEntry3, 1, 1) == EC_SUCCESS);
+    TEST_CHECK(head->addEntry(testEntry3, 2, 1) == EC_SUCCESS);
+    TEST_CHECK(head->addEntry(testEntry4, 1, 1) == EC_SUCCESS);
 
     destroy_entry(testEntry1);
     destroy_entry(testEntry2);
@@ -527,8 +524,8 @@ void test_indexNode_getEntry(void)
     word testWord1 = (word) "TESTWORD1";
     entry *testEntry1;
     create_entry(&testWord1, &testEntry1);
-    indexNode *head = new indexNode(&testEntry1);
-    TEST_CHECK(head->getEntry() == &testEntry1);
+    indexNode *head = new indexNode(testEntry1);
+    TEST_CHECK(head->getEntry() == testEntry1);
 
     destroy_entry(testEntry1);
     delete head;
@@ -550,15 +547,15 @@ void test_indexNode_getChildren(void)
     indexNode *head;
     indexList *listOfChildren;
 
-    head = new indexNode(&testEntry1);
-    head->addEntry(&testEntry2, 1, 1);
-    head->addEntry(&testEntry3, 1, 1);
+    head = new indexNode(testEntry1);
+    head->addEntry(testEntry2, 1, 1);
+    head->addEntry(testEntry3, 1, 1);
 
     listOfChildren = head->getChildren();
     // Test the correct order of the nodes in the list
-    TEST_CHECK(listOfChildren->getNode()->getEntry() == &testEntry2);
+    TEST_CHECK(listOfChildren->getNode()->getEntry() == testEntry2);
     TEST_CHECK(listOfChildren->getDistanceFromParent() == 1);
-    TEST_CHECK(listOfChildren->getNext()->getNode()->getEntry() == &testEntry3);
+    TEST_CHECK(listOfChildren->getNext()->getNode()->getEntry() == testEntry3);
     TEST_CHECK(listOfChildren->getNext()->getDistanceFromParent() == 2);
 
     destroy_entry(testEntry1);
@@ -577,21 +574,21 @@ void test_indexNode_getMatchingType(void)
 
     // Test with default args
     create_entry(&testWord1, &testEntry1);
-    head = new indexNode(&testEntry1);
+    head = new indexNode(testEntry1);
     TEST_CHECK(head->getMatchingType() == MT_EDIT_DIST);
     destroy_entry(testEntry1);
     delete head;
 
     // Test by explicit argument EDIT_DIST
     create_entry(&testWord1, &testEntry1);
-    head = new indexNode(&testEntry1, MT_EDIT_DIST);
+    head = new indexNode(testEntry1, MT_EDIT_DIST);
     TEST_CHECK(head->getMatchingType() == MT_EDIT_DIST);
     destroy_entry(testEntry1);
     delete head;
 
     // Test by explicit argument EDIT_DIST
     create_entry(&testWord1, &testEntry1);
-    head = new indexNode(&testEntry1, 1, 1, MT_HAMMING_DIST);
+    head = new indexNode(testEntry1, 1, 1, MT_HAMMING_DIST);
     TEST_CHECK(head->getMatchingType() == MT_HAMMING_DIST);
     destroy_entry(testEntry1);
     delete head;
@@ -609,11 +606,11 @@ void test_indexList_constructor(void)
     indexList *testList = NULL;
 
     // Test indexList Constructor Edge Cases
-    TEST_EXCEPTION(testList = new indexList(&nullTestEntry, 1, MT_EDIT_DIST, 1, 1), std::exception);
-    TEST_EXCEPTION(testList = new indexList(&testEntry1, 1, MT_EXACT_MATCH, 1, 1), std::exception);
-    TEST_EXCEPTION(testList = new indexList(&testEntry1, 0, MT_EDIT_DIST, 1, 1), std::exception);
+    TEST_EXCEPTION(testList = new indexList(nullTestEntry, 1, MT_EDIT_DIST, 1, 1), std::exception);
+    TEST_EXCEPTION(testList = new indexList(testEntry1, 1, MT_EXACT_MATCH, 1, 1), std::exception);
+    TEST_EXCEPTION(testList = new indexList(testEntry1, 0, MT_EDIT_DIST, 1, 1), std::exception);
 
-    testList = new indexList(&testEntry1, 1, MT_EDIT_DIST, 1, 1);
+    testList = new indexList(testEntry1, 1, MT_EDIT_DIST, 1, 1);
     TEST_CHECK(testList != NULL);
 
     destroy_entry(testEntry1);
@@ -636,14 +633,13 @@ void test_indexList_addToList(void)
     indexList *testList = NULL;
 
     // Test adding good inputs
-    testList = new indexList(&testEntry1, 1, MT_EDIT_DIST, 1, 1);
-    TEST_CHECK(testList->addToList(&testEntry3, 2, 1, 1) == 0);
-    TEST_CHECK(testList->addToList(&testEntry2, 1, 1, 1) == 0);
+    testList = new indexList(testEntry1, 1, MT_EDIT_DIST, 1, 1);
+    TEST_CHECK(testList->addToList(testEntry3, 2, 1, 1) == 0);
+    TEST_CHECK(testList->addToList(testEntry2, 1, 1, 1) == 0);
 
     // Test NULL Pointers and invalid distance from parent
-    TEST_EXCEPTION(testList->addToList(&testEntry3, 0, 1, 1), std::exception);
-    TEST_EXCEPTION(testList->addToList(&testEntry3, -1, 1, 1), std::exception);
-    TEST_EXCEPTION(testList->addToList(&nullTestEntry, 3, 1, 1), std::exception);
+    TEST_EXCEPTION(testList->addToList(testEntry3, 0, 1, 1), std::exception);
+    TEST_EXCEPTION(testList->addToList(nullTestEntry, 3, 1, 1), std::exception);
 
     destroy_entry(testEntry1);
     destroy_entry(testEntry2);
@@ -659,7 +655,7 @@ void test_indexList_getDistanceFromParent(void)
     create_entry(&testWord1, &testEntry1);
     indexList *testList = NULL;
 
-    testList = new indexList(&testEntry1, 1, MT_EDIT_DIST, 1, 1);
+    testList = new indexList(testEntry1, 1, MT_EDIT_DIST, 1, 1);
     TEST_CHECK(testList->getDistanceFromParent() == 1);
 
     destroy_entry(testEntry1);
@@ -674,8 +670,8 @@ void test_indexList_getNode(void)
     create_entry(&testWord1, &testEntry1);
     indexList *testList = NULL;
 
-    testList = new indexList(&testEntry1, 1, MT_EDIT_DIST, 1, 1);
-    TEST_CHECK(testList->getNode()->getEntry() == &testEntry1);
+    testList = new indexList(testEntry1, 1, MT_EDIT_DIST, 1, 1);
+    TEST_CHECK(testList->getNode()->getEntry() == testEntry1);
 
     destroy_entry(testEntry1);
     delete testList;
@@ -692,9 +688,9 @@ void test_indexList_getNext(void)
     create_entry(&testWord2, &testEntry2);
     indexList *testList = NULL;
 
-    testList = new indexList(&testEntry1, 1, MT_EDIT_DIST, 1, 1);
-    testList->addToList(&testEntry2, 2, 1, 1);
-    TEST_CHECK(testList->getNext()->getNode()->getEntry() == &testEntry2);
+    testList = new indexList(testEntry1, 1, MT_EDIT_DIST, 1, 1);
+    testList->addToList(testEntry2, 2, 1, 1);
+    TEST_CHECK(testList->getNext()->getNode()->getEntry() == testEntry2);
 
     destroy_entry(testEntry1);
     destroy_entry(testEntry2);
@@ -751,29 +747,28 @@ void test_lookup_entry_index(void)
     test_list->addEntry(testEntry3);
     test_list->addEntry(testEntry2);
     test_list->addEntry(testEntry1);
-    addToIndex(&testEntry1, 1, MT_EDIT_DIST, 1);
-    addToIndex(&testEntry2, 2, MT_EDIT_DIST, 1);
-    addToIndex(&testEntry3, 3, MT_EDIT_DIST, 1);
-    addToIndex(&testEntry4, 4, MT_EDIT_DIST, 1);
-    addToIndex(&testEntry5, 5, MT_EDIT_DIST, 1);
-    addToIndex(&testEntry6, 6, MT_EDIT_DIST, 1);
-
-    addToIndex(&testEntry7, 1, MT_HAMMING_DIST, 1);
-    addToIndex(&testEntry8, 2, MT_HAMMING_DIST, 1);
-    addToIndex(&testEntry9, 3, MT_HAMMING_DIST, 0);
-    addToIndex(&testEntry10, 4, MT_HAMMING_DIST, 1);
-    addToIndex(&testEntry11, 5, MT_HAMMING_DIST, 1);
-    addToIndex(&testEntry12, 6, MT_HAMMING_DIST, 1);
+    addToIndex(testEntry1, 1, MT_EDIT_DIST, 1);
+    addToIndex(testEntry2, 2, MT_EDIT_DIST, 1);
+    addToIndex(testEntry3, 3, MT_EDIT_DIST, 1);
+    addToIndex(testEntry4, 4, MT_EDIT_DIST, 1);
+    addToIndex(testEntry5, 5, MT_EDIT_DIST, 1);
+    addToIndex(testEntry6, 6, MT_EDIT_DIST, 1);
+    addToIndex(testEntry7, 1, MT_HAMMING_DIST, 1);
+    addToIndex(testEntry8, 2, MT_HAMMING_DIST, 1);
+    addToIndex(testEntry9, 3, MT_HAMMING_DIST, 0);
+    addToIndex(testEntry10, 4, MT_HAMMING_DIST, 1);
+    addToIndex(testEntry11, 5, MT_HAMMING_DIST, 1);
+    addToIndex(testEntry12, 6, MT_HAMMING_DIST, 1);
     const word nullText = NULL;
 
     // Test exceptions on bad arguments
-    TEST_EXCEPTION(lookup_entry_index(&nullText, result, MT_EDIT_DIST), std::exception);
+    TEST_EXCEPTION(lookup_entry_index(nullText, result, MT_EDIT_DIST), std::exception);
 
     //editIndex->printTree();
 
     // This word does not exist, but there are several words with a distance 1 to it
     const word searchTermEdit1 = (char *)"TESTWORD\0";
-    TEST_CHECK(lookup_entry_index(&searchTermEdit1, result, MT_EDIT_DIST) == EC_SUCCESS);
+    TEST_CHECK(lookup_entry_index(searchTermEdit1, result, MT_EDIT_DIST) == EC_SUCCESS);
     // Test that only the correct words matched
     resultNode = result->getHead();
     TEST_CHECK(strcmp(resultNode->getWord(), testEntry6->getWord()) == 0);
@@ -794,7 +789,7 @@ void test_lookup_entry_index(void)
     // Search for word that exists as second child
     const word searchTermEdit2 = (char *)"TESTWOR22\0";
     create_entry_list(&result);
-    TEST_CHECK(lookup_entry_index(&searchTermEdit2, result, MT_EDIT_DIST) == EC_SUCCESS);
+    TEST_CHECK(lookup_entry_index(searchTermEdit2, result, MT_EDIT_DIST) == EC_SUCCESS);
     resultNode = result->getHead();
     TEST_CHECK(strcmp(resultNode->getWord(), testEntry2->getWord()) == 0);
     resultNode = resultNode->getNext();
@@ -807,12 +802,12 @@ void test_lookup_entry_index(void)
     create_entry_list(&result);
     // This word does not exist, but there are several words with a distance 1 to it
     const word searchTermHamming1 = (char *)"TESTWORD\0";
-    TEST_CHECK(lookup_entry_index(&searchTermHamming1, result, MT_HAMMING_DIST) == EC_SUCCESS);
+    TEST_CHECK(lookup_entry_index(searchTermHamming1, result, MT_HAMMING_DIST) == EC_SUCCESS);
     resultNode = result->getHead();
     TEST_CHECK(resultNode == NULL);
 
     const word searchTermHamming2 = (char *)"TESTWORD1\0";
-    TEST_CHECK(lookup_entry_index(&searchTermHamming2, result, MT_HAMMING_DIST) == EC_SUCCESS);
+    TEST_CHECK(lookup_entry_index(searchTermHamming2, result, MT_HAMMING_DIST) == EC_SUCCESS);
     // Test that only the correct words matched
     resultNode = result->getHead();
     TEST_CHECK(strcmp(resultNode->getWord(), testEntry6->getWord()) == 0);
@@ -833,7 +828,7 @@ void test_lookup_entry_index(void)
     // Search for word that exists as second child
     const word testTermHamming3 = (char *)"TESTWOR22\0";
     create_entry_list(&result);
-    TEST_CHECK(lookup_entry_index(&testTermHamming3, result, MT_HAMMING_DIST) == EC_SUCCESS);
+    TEST_CHECK(lookup_entry_index(testTermHamming3, result, MT_HAMMING_DIST) == EC_SUCCESS);
     resultNode = result->getHead();
     TEST_CHECK(strcmp(resultNode->getWord(), testEntry2->getWord()) == 0);
     resultNode = resultNode->getNext();
@@ -870,16 +865,16 @@ void test_addToIndex(void)
     entry_list *result = NULL;
     create_entry_list(&result);
     InitializeIndex();
-    addToIndex(&testEntry1, 1, MT_EDIT_DIST, 1);
-    addToIndex(&testEntry2, 2, MT_EDIT_DIST, 1);
-    addToIndex(&testEntry3, 3, MT_EDIT_DIST, 1);
-    addToIndex(&testEntry4, 4, MT_EDIT_DIST, 1);
-    addToIndex(&testEntry5, 5, MT_EDIT_DIST, 1);
-    addToIndex(&testEntry6, 6, MT_EDIT_DIST, 1);
+    addToIndex(testEntry1, 1, MT_EDIT_DIST, 1);
+    addToIndex(testEntry2, 2, MT_EDIT_DIST, 1);
+    addToIndex(testEntry3, 3, MT_EDIT_DIST, 1);
+    addToIndex(testEntry4, 4, MT_EDIT_DIST, 1);
+    addToIndex(testEntry5, 5, MT_EDIT_DIST, 1);
+    addToIndex(testEntry6, 6, MT_EDIT_DIST, 1);
 
     // Search for a word
     const word wordToFind = (char *)"TESTWORD\0";
-    TEST_CHECK(lookup_entry_index(&wordToFind, result, MT_EDIT_DIST) == EC_SUCCESS);
+    TEST_CHECK(lookup_entry_index(wordToFind, result, MT_EDIT_DIST) == EC_SUCCESS);
     // Test that only the correct words matched
     resultNode = result->getHead();
     TEST_CHECK(strcmp(resultNode->getWord(), testEntry6->getWord()) == 0);
@@ -956,19 +951,19 @@ void test_removeFromIndex(void)
     test_list->addEntry(testEntry3);
     test_list->addEntry(testEntry2);
     test_list->addEntry(testEntry1);
-    addToIndex(&testEntry1, 1, MT_EDIT_DIST, 1);
-    addToIndex(&testEntry2, 2, MT_EDIT_DIST, 1);
-    addToIndex(&testEntry3, 3, MT_EDIT_DIST, 1);
-    addToIndex(&testEntry4, 4, MT_EDIT_DIST, 1);
-    addToIndex(&testEntry5, 5, MT_EDIT_DIST, 1);
-    addToIndex(&testEntry6, 6, MT_EDIT_DIST, 1);
+    addToIndex(testEntry1, 1, MT_EDIT_DIST, 1);
+    addToIndex(testEntry2, 2, MT_EDIT_DIST, 1);
+    addToIndex(testEntry3, 3, MT_EDIT_DIST, 1);
+    addToIndex(testEntry4, 4, MT_EDIT_DIST, 1);
+    addToIndex(testEntry5, 5, MT_EDIT_DIST, 1);
+    addToIndex(testEntry6, 6, MT_EDIT_DIST, 1);
 
-    addToIndex(&testEntry7, 1, MT_HAMMING_DIST, 1);
-    addToIndex(&testEntry8, 2, MT_HAMMING_DIST, 1);
-    addToIndex(&testEntry9, 3, MT_HAMMING_DIST, 0);
-    addToIndex(&testEntry10, 4, MT_HAMMING_DIST, 1);
-    addToIndex(&testEntry11, 5, MT_HAMMING_DIST, 1);
-    addToIndex(&testEntry12, 6, MT_HAMMING_DIST, 1);
+    addToIndex(testEntry7, 1, MT_HAMMING_DIST, 1);
+    addToIndex(testEntry8, 2, MT_HAMMING_DIST, 1);
+    addToIndex(testEntry9, 3, MT_HAMMING_DIST, 0);
+    addToIndex(testEntry10, 4, MT_HAMMING_DIST, 1);
+    addToIndex(testEntry11, 5, MT_HAMMING_DIST, 1);
+    addToIndex(testEntry12, 6, MT_HAMMING_DIST, 1);
 
     // ADD CASES HERE
     const word textToRemove = (char *)"TESTWORD1\0";
@@ -976,7 +971,7 @@ void test_removeFromIndex(void)
 
     // This word does not exist, but there are several words with a distance 1 to it
     const word searchItem = (char *)"TESTWORD\0";
-    TEST_CHECK(lookup_entry_index(&searchItem, result, MT_EDIT_DIST) == EC_SUCCESS);
+    TEST_CHECK(lookup_entry_index(searchItem, result, MT_EDIT_DIST) == EC_SUCCESS);
 
     // Test that (only) the removed word does not apear
     resultNode = result->getHead();
@@ -995,7 +990,7 @@ void test_removeFromIndex(void)
     create_entry_list(&result);
     removeFromIndex(textToRemove, 1, MT_HAMMING_DIST);
     const word searchTermHamming2 = (char *)"TESTWORD1\0";
-    TEST_CHECK(lookup_entry_index(&searchTermHamming2, result, MT_HAMMING_DIST) == EC_SUCCESS);
+    TEST_CHECK(lookup_entry_index(searchTermHamming2, result, MT_HAMMING_DIST) == EC_SUCCESS);
     // Test that only the correct words matched
     resultNode = result->getHead();
     TEST_CHECK(strcmp(resultNode->getWord(), testEntry6->getWord()) == 0);
@@ -1116,11 +1111,11 @@ TEST_LIST = {
     {"indexList getNode", test_indexList_getNode},
     {"indexList getNext", test_indexList_getNext},
     //{"lookup_entry_index", test_lookup_entry_index},
+    //{"Remove word from index", test_removeFromIndex},
+    //{"Add word to index", test_addToIndex},
     {"payloadNode Constructor, Getters", test_payloadNode_constructor_getters},
     {"payloadNode setNext", test_payloadNode_setNext},
     {"payload Constructor", test_payload_constructor_EmptyPayload_getPayload},
     {"payload addToPayload", test_payload_addToPayload},
     {"payload deleteNode", test_payload_deletePayloadNode},
-    //{"Remove word from index", test_removeFromIndex},
-    //{"Add word to index", test_addToIndex},
     {NULL, NULL}};

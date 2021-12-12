@@ -13,23 +13,23 @@ class indexList;
 class indexNode {
     private:
         MatchType MatchingType;
-        entry** content;
+        entry* content;
         indexList* children;
     public:
-        indexNode(entry** input, QueryID id = 1, unsigned int threshold = 0, MatchType matchingMetric = MT_EDIT_DIST);
-        ErrorCode addEntry(entry** input, QueryID id, unsigned int threshold);
+        indexNode(entry* input, QueryID id = 1, unsigned int threshold = 0, MatchType matchingMetric = MT_EDIT_DIST);
+        ErrorCode addEntry(entry* input, QueryID id, unsigned int threshold);
         int printTree(int depth = 0);
-        entry** getEntry();
+        entry* getEntry();
         indexList* getChildren();
         MatchType getMatchingType();
         ~indexNode();
 };
 
 //ErrorCode build_entry_index(const entry_list* el, MatchType type, indexNode** ix);
-ErrorCode lookup_entry_index(const word *w, entry_list *result, MatchType queryMatchingType);
+ErrorCode lookup_entry_index(const word w, entry_list *result, MatchType queryMatchingType);
 ErrorCode destroy_entry_index(indexNode* ix);
 ErrorCode InitializeIndex();
-ErrorCode addToIndex(entry** toAdd, QueryID queryId, MatchType queryMatchingType, unsigned int threshold);
+ErrorCode addToIndex(entry* toAdd, QueryID queryId, MatchType queryMatchingType, unsigned int threshold);
 ErrorCode removeFromIndex(const word givenWord, const QueryID queryId, const MatchType givenType);
 ////////////////////////////////////////////////////////////////////////////////////
 
@@ -67,8 +67,8 @@ class indexList {
         indexNode* node;
         indexList* next;
     public:
-        indexList(entry** content, unsigned int distance, MatchType matchingMetric, QueryID id, unsigned int threshold, indexList* next = nullptr);
-        int addToList(entry** content, unsigned int distance, QueryID id, unsigned int threshold);    // Insert new entry in the right place in the list
+        indexList(entry* content, unsigned int distance, MatchType matchingMetric, QueryID id, unsigned int threshold, indexList* next = nullptr);
+        int addToList(entry* content, unsigned int distance, QueryID id, unsigned int threshold);    // Insert new entry in the right place in the list
         unsigned int getDistanceFromParent() const;
         void printList(int depth = 0);
         indexNode* getNode() const ;

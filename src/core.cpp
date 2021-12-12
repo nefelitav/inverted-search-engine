@@ -6,10 +6,10 @@
 // Some globals
 entry_list* EntryList; 
 QueryTable* QT;
+EntryTable* ET;
 indexNode* editIndex;
 indexNode** hammingIndexes;
 void* exactHash;
-EntryTable* ET;
 
 ErrorCode InitializeIndex() 
 {
@@ -41,22 +41,21 @@ ErrorCode StartQuery(QueryID query_id, const char* query_str, MatchType match_ty
         Query* q = new Query(query_id, (char*)query_str, match_type, match_dist);
         QT->addToBucket(hashFunctionById(query_id), q);
         int i = 0;
-        entry* e = NULL;
+        entry *tempEntry;
         word w = q->getWord(0);
         if (w == NULL)
         {
             return EC_FAIL;
         }
         while (w != NULL)
-        {   
-            create_entry(&w, &e);
-            e->addToPayload(query_id, match_dist);
-            add_entry(EntryList, e);    
-            addToIndex(&e, query_id, match_type, match_dist); // add entry to index
+        {
+            create_entry(&w, &tempEntry);
+            EntryList->addEntry(tempEntry);
+            tempEntry->addToPayload(query_id, match_dist);
+            addToIndex(tempEntry, query_id, match_type, match_dist); // add entry to index
             i++;
             w = q->getWord(i);
         }
-        //delete q;                       // delete querytable instead
         return EC_SUCCESS;
     } 
     catch (const std::exception& _) 
@@ -101,8 +100,28 @@ ErrorCode EndQuery(QueryID query_id)
     }
     return EC_NO_AVAIL_RES;
 }
-// ErrorCode MatchDocument(DocID         doc_id,
-                        // const char*   doc_str);
+
+ErrorCode MatchDocument(DocID doc_id, const char* doc_str)
+{
+    try 
+    {
+        Document* d = new Document(doc_id, (char*)doc_str);
+        DocTable* DT;
+        DT = new DocTable();
+        DocumentDeduplication(d, DT);//->printTable();
+        DT->wordLookup();
+        delete d;
+        delete DT;
+        return EC_SUCCESS;
+    } 
+    catch (const std::exception& _) 
+    {
+        return EC_FAIL;
+    }
+    return EC_NO_AVAIL_RES;
+
+
+}
 // ErrorCode GetNextAvailRes(DocID*         p_doc_id,
                         // unsigned int*  p_num_res,
                         // QueryID**      p_query_ids);

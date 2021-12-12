@@ -9,15 +9,12 @@
 // create documents and queries, reading words from a file
 int main()
 {
-    Query **q = new Query *[NUM_QUERIES]();    // array of queries - static
-    Document **d = new Document *[NUM_DOCS](); // array of docs - static
     std::string line;
     std::ifstream myfile;
     myfile.open("./data/input.txt");
     char *q_words;
     char *d_words;
     int q_count = 0, d_count = 0, doc = 0;
-    //HashTable* HT;
 
     InitializeIndex();
     if (myfile.is_open())
@@ -37,22 +34,17 @@ int main()
             {
                 q_words = new char[strlen(line.c_str()) + 1]();
                 strcpy(q_words, line.c_str());
-                //q[q_count] = new Query(q_count, q_words, MT_EXACT_MATCH, 0);               // new query
-                //q[q_count]->printQuery();
-                StartQuery(q_count, q_words, MT_EXACT_MATCH, 0);
+                StartQuery(q_count, q_words, MT_HAMMING_DIST, 0);
                 delete[] q_words;
                 q_count++;
             }
             else
             {
-                //HT = new HashTable();
+                //editIndex->printTree();
                 d_words = new char[strlen(line.c_str()) + 1]();
                 strcpy(d_words, line.c_str());
-                d[d_count] = new Document(d_words, d_count); // new doc
-                //d[d_count]->printDocument();
-                //DocumentDeduplication(d[d_count], HT)->printTable();
+                MatchDocument(d_count, d_words);
                 delete[] d_words;
-                //delete HT;
                 d_count++;
             }
         }
@@ -63,29 +55,14 @@ int main()
         std::cout << "Unable to open file" << std::endl;
         return -1;
     }
-    EndQuery(0);
-    EndQuery(1);
-    EndQuery(2);
-    EndQuery(3);
-    EndQuery(4);
+    // EndQuery(0);
+    // EndQuery(1);
+    // EndQuery(2);
+    // EndQuery(3);
+    // EndQuery(4);
 
     // ET->printTable();
-    // for (int j = 0; j < MAX_QUERY_WORDS; j++)
-    // {
-    //     if (QT->getQuery(0)->getWord(j) != NULL)
-    //     {
-    //         ET->deleteQueryId(QT->getQuery(0)->getWord(j), 0);
-    //     }
-    // }
-    // std::cout << "----------------------------" << std::endl;
-    // ET->printTable();
-
-    // ET->printBucket(1001);
-
-
-    // std::cout << std::endl;
     // QT->printTable();
-    // std::cout << std::endl;
 
     // const word w = d[0]->getWord(1);
     // const word w2 = d[0]->getWord(2);
@@ -129,16 +106,4 @@ int main()
     // destroy_entry_list(result);
 
     DestroyIndex();
-
-    // Delete queries and documents
-    for (int i = 0; i < NUM_QUERIES; i++)
-    {
-        delete q[i];
-    }
-    delete[] q;
-    for (int i = 0; i < NUM_DOCS; i++)
-    {
-        delete d[i];
-    }
-    delete[] d;
 }

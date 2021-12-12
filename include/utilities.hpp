@@ -10,26 +10,50 @@
 #include <cstdlib>
 
 
-bool exactMatch(const word word1,const word word2);
-int hammingDistance(const word word1,const word word2);
-int editDistance(const word word1,const word word2);
+bool exactMatch(const word word1, const word word2);
+int hammingDistance(const word word1, const word word2);
+int editDistance(const word word1, const word word2);
  
-class HashTable {
+
+class matchedQuery {
+    private:
+        QueryID id;
+        matchedQuery* next;
+    public:
+        matchedQuery(QueryID id);
+        matchedQuery* getNext();
+        QueryID getId();
+        void setNext(matchedQuery* next);
+};
+
+class matchedQueryList {
+    private:
+        matchedQuery* head;
+    public:
+        matchedQueryList();
+        void addToList(QueryID id);
+        void printList();
+        matchedQuery* getHead();
+        void removeQuery(matchedQuery* q);
+        ~matchedQueryList();
+};
+
+class DocTable {
     private:
         word** buckets;
         int* wordsPerBucket;
     public:
-        HashTable();
+        DocTable();
         unsigned long addToBucket(unsigned long hash, const word w);
-        void addWordsToIndex();
+        void wordLookup();
         const word* getBucket(unsigned long hash) const;
         void printBucket(unsigned long hash) const;
         void printTable() const;
         const int getWordsPerBucket(unsigned long hash) const;
-        ~HashTable();
+        ~DocTable();
 };
 
-HashTable* DocumentDeduplication(Document* d, HashTable* HT);
+DocTable* DocumentDeduplication(Document* d, DocTable* HT);
 int binarySearch(word* words, int left, int right, const word w);
 unsigned long hashFunction(const word str);
 
@@ -46,13 +70,13 @@ class QueryTable {
         Query** getBucket(unsigned long hash) const;
         void printBucket(unsigned long hash) const;
         void printTable() const;
-        const Query* getQuery(QueryID id) const;
+        Query* getQuery(QueryID id);
         void deleteQuery(QueryID id) const;
         const int getQueriesPerBucket(unsigned long hash) const;
         ~QueryTable();
 };
 
-int FindQuery(Query** queries, int left, int right, const QueryID id);
+int findQuery(Query** queries, int left, int right, const QueryID id);
 unsigned long hashFunctionById(QueryID id);
 int QuerybinarySearch(Query** queries, int left, int right, const QueryID id);
 
@@ -68,9 +92,10 @@ class EntryTable {
         void printTable() const;
         const int getEntriesPerBucket(unsigned long hash) const;
         void deleteQueryId(word givenWord, const QueryID queryId);
+        void wordLookup(const word w, entry_list* result);
         ~EntryTable();
 };
-int FindEntry(entry** entries, int left, int right, const word w);
+int findEntry(entry** entries, int left, int right, const word w);
 int entrybinarySearch(entry** entries, int left, int right, const word w);
 
 extern QueryTable* QT;

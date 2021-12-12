@@ -15,6 +15,8 @@ class Query {
         QueryID id;
         MatchType match_type;
         unsigned int match_dist;
+        bool* matchedEntries;
+        int entriesNum;
     public:
         Query(QueryID id, char * words, MatchType match_type, unsigned int match_dist);
         void printQuery() const;                                                            
@@ -23,7 +25,12 @@ class Query {
         const QueryID getId() const;                                                             
         const int get_word_num() const;
         const MatchType getMatchingType() const;                                                             
-        const unsigned int getMatchingDistance() const;                                                             
+        const unsigned int getMatchingDistance() const;     
+        void setTrue(const word entry_word);
+        void setFalse();
+        void printMatchedEntries();
+        bool* getMatchedEntries();
+        bool matched();
         ~Query();
           
 };
@@ -33,7 +40,7 @@ class Document {
         char* text;                 // saving words in a 1d array instead of a 2d to save time (contiguous allocation)   
         DocID id;
     public:
-        Document(char * words, QueryID id); 
+        Document(DocID id, char * words); 
         void printDocument() const;
         const word getWord(int word_num) const;                      
         char* getText() const;
@@ -54,6 +61,7 @@ class entry {
         void setNext(entry* e);
         void addToPayload(QueryID id, unsigned int threshold);
         bool EmptyPayload();
+        void printPayload();
         void deletePayloadNode(QueryID id);
         ~entry();
 };
