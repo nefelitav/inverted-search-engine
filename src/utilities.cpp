@@ -867,3 +867,55 @@ EntryTable :: ~EntryTable()
 }
 
 ///////////////////////////////////////////////////////////////////////
+
+result::result(int numRes, DocID document, QueryID *queries)
+{
+    this->doc_id = document;
+    this->num_res = numRes;
+    this->query_ids = queries;
+    this->next = NULL;
+}
+
+void result::addResult(result *toAdd)
+{
+    if (this->next != NULL)
+    {
+        this->next->addResult(toAdd);
+    }
+    else
+    {
+        this->next = toAdd;
+    }
+}
+
+result *result::getNext()
+{
+    return this->next;
+}
+
+int result::getNumRes()
+{
+    return this->num_res;
+}
+
+DocID result::getDocID()
+{
+    return this->doc_id;
+}
+
+QueryID *result::getQueries()
+{
+    return this->query_ids;
+}
+
+void storeResult(int numRes, DocID document, QueryID *queries)
+{
+    result* temp = NULL;
+    if (resultList == NULL)
+    {
+        resultList = new result(numRes, document, queries);
+    }else{
+        temp = new result(numRes, document, queries);
+        resultList->addResult(temp);
+    }
+}

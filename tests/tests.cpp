@@ -85,7 +85,7 @@ void test_entry(void)
 
 void test_entry_set_get_payload(void)
 {
-    word testWord = (word)"TESTWORD1";
+    word testWord = (word) "TESTWORD1";
     entry *testEntry;
     create_entry(&testWord, &testEntry);
 
@@ -95,6 +95,18 @@ void test_entry_set_get_payload(void)
     TEST_CHECK(testEntry->getPayload()->getThreshold() == 2);
 
     destroy_entry(testEntry);
+}
+
+void test_entry_EmptyPayload(void)
+{
+    // Create entry with no Payload
+    char *testWord1 = (char *)"TESTWORD1";
+    entry *testEntry1;
+    create_entry(&testWord1, &testEntry1);
+
+    // Check that EmptyPayload is true
+    TEST_CHECK(testEntry1->EmptyPayload() == true);
+    destroy_entry(testEntry1);
 }
 
 void test_entrylist(void)
@@ -261,7 +273,7 @@ void test_start_query(void)
     DestroyIndex();
 }
 
-// Match functions
+//////////////////////////// Distance Functionss ////////////////////////////
 void test_exact_match(void)
 {
     word word1 = (word) "hello";
@@ -311,8 +323,8 @@ void test_edit(void)
     TEST_EXCEPTION(editDistance(ptrNull, ptrNull), std::exception);
 }
 
-// Stack
-void test_add(void)
+//////////////////////////// Stack ////////////////////////////
+void test_stack_add(void)
 {
     // Setup
     indexNode *nullPTR = NULL;
@@ -360,7 +372,7 @@ void test_add(void)
     destroy_entry(testEntry3);
 }
 
-void test_pop(void)
+void test__stack_pop(void)
 {
     // Setup
     indexNode *nodeToReturn;
@@ -747,6 +759,18 @@ void test_lookup_entry_index(void)
     test_list->addEntry(testEntry3);
     test_list->addEntry(testEntry2);
     test_list->addEntry(testEntry1);
+    testEntry1->addToPayload(1,1);
+    testEntry2->addToPayload(2,1);
+    testEntry3->addToPayload(3,1);
+    testEntry4->addToPayload(4,1);
+    testEntry5->addToPayload(5,1);
+    testEntry6->addToPayload(6,1);
+    testEntry7->addToPayload(1,1);
+    testEntry8->addToPayload(2,1);
+    testEntry9->addToPayload(3,0);
+    testEntry10->addToPayload(4,1);
+    testEntry11->addToPayload(5,1);
+    testEntry12->addToPayload(6,1);
     addToIndex(testEntry1, 1, MT_EDIT_DIST, 1);
     addToIndex(testEntry2, 2, MT_EDIT_DIST, 1);
     addToIndex(testEntry3, 3, MT_EDIT_DIST, 1);
@@ -798,7 +822,7 @@ void test_lookup_entry_index(void)
     TEST_CHECK(resultNode == NULL);
     destroy_entry_list(result);
 
-    /////////////////// Test For Hamming Indexes ///////////////////
+    //////////////// Test For Hamming Indexes 
     create_entry_list(&result);
     // This word does not exist, but there are several words with a distance 1 to it
     const word searchTermHamming1 = (char *)"TESTWORD\0";
@@ -841,69 +865,10 @@ void test_lookup_entry_index(void)
     DestroyIndex();
     destroy_entry_list(test_list);
 }
+
 void test_addToIndex(void)
 {
-    char *testWord1 = (char *)"TESTWORD1"; // Parent
-    char *testWord2 = (char *)"TESTWORD2"; // Child diff=1
-    char *testWord3 = (char *)"TESTWOR22"; // Child diff=2
-    char *testWord4 = (char *)"TESTWORD3"; // Child diff=1,1
-    char *testWord5 = (char *)"TESTWORD4"; // Child diff=1,1
-    char *testWord6 = (char *)"TESTWORD5"; // Child diff=1,1
-    entry *testEntry1;
-    entry *testEntry2;
-    entry *testEntry3;
-    entry *testEntry4;
-    entry *testEntry5;
-    entry *testEntry6;
-    create_entry(&testWord1, &testEntry1);
-    create_entry(&testWord2, &testEntry2);
-    create_entry(&testWord3, &testEntry3);
-    create_entry(&testWord4, &testEntry4);
-    create_entry(&testWord5, &testEntry5);
-    create_entry(&testWord6, &testEntry6);
-    entry *resultNode = NULL;
-    entry_list *result = NULL;
-    create_entry_list(&result);
-    InitializeIndex();
-    addToIndex(testEntry1, 1, MT_EDIT_DIST, 1);
-    addToIndex(testEntry2, 2, MT_EDIT_DIST, 1);
-    addToIndex(testEntry3, 3, MT_EDIT_DIST, 1);
-    addToIndex(testEntry4, 4, MT_EDIT_DIST, 1);
-    addToIndex(testEntry5, 5, MT_EDIT_DIST, 1);
-    addToIndex(testEntry6, 6, MT_EDIT_DIST, 1);
-
-    // Search for a word
-    const word wordToFind = (char *)"TESTWORD\0";
-    TEST_CHECK(lookup_entry_index(wordToFind, result, MT_EDIT_DIST) == EC_SUCCESS);
-    // Test that only the correct words matched
-    resultNode = result->getHead();
-    TEST_CHECK(strcmp(resultNode->getWord(), testEntry6->getWord()) == 0);
-    resultNode = resultNode->getNext();
-    TEST_CHECK(strcmp(resultNode->getWord(), testEntry5->getWord()) == 0);
-    resultNode = resultNode->getNext();
-    TEST_CHECK(strcmp(resultNode->getWord(), testEntry4->getWord()) == 0);
-    resultNode = resultNode->getNext();
-    TEST_CHECK(strcmp(resultNode->getWord(), testEntry2->getWord()) == 0);
-    resultNode = resultNode->getNext();
-    TEST_CHECK(strcmp(resultNode->getWord(), testEntry1->getWord()) == 0);
-    resultNode = resultNode->getNext();
-    TEST_CHECK(resultNode == NULL);
-
-    // Clear the result entry_list
-    destroy_entry_list(result);
-    destroy_entry(testEntry1);
-    destroy_entry(testEntry2);
-    destroy_entry(testEntry3);
-    destroy_entry(testEntry4);
-    destroy_entry(testEntry5);
-    destroy_entry(testEntry6);
-    DestroyIndex();
-}
-
-void test_removeFromIndex(void)
-{
-    // TODO make compatible with new lookup
-    char *testWord1 = (char *)"TESTWORD1"; // Parent
+char *testWord1 = (char *)"TESTWORD1"; // Parent
     char *testWord2 = (char *)"TESTWORD2"; // Child diff=1
     char *testWord3 = (char *)"TESTWOR22"; // Child diff=2
     char *testWord4 = (char *)"TESTWORD3"; // Child diff=1,1
@@ -934,6 +899,18 @@ void test_removeFromIndex(void)
     create_entry(&testWord4, &testEntry10);
     create_entry(&testWord5, &testEntry11);
     create_entry(&testWord6, &testEntry12);
+    testEntry1->addToPayload(1,1);
+    testEntry2->addToPayload(2,1);
+    testEntry3->addToPayload(3,1);
+    testEntry4->addToPayload(4,1);
+    testEntry5->addToPayload(5,1);
+    testEntry6->addToPayload(6,1);
+    testEntry7->addToPayload(1,1);
+    testEntry8->addToPayload(2,1);
+    testEntry9->addToPayload(3,0);
+    testEntry10->addToPayload(4,1);
+    testEntry11->addToPayload(5,1);
+    testEntry12->addToPayload(6,1);
     entry *resultNode = NULL;
     entry_list *result = NULL;
     entry_list *test_list;
@@ -965,7 +942,130 @@ void test_removeFromIndex(void)
     addToIndex(testEntry11, 5, MT_HAMMING_DIST, 1);
     addToIndex(testEntry12, 6, MT_HAMMING_DIST, 1);
 
-    // ADD CASES HERE
+
+
+    // This word does not exist, but there are several words with a distance 1 to it
+    const word searchItem = (char *)"TESTWORD\0";
+    TEST_CHECK(lookup_entry_index(searchItem, result, MT_EDIT_DIST) == EC_SUCCESS);
+
+    // Test that (only) the removed word does not apear
+    resultNode = result->getHead();
+    TEST_CHECK(strcmp(resultNode->getWord(), testEntry6->getWord()) == 0);
+    resultNode = resultNode->getNext();
+    TEST_CHECK(strcmp(resultNode->getWord(), testEntry5->getWord()) == 0);
+    resultNode = resultNode->getNext();
+    TEST_CHECK(strcmp(resultNode->getWord(), testEntry4->getWord()) == 0);
+    resultNode = resultNode->getNext();
+    TEST_CHECK(strcmp(resultNode->getWord(), testEntry2->getWord()) == 0);
+    resultNode = resultNode->getNext();
+    TEST_CHECK(strcmp(resultNode->getWord(), testEntry1->getWord()) == 0);
+    resultNode = resultNode->getNext();
+    TEST_CHECK(resultNode == NULL);
+    destroy_entry_list(result);
+
+    //////////Test For Hamming Indexes 
+    create_entry_list(&result);
+    const word searchTermHamming = (char *)"TESTWORD1\0";
+    TEST_CHECK(lookup_entry_index(searchTermHamming, result, MT_HAMMING_DIST) == EC_SUCCESS);
+
+    // Test that only the correct words matched
+    resultNode = result->getHead();
+    TEST_CHECK(strcmp(resultNode->getWord(), testEntry6->getWord()) == 0);
+    resultNode = resultNode->getNext();
+    TEST_CHECK(strcmp(resultNode->getWord(), testEntry5->getWord()) == 0);
+    resultNode = resultNode->getNext();
+    TEST_CHECK(strcmp(resultNode->getWord(), testEntry4->getWord()) == 0);
+    resultNode = resultNode->getNext();
+    TEST_CHECK(strcmp(resultNode->getWord(), testEntry2->getWord()) == 0);
+    resultNode = resultNode->getNext();
+    TEST_CHECK(strcmp(resultNode->getWord(), testEntry1->getWord()) == 0);
+    resultNode = resultNode->getNext();
+    TEST_CHECK(resultNode == NULL);
+
+    // Destroy the Indexes
+    DestroyIndex();
+
+    // Clear the result entry_list
+    destroy_entry_list(result);
+    destroy_entry_list(test_list);
+}
+
+void test_removeFromIndex(void)
+{
+    char *testWord1 = (char *)"TESTWORD1"; // Parent
+    char *testWord2 = (char *)"TESTWORD2"; // Child diff=1
+    char *testWord3 = (char *)"TESTWOR22"; // Child diff=2
+    char *testWord4 = (char *)"TESTWORD3"; // Child diff=1,1
+    char *testWord5 = (char *)"TESTWORD4"; // Child diff=1,1
+    char *testWord6 = (char *)"TESTWORD5"; // Child diff=1,1
+    entry *testEntry1;
+    entry *testEntry2;
+    entry *testEntry3;
+    entry *testEntry4;
+    entry *testEntry5;
+    entry *testEntry6;
+    entry *testEntry7;
+    entry *testEntry8;
+    entry *testEntry9;
+    entry *testEntry10;
+    entry *testEntry11;
+    entry *testEntry12;
+    InitializeIndex();
+    create_entry(&testWord1, &testEntry1);
+    create_entry(&testWord2, &testEntry2);
+    create_entry(&testWord3, &testEntry3);
+    create_entry(&testWord4, &testEntry4);
+    create_entry(&testWord5, &testEntry5);
+    create_entry(&testWord6, &testEntry6);
+    create_entry(&testWord1, &testEntry7);
+    create_entry(&testWord2, &testEntry8);
+    create_entry(&testWord3, &testEntry9);
+    create_entry(&testWord4, &testEntry10);
+    create_entry(&testWord5, &testEntry11);
+    create_entry(&testWord6, &testEntry12);
+    testEntry1->addToPayload(1,1);
+    testEntry2->addToPayload(2,1);
+    testEntry3->addToPayload(3,1);
+    testEntry4->addToPayload(4,1);
+    testEntry5->addToPayload(5,1);
+    testEntry6->addToPayload(6,1);
+    testEntry7->addToPayload(1,1);
+    testEntry8->addToPayload(2,1);
+    testEntry9->addToPayload(3,0);
+    testEntry10->addToPayload(4,1);
+    testEntry11->addToPayload(5,1);
+    testEntry12->addToPayload(6,1);
+    entry *resultNode = NULL;
+    entry_list *result = NULL;
+    entry_list *test_list;
+    create_entry_list(&result);
+    create_entry_list(&test_list);
+    test_list->addEntry(testEntry12);
+    test_list->addEntry(testEntry11);
+    test_list->addEntry(testEntry10);
+    test_list->addEntry(testEntry9);
+    test_list->addEntry(testEntry8);
+    test_list->addEntry(testEntry7);
+    test_list->addEntry(testEntry6);
+    test_list->addEntry(testEntry5);
+    test_list->addEntry(testEntry4);
+    test_list->addEntry(testEntry3);
+    test_list->addEntry(testEntry2);
+    test_list->addEntry(testEntry1);
+    addToIndex(testEntry1, 1, MT_EDIT_DIST, 1);
+    addToIndex(testEntry2, 2, MT_EDIT_DIST, 1);
+    addToIndex(testEntry3, 3, MT_EDIT_DIST, 1);
+    addToIndex(testEntry4, 4, MT_EDIT_DIST, 1);
+    addToIndex(testEntry5, 5, MT_EDIT_DIST, 1);
+    addToIndex(testEntry6, 6, MT_EDIT_DIST, 1);
+
+    addToIndex(testEntry7, 1, MT_HAMMING_DIST, 1);
+    addToIndex(testEntry8, 2, MT_HAMMING_DIST, 1);
+    addToIndex(testEntry9, 3, MT_HAMMING_DIST, 0);
+    addToIndex(testEntry10, 4, MT_HAMMING_DIST, 1);
+    addToIndex(testEntry11, 5, MT_HAMMING_DIST, 1);
+    addToIndex(testEntry12, 6, MT_HAMMING_DIST, 1);
+
     const word textToRemove = (char *)"TESTWORD1\0";
     removeFromIndex(textToRemove, 1, MT_EDIT_DIST);
 
@@ -986,11 +1086,12 @@ void test_removeFromIndex(void)
     TEST_CHECK(resultNode == NULL);
     destroy_entry_list(result);
 
-    /////////////////// Test For Hamming Indexes ///////////////////
+    //////////Test For Hamming Indexes 
     create_entry_list(&result);
     removeFromIndex(textToRemove, 1, MT_HAMMING_DIST);
     const word searchTermHamming2 = (char *)"TESTWORD1\0";
     TEST_CHECK(lookup_entry_index(searchTermHamming2, result, MT_HAMMING_DIST) == EC_SUCCESS);
+
     // Test that only the correct words matched
     resultNode = result->getHead();
     TEST_CHECK(strcmp(resultNode->getWord(), testEntry6->getWord()) == 0);
@@ -1011,7 +1112,7 @@ void test_removeFromIndex(void)
     destroy_entry_list(test_list);
 }
 
-//////////////////////////// Payload List-Node ////////////////////////////
+//////////////////////////// Payload ////////////////////////////
 
 void test_payloadNode_constructor_getters(void)
 {
@@ -1021,6 +1122,7 @@ void test_payloadNode_constructor_getters(void)
     TEST_CHECK(testNode->getNext() == NULL);
     delete testNode;
 }
+
 void test_payloadNode_setNext(void)
 {
     payloadNode *testNode1 = new payloadNode(1, 1);
@@ -1037,49 +1139,123 @@ void test_payloadNode_setNext(void)
     delete testNode1;
     delete testNode2;
 }
-void test_payload_constructor_EmptyPayload_getPayload(void) 
-{
-    char *testWord1 = (char *)"TESTWORD1";
-    entry *testEntry1;
-    create_entry(&testWord1, &testEntry1);
-    TEST_CHECK(testEntry1->getPayload() == NULL);
-    TEST_CHECK(testEntry1->EmptyPayload() == true);
-    destroy_entry(testEntry1);
-}
 
-void test_payload_addToPayload(void) 
+void test_payload_addToPayload(void)
 {
+    // Create a test entry
     char *testWord1 = (char *)"TESTWORD1";
     entry *testEntry1;
     create_entry(&testWord1, &testEntry1);
-    testEntry1->addToPayload(2,2);
+
+    // Add payload with QueryID 2, check that it is accessible
+    testEntry1->addToPayload(2, 2);
     TEST_CHECK(testEntry1->getPayload()->getId() == 2);
-    testEntry1->addToPayload(3,3);
+
+    // Add payload with QueryID 3, check that both 2 and 3 are accessible
+    testEntry1->addToPayload(3, 3);
     TEST_CHECK(testEntry1->getPayload()->getId() == 2);
     TEST_CHECK(testEntry1->getPayload()->getNext()->getId() == 3);
-    testEntry1->addToPayload(1,1);
+
+    // Add payload with QueryID 1, check that all 1, 2 and 3 are accessible
+    testEntry1->addToPayload(1, 1);
     TEST_CHECK(testEntry1->getPayload()->getId() == 1);
     TEST_CHECK(testEntry1->getPayload()->getNext()->getId() == 2);
     TEST_CHECK(testEntry1->getPayload()->getNext()->getNext()->getId() == 3);
+
+    // Cleanup
     destroy_entry(testEntry1);
 }
-void test_payload_deletePayloadNode(void) 
+
+void test_payload_deletePayloadNode(void)
 {
+    // Create entry with 3 payload nodes
     char *testWord1 = (char *)"TESTWORD1";
     entry *testEntry1;
     create_entry(&testWord1, &testEntry1);
-    testEntry1->addToPayload(1,1);
-    testEntry1->addToPayload(2,2);
-    testEntry1->addToPayload(3,3);
+    testEntry1->addToPayload(1, 1);
+    testEntry1->addToPayload(2, 2);
+    testEntry1->addToPayload(3, 3);
 
+    // Delete the node with QueryID 1 and check that it is removed from the list
     testEntry1->deletePayloadNode(1);
     TEST_CHECK(testEntry1->getPayload()->getId() == 2);
     TEST_CHECK(testEntry1->getPayload()->getNext()->getId() == 3);
+
+    // Delete the node with QueryID 2 and check that it is removed from the list
     testEntry1->deletePayloadNode(2);
     TEST_CHECK(testEntry1->getPayload()->getId() == 3);
+
+    // Delete the node with QueryID 3 and check that the list is now empty
     testEntry1->deletePayloadNode(3);
     TEST_CHECK(testEntry1->EmptyPayload());
+
+    // Cleanup
     destroy_entry(testEntry1);
+}
+
+//////////////////////////// Result ////////////////////////////
+
+void test_result_storeResult(void)
+{   
+    // Create 2 result entries
+    InitializeIndex();
+    QueryID *testQ1 = new QueryID[1];
+    testQ1[0] = 3;
+    QueryID *testQ2 = new QueryID[2];
+    testQ2[0] = 4;
+    testQ2[1] = 5;
+    storeResult(1, (DocID)1, testQ1);
+    storeResult(2, (DocID)2, testQ2);
+
+    // Test that the first result was formed properly
+    TEST_CHECK(resultList->getDocID() == 1);
+    TEST_CHECK(resultList->getNumRes() == 1);
+    TEST_CHECK(resultList->getQueries() == testQ1);
+
+    // Test that the second result is accessible and was formed properly
+    TEST_CHECK(resultList->getNext()->getDocID() == 2);
+    TEST_CHECK(resultList->getNext()->getNumRes() == 2);
+    TEST_CHECK(resultList->getNext()->getQueries() == testQ2);
+
+    // Cleanup
+    delete[] testQ1;
+    delete[] testQ2;
+    DestroyIndex();
+}
+
+void test_GetNextAvailRes(void)
+{
+    // Create 2 result entries
+    InitializeIndex();
+    QueryID *testQ1 = new QueryID[1];
+    testQ1[0] = 3;
+    QueryID *testQ2 = new QueryID[2];
+    testQ2[0] = 4;
+    testQ2[1] = 5;
+    storeResult(1, (DocID)1, testQ1);
+    storeResult(2, (DocID)2, testQ2);
+    
+    // The variables that will receive the result
+    unsigned int receivedNum;
+    DocID receivedDocID;
+    QueryID* receivedQueryIDs;
+
+    // Check that the first result is received properly
+    GetNextAvailRes(&receivedDocID, &receivedNum, &receivedQueryIDs);
+    TEST_CHECK(receivedDocID == 1);
+    TEST_CHECK(receivedNum == 1);
+    TEST_CHECK(receivedQueryIDs == testQ1);
+
+    // Check that the second result is received properly
+    GetNextAvailRes(&receivedDocID, &receivedNum, &receivedQueryIDs);
+    TEST_CHECK(receivedDocID == 2);
+    TEST_CHECK(receivedNum == 2);
+    TEST_CHECK(receivedQueryIDs == testQ2);
+
+    // Cleanup
+    delete[] testQ1;
+    delete[] testQ2;
+    DestroyIndex();
 }
 
 TEST_LIST = {
@@ -1087,6 +1263,7 @@ TEST_LIST = {
     {"Document", test_document},
     {"Entry", test_entry},
     {"Entry payload Set and Get", test_entry_set_get_payload},
+    {"Entry EmptyPayload", test_entry_EmptyPayload},
     {"EntryList", test_entrylist},
     {"Binary Search", test_binary_search},
     {"Query Binary Search", test_query_binary_search},
@@ -1097,10 +1274,10 @@ TEST_LIST = {
     {"Exact Match", test_exact_match},
     {"Hamming Distance", test_hamming},
     {"Edit Distance", test_edit},
-    {"Stack Add", test_add},
-    {"Stack Remove", test_pop},
+    {"Stack Add", test_stack_add},
+    {"Stack Pop", test__stack_pop},
     {"Create StackNode", test_stackNode_create},
-    {"Pop StackNode", test_stackNode_pop},
+    {"StackNode Pop", test_stackNode_pop},
     {"indexNode Constructor and Add Entry", test_indexNode_constructor_addEntry},
     {"indexNode getEntry", test_indexNode_getEntry},
     {"indexNode getChildren", test_indexNode_getChildren},
@@ -1110,12 +1287,13 @@ TEST_LIST = {
     {"indexList getDistanceFromParent", test_indexList_getDistanceFromParent},
     {"indexList getNode", test_indexList_getNode},
     {"indexList getNext", test_indexList_getNext},
-    //{"lookup_entry_index", test_lookup_entry_index},
-    //{"Remove word from index", test_removeFromIndex},
-    //{"Add word to index", test_addToIndex},
+    {"lookup_entry_index", test_lookup_entry_index},
+    {"Remove word from index", test_removeFromIndex},
+    {"Add word to index", test_addToIndex},
     {"payloadNode Constructor, Getters", test_payloadNode_constructor_getters},
     {"payloadNode setNext", test_payloadNode_setNext},
-    {"payload Constructor", test_payload_constructor_EmptyPayload_getPayload},
     {"payload addToPayload", test_payload_addToPayload},
     {"payload deleteNode", test_payload_deletePayloadNode},
+    {"store result",test_result_storeResult},
+    {"GetNextAvailRes",test_GetNextAvailRes},
     {NULL, NULL}};
