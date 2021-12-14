@@ -13,12 +13,23 @@
     void test_entry_set_get_payload(void);
     void test_entry_emptyPayload(void);
     void test_entrylist(void);
+    
     void test_binary_search(void);
     void test_query_binary_search(void);
+    void test_entry_binary_search(void);
+    void test_result_binary_search(void);
+    void test_find_query(void);
+    void test_find_entry(void);
+
     void test_hash_function(void);
     void test_deduplication(void);
+
     void test_start_query(void);
-    void test_hash_table(void);
+
+    void test_doc_table(void);
+    void test_query_table(void);
+    void test_entry_table(void);
+
     void test_exact_match(void);
     void test_hamming(void);
     void test_edit(void);

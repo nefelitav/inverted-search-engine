@@ -30,6 +30,9 @@ class result
         QueryID *getQueries();
 };
 
+void storeResult(int numRes, DocID document, QueryID *queries);
+
+
 //////////////////////////////////////////////////////////////////////////
 
 class matchedQuery {
@@ -124,7 +127,6 @@ class EntryTable {      // hash table where entries are stored, used for exact m
 
 int findEntry(entry **entries, int left, int right, const word w);
 int entryBinarySearch(entry **entries, int left, int right, const word w);
-void storeResult(int numRes, DocID document, QueryID *queries);
 
 //////////////////////////////////////////////////////////////////////////
 
@@ -139,13 +141,11 @@ class ResultTable {         // hash table where query ids are stored, deduplicat
         void printBucket(unsigned long hash) const;
         void printTable() const;
         Query* getQuery(QueryID id);
-        void deleteQueryId(QueryID id) const;
         matchedQueryList* checkMatch();
         const int getQueriesPerBucket(unsigned long hash) const;
         ~ResultTable();
 };
 
-int findQueryId(QueryID* ids, int left, int right, const QueryID id);
 int resultBinarySearch(QueryID* ids, int left, int right, const QueryID id);
 
 //////////////////////////////////////////////////////////////////////////

@@ -2,35 +2,25 @@
 
 Query :: Query(QueryID id, char * words, MatchType match_type, unsigned int match_dist)
 {
-    if (words == NULL)
-    {
-        throw std::invalid_argument("Got NULL pointer");
-    }
     this->words = new char[MAX_QUERY_LENGTH]();                                // allocate memory and set to zero, to avoid junk
     int i = 0, length = 0;
     const char* c = " ";                                                       // delimiter
     word token = strtok((char *)words, c);
 
-    while (i < MAX_QUERY_WORDS && token != NULL)                               // get all words from input but not more than MAX_QUERY_WORDS
+    while (token != NULL)                               // get all words from input but not more than MAX_QUERY_WORDS
     {
         length = strlen(token) + 1;                                            // length of each word
         words += length;                                                       // pointer to input
         if (*words == '\0')                                                    // no more words in input
         {
-            if (length < MAX_WORD_LENGTH && length > MIN_WORD_LENGTH)          // check that requirements are met
-            {
-                memcpy(this->words + (MAX_WORD_LENGTH + 1)*i, token, length); 
-            }
+            memcpy(this->words + (MAX_WORD_LENGTH + 1)*i, token, length); 
             break;
         }
-        if (length < MAX_WORD_LENGTH && length > MIN_WORD_LENGTH)
-        {
-            memcpy(this->words + (MAX_WORD_LENGTH + 1)*i, token, length); 
-            i++;    
-        }
+        memcpy(this->words + (MAX_WORD_LENGTH + 1)*i, token, length); 
+        i++;    
         token = strtok(NULL, c);
     }
-    this->entriesNum = i+1;                                                     // save number of entries
+    this->entriesNum = i;                                                     // save number of entries
     this->matchedEntries = new bool[this->entriesNum];                          // every cell corresponds to an entry
 
     for (i = 0; i < this->entriesNum; i++)
@@ -147,31 +137,21 @@ Query :: ~Query()
 
 Document :: Document(DocID id, char * words)  
 {
-    if (words == NULL)
-    {
-        throw std::invalid_argument("Got NULL pointer");
-    }
     this->text = new char[MAX_DOC_LENGTH]();                                // allocate memory and set to zero, to avoid junk
     int i = 0, length = 0;
     const char* c = " ";                                                    // delimiter
     word token = strtok((char *)words, c);
-    while (i < MAX_DOC_WORDS && token != NULL)                              // get all words from input but not more than MAX_QUERY_WORDS
+    while (token != NULL)                              // get all words from input but not more than MAX_QUERY_WORDS
     {
         length = strlen(token) + 1;                                         // length of each word
         words += length;                                                    // pointer to input
         if (*words == '\0')                                                 // no more words in input
         {
-            if (length < MAX_WORD_LENGTH && length > MIN_WORD_LENGTH)
-            {
-                memcpy(this->text + (MAX_WORD_LENGTH + 1)*i, token, length);                                             
-            }
+            memcpy(this->text + (MAX_WORD_LENGTH + 1)*i, token, length);                                             
             break;
         }
-        if (length < MAX_WORD_LENGTH && length > MIN_WORD_LENGTH)
-        {
-            memcpy(this->text + (MAX_WORD_LENGTH + 1)*i, token, length);                                             
-            i++;  
-        }
+        memcpy(this->text + (MAX_WORD_LENGTH + 1)*i, token, length);                                             
+        i++;  
         token = strtok(NULL, c);
     }
     this->id = id;

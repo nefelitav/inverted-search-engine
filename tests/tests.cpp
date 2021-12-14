@@ -3,53 +3,57 @@
 // Structs
 void test_query(void)
 {
-    // too large / small word in the input and too many words given
     char *q_words = new char[MAX_QUERY_LENGTH]();
-    memcpy(q_words, "hello    people how hellopeoplehellopeoplehellopeople things people how", MAX_QUERY_LENGTH);
+    memcpy(q_words, "blue purple green black yellow", MAX_QUERY_LENGTH);
     Query q(0, q_words, MT_EXACT_MATCH, 0);
-    //q.printQuery();
 
-    TEST_CHECK((q.getText() != NULL));   // well created query
-    TEST_CHECK((*(q.getText()) == 'h')); // first letter
-    TEST_CHECK(strcmp(q.getWord(0), "hello") == 0);
-    TEST_CHECK(strcmp(q.getWord(2), "things") == 0);
-    TEST_CHECK((q.getWord(6) == NULL)); // max query length = 5
+    TEST_CHECK((q.getText() != NULL));              // well created query
+    TEST_CHECK((*(q.getText()) == 'b'));            // first letter
+    TEST_CHECK(strcmp(q.getWord(0), "blue") == 0);
+    TEST_CHECK(strcmp(q.getWord(2), "green") == 0);
+    TEST_CHECK((q.getWord(6) == NULL));             // max query length = 5
+    TEST_CHECK((q.getId() == 0));
+    TEST_CHECK((q.getMatchingDistance() == 0));  
+    TEST_CHECK((q.getMatchingType() == MT_EXACT_MATCH)); 
+    q.setTrue((char*)"blue");
+    TEST_CHECK((q.getMatchedEntries()[0] == true));   
+    q.setFalse();
+    TEST_CHECK((q.getMatchedEntries()[0] == false));   
+    q.setTrue((char*)"blue");
+    q.setTrue((char*)"purple");
+    q.setTrue((char*)"green");
+    q.setTrue((char*)"black");
+    q.setTrue((char*)"yellow");
+    TEST_CHECK((q.matched() == true));
+
 
     delete[] q_words;
-
-    // empty input
-    TEST_EXCEPTION(Query q2(1, NULL, MT_EXACT_MATCH, 0), std::exception); // given null as input -> throw exception
 }
 
 void test_document(void)
 {
-    // too big/small word in the input
     char *d_words = new char[MAX_DOC_LENGTH]();
-    strcpy(d_words, "hello people    how hellopeoplehellopeoplehellopeople things people how");
+    strcpy(d_words, "blue purple green black yellow blue purple green black yellow");
     Document d(0, d_words);
-    //d.printDocument();
 
     TEST_CHECK((d.getText() != NULL));
-    TEST_CHECK((*(d.getText()) == 'h'));
-    TEST_CHECK((d.getWordNum() == 4));
-    TEST_CHECK(strcmp(d.getWord(0), "hello") == 0);
-    TEST_CHECK(strcmp(d.getWord(2), "things") == 0);
-    TEST_CHECK((d.getWord(6) == NULL));
+    TEST_CHECK((*(d.getText()) == 'b'));
+    TEST_CHECK((d.getWordNum() == 10));
+    TEST_CHECK(strcmp(d.getWord(0), "blue") == 0);
+    TEST_CHECK(strcmp(d.getWord(2), "green") == 0);
+    TEST_CHECK((d.getWord(10) == NULL));
 
     delete[] d_words;
-
-    // empty input
-    TEST_EXCEPTION(Document d2(1, NULL), std::exception);
 }
 
 void test_entry(void)
 {
-    char *d_words = new char[MAX_DOC_LENGTH]();
-    strcpy(d_words, "hello world lorem ipsum");
-    Document d(2, d_words);
+    char *q_words = new char[MAX_QUERY_LENGTH]();
+    strcpy(q_words, "hello world lorem ipsum");
+    Query q(2, q_words, MT_EXACT_MATCH, 0);
 
-    const word w = d.getWord(0);
-    const word w2 = d.getWord(1);
+    const word w = q.getWord(0);
+    const word w2 = q.getWord(1);
     const word w3 = NULL;
 
     entry *e = NULL;
@@ -80,12 +84,12 @@ void test_entry(void)
     TEST_CHECK((errorcode == EC_SUCCESS));
     errorcode = destroy_entry(e2);
     TEST_CHECK((errorcode == EC_SUCCESS));
-    delete[] d_words;
+    delete[] q_words;
 }
 
 void test_entry_set_get_payload(void)
 {
-    word testWord = (word) "TESTWORD1";
+    word testWord = (word)"TESTWORD1";
     entry *testEntry;
     create_entry(&testWord, &testEntry);
 
@@ -99,24 +103,25 @@ void test_entry_set_get_payload(void)
 
 void test_entry_emptyPayload(void)
 {
-    // Create entry with no Payload
     char *testWord1 = (char *)"TESTWORD1";
     entry *testEntry1;
     create_entry(&testWord1, &testEntry1);
 
-    // Check that emptyPayload is true
     TEST_CHECK(testEntry1->emptyPayload() == true);
+    testEntry1->addToPayload(0, 0);
+    TEST_CHECK(testEntry1->emptyPayload() == false);
+
     destroy_entry(testEntry1);
 }
 
 void test_entrylist(void)
 {
-    char *d_words = new char[MAX_DOC_LENGTH]();
-    strcpy(d_words, "hello world lorem ipsum");
-    Document d(2, d_words);
+    char *q_words = new char[MAX_QUERY_LENGTH]();
+    strcpy(q_words, "hello world lorem ipsum");
+    Query q(2, q_words, MT_EXACT_MATCH, 0);
 
-    const word w = d.getWord(0);
-    const word w2 = d.getWord(1);
+    const word w = q.getWord(0);
+    const word w2 = q.getWord(1);
     const word w3 = NULL;
 
     entry *e = NULL;
@@ -148,8 +153,6 @@ void test_entrylist(void)
     TEST_CHECK((strcmp(e2->getWord(), "world") == 0));
     TEST_CHECK((e->getNext() == NULL));
     TEST_CHECK((e2->getNext() == NULL));
-    TEST_CHECK((e->getPayload() == NULL));
-    TEST_CHECK((e2->getPayload() == NULL));
 
     // entries well added to the entry list
     errorcode = add_entry(el, e);
@@ -166,7 +169,7 @@ void test_entrylist(void)
     // entries and entry list well destroyed
     errorcode = destroy_entry_list(el);
     TEST_CHECK((errorcode == EC_SUCCESS));
-    delete[] d_words;
+    delete[] q_words;
 }
 
 // Deduplication
@@ -180,8 +183,7 @@ void test_binary_search(void)
     }
     strcpy(words[0], "b");
     words_until_now++;
-    // with this function i avoid adding duplicates
-    // but i also keep the bucket sorted
+
     TEST_CHECK((binarySearch(words, 0, words_until_now - 1, (char *)"b") == -1));
     TEST_CHECK((binarySearch(words, 0, words_until_now - 1, (char *)"a") == 0));
     TEST_CHECK((binarySearch(words, 0, words_until_now - 1, (char *)"c") == 1));
@@ -202,8 +204,7 @@ void test_query_binary_search(void)
     q[0] = new Query(1, q_words, MT_EXACT_MATCH, 0);
 
     queries_until_now++;
-    // // with this function i avoid adding queries with the same id
-    // // but i also keep the bucket sorted
+
     TEST_CHECK((queryBinarySearch(q, 0, queries_until_now - 1, 1) == -1));
     TEST_CHECK((queryBinarySearch(q, 0, queries_until_now - 1, 0) == 0));
     TEST_CHECK((queryBinarySearch(q, 0, queries_until_now - 1, 2) == 1));
@@ -212,7 +213,91 @@ void test_query_binary_search(void)
     delete[] q;
     delete[] q_words;
 }
-void test_hash_table(void)
+
+void test_find_query(void)
+{
+    int queries_until_now = 0;
+    char *q_words = new char[MAX_QUERY_LENGTH]();
+    memcpy(q_words, "hello people things", MAX_QUERY_LENGTH);
+    Query **q = new Query*[5]();
+
+    q[0] = new Query(0, q_words, MT_EXACT_MATCH, 0);
+    q[1] = new Query(1, q_words, MT_EXACT_MATCH, 0);
+    q[2] = new Query(2, q_words, MT_EXACT_MATCH, 0);
+    q[3] = new Query(3, q_words, MT_EXACT_MATCH, 0);
+    q[4] = new Query(4, q_words, MT_EXACT_MATCH, 0);
+
+    queries_until_now += 5;
+    TEST_CHECK((findQuery(q, 0, queries_until_now - 1, 0) == 0));
+    TEST_CHECK((findQuery(q, 0, queries_until_now - 1, 2) == 2));
+    TEST_CHECK((findQuery(q, 0, queries_until_now - 1, 4) == 4));
+
+    TEST_EXCEPTION(findQuery(NULL, 0, queries_until_now - 1, 0), std::exception); // pass NULL as query array
+
+    for (int i = 0; i < 5; i++)
+        delete q[i];
+    delete[] q;
+    delete[] q_words;
+
+}
+
+void test_entry_binary_search(void)
+{
+    entry ** entries = new entry*[1]();
+    int entries_until_now = 0;
+    entries[0] = new entry((char*)"b");
+
+    entries_until_now++;
+
+    TEST_CHECK(entryBinarySearch(entries, 0, entries_until_now - 1, (char*)"a") == 0);
+    TEST_CHECK(entryBinarySearch(entries, 0, entries_until_now - 1, (char*)"b") == 0);  // add to payload
+    TEST_CHECK(entryBinarySearch(entries, 0, entries_until_now - 1, (char*)"c") == 1);
+
+    TEST_EXCEPTION(entryBinarySearch(NULL, 0, entries_until_now - 1, (char*)"b"), std::exception); // pass NULL as query array
+
+    delete entries[0];
+    delete[] entries;
+
+}
+
+void test_find_entry(void)
+{
+    entry ** entries = new entry*[5]();
+    int entries_until_now = 0;
+    entries[0] = new entry((char*)"a");
+    entries[1] = new entry((char*)"b");
+    entries[2] = new entry((char*)"c");
+    entries[3] = new entry((char*)"d");
+    entries[4] = new entry((char*)"z");
+
+    entries_until_now += 5;
+
+    //TEST_CHECK(findEntry(entries, 0, entries_until_now - 1, (char*)"a") == 0);
+    //TEST_CHECK(findEntry(entries, 0, entries_until_now - 1, (char*)"d") == 4);
+    TEST_CHECK(findEntry(entries, 0, entries_until_now - 1, (char*)"c") == 2);
+    
+    TEST_EXCEPTION(findEntry(entries, 0, entries_until_now - 1, NULL), std::exception); 
+    TEST_CHECK(findEntry(NULL, 0, entries_until_now - 1, (char*)"c") == -1);  // bucket is empty
+    
+    for (int i = 0; i < 5; i++)
+        delete entries[i];
+    delete[] entries;
+}
+
+
+void test_result_binary_search()
+{
+    QueryID ids[1];
+    ids[0] = 23;
+    TEST_CHECK(resultBinarySearch(ids, 0, 0, 0) == 0);
+    TEST_CHECK(resultBinarySearch(ids, 0, 0, 23) == -1);
+    TEST_CHECK(resultBinarySearch(ids, 0, 0, 50) == 1);
+
+    TEST_EXCEPTION(resultBinarySearch(NULL, 0, 0, 2), std::exception); // pass NULL as query array
+
+}
+
+void test_doc_table(void)
 {
     DocTable *HT = new DocTable; // create hash table
     const word w = new char[MAX_WORD_LENGTH];
@@ -234,6 +319,63 @@ void test_hash_table(void)
     delete[] w2;
     delete HT;
 }
+void test_query_table(void)
+{
+    QueryTable *QT = new QueryTable(); // create hash table
+    char *q_words = new char[MAX_QUERY_LENGTH]();
+    memcpy(q_words, "blue purple green black yellow", MAX_QUERY_LENGTH);
+    Query* q = new Query(0, q_words, MT_EXACT_MATCH, 0);
+    Query* q2 = new Query(0, q_words, MT_EXACT_MATCH, 0);
+
+    unsigned long hash = QT->addToBucket(hashFunctionById(q->getId()), q); // add query to hash table
+    TEST_CHECK((hash == hashFunctionById(q->getId())));
+    TEST_CHECK((QT->getQueriesPerBucket(hash) == 1));                                                           // one query in this bucket
+    hash = QT->addToBucket(hashFunctionById(q2->getId()), q2);                                                  // add the exact same queryid to hash table
+    TEST_CHECK((QT->getQueriesPerBucket(hash) == 1));                                                           // still one query , coz duplicates are not added
+    TEST_CHECK((QT->getBucket(hash)[0] != QT->getBucket(hash)[1] && QT->getBucket(hash)[0] == q)); // check that the second query wasnt added
+    TEST_EXCEPTION(QT->addToBucket(hashFunctionById(0), NULL), std::exception); // pass NULL as query
+
+    delete[] q_words;
+    delete QT;
+}
+
+void test_entry_table(void)
+{
+    EntryTable *ET = new EntryTable(); // create hash table
+    char *q_words = new char[MAX_QUERY_LENGTH]();
+    strcpy(q_words, "hello world lorem ipsum");
+    Query q(2, q_words, MT_EXACT_MATCH, 0);
+
+    const word w = q.getWord(0);
+    const word w2 = q.getWord(1);
+
+    entry *e = NULL;
+    entry *e2 = NULL;
+
+    // entries well created
+    ErrorCode errorcode = create_entry(&w, &e);
+    TEST_CHECK((errorcode == EC_SUCCESS));
+    errorcode = create_entry(&w2, &e2);
+
+    ET->addToBucket(hashFunction(w), e);
+    TEST_CHECK(ET->getEntriesPerBucket(hashFunction(w)) == 1);
+    TEST_CHECK(ET->getBucket(hashFunction(w))[0] == e);
+
+    ET->addToBucket(hashFunction(w2), e2);
+    TEST_CHECK(ET->getEntriesPerBucket(hashFunction(w2)) == 1);
+    TEST_CHECK(ET->getBucket(hashFunction(w2))[0] == e2);
+    entry_list* result = NULL;
+    create_entry_list(&result);
+    //ET->wordLookup((char*)"hello", result);
+
+    destroy_entry_list(result);
+
+    destroy_entry(e);
+    destroy_entry(e2);
+
+    delete[] q_words;
+    delete ET;
+}
 
 void test_deduplication(void)
 {
@@ -254,6 +396,7 @@ void test_hash_function(void)
     TEST_EXCEPTION(hashFunction(NULL), std::exception);
     TEST_EXCEPTION(hashFunction((char *)" "), std::exception);
 }
+
 
 void test_start_query(void)
 {
@@ -1267,10 +1410,16 @@ TEST_LIST = {
     {"EntryList", test_entrylist},
     {"Binary Search", test_binary_search},
     {"Query Binary Search", test_query_binary_search},
+    {"Entry Binary Search", test_entry_binary_search},
+    {"Result Binary Search", test_result_binary_search},
+    {"Find Query", test_find_query},
+    {"Find Entry", test_find_entry},
     {"Hash Function", test_hash_function},
     {"Document Deduplication", test_deduplication},
     {"Start Query", test_start_query},
-    {"Hash Table", test_hash_table},
+    {"Doc Table", test_doc_table},
+    {"Query Table", test_query_table},
+    {"Entry Table", test_entry_table},
     {"Exact Match", test_exact_match},
     {"Hamming Distance", test_hamming},
     {"Edit Distance", test_edit},
@@ -1295,5 +1444,5 @@ TEST_LIST = {
     //{"payload addToPayload", test_payload_addToPayload},
     //{"payload deleteNode", test_payload_deletePayloadNode},
     //{"store result", test_result_storeResult},
-    {"GetNextAvailRes", test_GetNextAvailRes},
+    //{"GetNextAvailRes", test_GetNextAvailRes},
     {NULL, NULL}};
