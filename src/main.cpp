@@ -34,7 +34,7 @@ int main()
             {
                 q_words = new char[strlen(line.c_str()) + 1]();
                 strcpy(q_words, line.c_str());
-                StartQuery(q_count, q_words, MT_HAMMING_DIST, 0);
+                StartQuery(q_count, q_words, MT_EXACT_MATCH, 0);
                 delete[] q_words;
                 q_count++;
             }
@@ -43,6 +43,7 @@ int main()
                 //editIndex->printTree();
                 d_words = new char[strlen(line.c_str()) + 1]();
                 strcpy(d_words, line.c_str());
+                //ET->printTable();
                 MatchDocument(d_count, d_words);
                 delete[] d_words;
                 d_count++;
@@ -60,6 +61,7 @@ int main()
     // EndQuery(2);
     // EndQuery(3);
     // EndQuery(4);
+    //ET->printTable();
 
     // ET->printTable();
     // QT->printTable();

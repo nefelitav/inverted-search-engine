@@ -3,7 +3,7 @@
 #include "../include/utilities.hpp"
 #include "../include/index.hpp"
 
-// Some globals
+// some globals
 entry_list *EntryList;
 QueryTable *QT;
 EntryTable *ET;
@@ -20,7 +20,7 @@ ErrorCode InitializeIndex()
         QT = new QueryTable();
         ET = new EntryTable();
         editIndex = new indexNode(NULL);
-        hammingIndexes = new indexNode *[27];
+        hammingIndexes = new indexNode*[27];
         for (int i = 0; i < 27; i++)
         {
             hammingIndexes[i] = new indexNode(NULL, MT_HAMMING_DIST);
@@ -38,11 +38,11 @@ ErrorCode StartQuery(QueryID query_id, const char *query_str, MatchType match_ty
 {
     try
     {
-        Query *q = new Query(query_id, (char *)query_str, match_type, match_dist);
-        QT->addToBucket(hashFunctionById(query_id), q);
+        Query *q = new Query(query_id, (char *)query_str, match_type, match_dist);  // create query
+        QT->addToBucket(hashFunctionById(query_id), q);                             // store it in hash table
         int i = 0;
         entry *tempEntry;
-        word w = q->getWord(0);
+        word w = q->getWord(0);                                                     // get every entry of query
         if (w == NULL)
         {
             return EC_FAIL;
@@ -52,7 +52,7 @@ ErrorCode StartQuery(QueryID query_id, const char *query_str, MatchType match_ty
             create_entry(&w, &tempEntry);
             EntryList->addEntry(tempEntry);
             tempEntry->addToPayload(query_id, match_dist);
-            addToIndex(tempEntry, query_id, match_type, match_dist); // add entry to index
+            addToIndex(tempEntry, query_id, match_type, match_dist);                // add entry to the appropriate index
             i++;
             w = q->getWord(i);
         }
@@ -91,7 +91,7 @@ ErrorCode EndQuery(QueryID query_id)
 {
     try
     {
-        QT->deleteQuery(query_id); // delete from query table, delete its entries from index
+        QT->deleteQuery(query_id);      // delete query from hash table and its entries from index
         return EC_SUCCESS;
     }
     catch (const std::exception &_)
@@ -105,11 +105,11 @@ ErrorCode MatchDocument(DocID doc_id, const char *doc_str)
 {
     try
     {
-        Document *d = new Document(doc_id, (char *)doc_str);
+        Document *d = new Document(doc_id, (char *)doc_str);    // create document
         DocTable *DT;
         DT = new DocTable();
-        DocumentDeduplication(d, DT); //->printTable();
-        DT->wordLookup();
+        DocumentDeduplication(d, DT);                           // deduplicate document
+        DT->wordLookup();                                       // check for match
         delete d;
         delete DT;
         return EC_SUCCESS;

@@ -23,7 +23,7 @@ class Query {
         const word getWord(int word_num) const;                                                         
         const char* getText() const;
         const QueryID getId() const;                                                             
-        const int get_word_num() const;
+        const int getWordNum() const;
         const MatchType getMatchingType() const;                                                             
         const unsigned int getMatchingDistance() const;     
         void setTrue(const word entry_word);
@@ -44,9 +44,24 @@ class Document {
         void printDocument() const;
         const word getWord(int word_num) const;                      
         char* getText() const;
-        const int get_word_num() const;
+        const int getWordNum() const;
         ~Document();
 };
+
+
+class payloadNode {
+    private:
+        QueryID id;
+        unsigned int threshold;
+        payloadNode* next;
+    public:
+        payloadNode(QueryID id, unsigned int threshold, payloadNode* next = NULL);
+        const QueryID getId() const;
+        const unsigned int getThreshold() const;
+        payloadNode* getNext();
+        void setNext(payloadNode* newNext);
+};
+
 
 class entry {
     private:
@@ -60,7 +75,7 @@ class entry {
         entry* getNext() const;
         void setNext(entry* e);
         void addToPayload(QueryID id, unsigned int threshold);
-        bool EmptyPayload();
+        bool emptyPayload();
         void printPayload();
         void deletePayloadNode(QueryID id);
         ~entry();
@@ -90,7 +105,5 @@ unsigned int get_number_entries(const entry_list* el);
 ErrorCode add_entry(entry_list* el, entry* e);
 entry* get_first(const entry_list* el);
 entry* get_next(const entry_list* el, entry* e);
-
-
 
 #endif

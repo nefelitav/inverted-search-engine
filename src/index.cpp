@@ -113,7 +113,9 @@ indexNode :: ~indexNode()
 {
     delete this->children;
 }
+
 ////////////////////////////////////////////////////////////////////////////////////
+
 
 ErrorCode lookup_entry_index(const word w, entry_list *result, MatchType queryMatchingType)
 {
@@ -186,7 +188,7 @@ ErrorCode lookup_entry_index(const word w, entry_list *result, MatchType queryMa
             }
 
             // Add to results if close enough and the entry exists
-            if (currNode->getEntry()->EmptyPayload() == false)
+            if (currNode->getEntry()->emptyPayload() == false)
             {
                 currPayloadNode = currNode->getEntry()->getPayload();
                 while (currPayloadNode != NULL)
@@ -242,19 +244,6 @@ ErrorCode lookup_entry_index(const word w, entry_list *result, MatchType queryMa
     }
 }
 
-ErrorCode destroy_entry_index(indexNode *ix)
-{
-    try
-    {
-        delete ix;
-        return EC_SUCCESS;
-    }
-    catch (const std::exception &_)
-    {
-        return EC_FAIL;
-    }
-}
-
 ErrorCode addToIndex(entry *toAdd, QueryID queryId, MatchType queryMatchingType, unsigned int threshold)
 {
     if (toAdd == NULL)
@@ -292,8 +281,7 @@ ErrorCode addToIndex(entry *toAdd, QueryID queryId, MatchType queryMatchingType,
     }
 }
 
-ErrorCode removeFromIndex(const word givenWord, const QueryID queryId, const
-MatchType givenType)
+ErrorCode removeFromIndex(const word givenWord, const QueryID queryId, const MatchType givenType)
 {
 
     // Check input
@@ -359,7 +347,7 @@ MatchType givenType)
             }
 
             // Delete payload entry if found
-            if (currNode->getEntry()->EmptyPayload() == false && distance == 0)
+            if (currNode->getEntry()->emptyPayload() == false && distance == 0)
             {
                 currNode->getEntry()->deletePayloadNode(queryId);
                 delete stack;
@@ -386,6 +374,19 @@ MatchType givenType)
             currNode = stack->pop();
         }
         delete stack;
+        return EC_SUCCESS;
+    }
+    catch (const std::exception &_)
+    {
+        return EC_FAIL;
+    }
+}
+
+ErrorCode destroy_entry_index(indexNode *ix)
+{
+    try
+    {
+        delete ix;
         return EC_SUCCESS;
     }
     catch (const std::exception &_)
@@ -469,8 +470,7 @@ int Stack :: getSize()
 
 ////////////////////////////////////////////////////////////////////////////////////
 
-indexList :: indexList(entry *content, unsigned int distance, MatchType
-matchingMetric, QueryID id, unsigned int threshold, indexList *next)
+indexList :: indexList(entry *content, unsigned int distance, MatchType matchingMetric, QueryID id, unsigned int threshold, indexList *next)
 {
     // Check input
     if (content == NULL)
@@ -491,7 +491,6 @@ matchingMetric, QueryID id, unsigned int threshold, indexList *next)
     // Create the index node with the given content
     this->node = new indexNode(content, id, threshold, matchingMetric);
 }
-
 
 unsigned int indexList :: getDistanceFromParent() const
 {
@@ -522,8 +521,7 @@ int indexList :: addToList(entry *content, unsigned int distance, QueryID id, un
         }
         else
         { // Else if the next node has higher distance, create a new list node between this one and the next
-            this->next = new indexList(content, distance,
-this->node->getMatchingType(), id, threshold, next);
+            this->next = new indexList(content, distance, this->node->getMatchingType(), id, threshold, next);
         }
     }
     else
@@ -566,54 +564,4 @@ indexList :: ~indexList()
     }
     // Then the contents of this node
     delete this->node;
-}
-////////////////////////////////////////////////////////////////////////////////////
-
-payloadNode :: payloadNode(QueryID id, unsigned int threshold, payloadNode* next) 
-{
-
-    this->id = id;
-    this->threshold = threshold;
-    this->next = next;
-}
-
-const QueryID payloadNode :: getId() const
-{
-    return this->id;
-}
-
-const unsigned int payloadNode :: getThreshold() const
-{
-    return this->threshold;
-}
-
-payloadNode *payloadNode :: getNext()
-{
-    return this->next;
-}
-
-void payloadNode :: setNext(payloadNode *newNext)
-{
-    this->next = newNext;
-}
-
-void payloadNode :: addNode(QueryID id, unsigned int threshold) 
-{
-    payloadNode* temp;
-    if (this->next == NULL) 
-    {
-        this->next = new payloadNode(id, threshold);
-    }
-    else if (this->next->getId() > id)
-    {
-        temp = this->next;
-        this->next = new payloadNode(id, threshold, temp);
-    }
-    else if (this->next->getId() == id)
-    { /////////////////////
-    }
-    else
-    {
-        this->next->addNode(id, threshold);
-    }
 }

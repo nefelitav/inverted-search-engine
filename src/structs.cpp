@@ -1,4 +1,5 @@
 #include "../include/structs.hpp"
+
 Query :: Query(QueryID id, char * words, MatchType match_type, unsigned int match_dist)
 {
     if (words == NULL)
@@ -16,7 +17,7 @@ Query :: Query(QueryID id, char * words, MatchType match_type, unsigned int matc
         words += length;                                                       // pointer to input
         if (*words == '\0')                                                    // no more words in input
         {
-            if (length < MAX_WORD_LENGTH && length > MIN_WORD_LENGTH)
+            if (length < MAX_WORD_LENGTH && length > MIN_WORD_LENGTH)          // check that requirements are met
             {
                 memcpy(this->words + (MAX_WORD_LENGTH + 1)*i, token, length); 
             }
@@ -29,20 +30,20 @@ Query :: Query(QueryID id, char * words, MatchType match_type, unsigned int matc
         }
         token = strtok(NULL, c);
     }
-    this->entriesNum = i+1;
-    this->matchedEntries = new bool[this->entriesNum];
+    this->entriesNum = i+1;                                                     // save number of entries
+    this->matchedEntries = new bool[this->entriesNum];                          // every cell corresponds to an entry
 
     for (i = 0; i < this->entriesNum; i++)
     {
-        this->matchedEntries[i] = false;
+        this->matchedEntries[i] = false;                                        // set by default to false
     }
     this->id = id;
     this->match_type = match_type;
     this->match_dist = match_dist;
-
     //std::cout << "Query with id = " << this->id << " is created!" << std::endl;
 }
-void Query :: printQuery() const                                               // for debugging reasons
+
+void Query :: printQuery() const                                               // for debugging
 {
     std::cout << "-------------------" << std::endl;
     std::cout << "Print query words :" << std::endl;
@@ -84,7 +85,7 @@ const word Query :: getWord(int word_num) const                             // a
     }
     return ptr;
 }
-void Query :: setTrue(const word entry_word)
+void Query :: setTrue(const word entry_word)                                // entry matched with a doc word
 {
     for (int i = 0; i < this->entriesNum; i++)
     {
@@ -95,14 +96,14 @@ void Query :: setTrue(const word entry_word)
         }
     }
 }
-void Query :: setFalse()
+void Query :: setFalse()                                                    // set to default to start a new search with new doc
 {
     for (int i = 0; i < this->entriesNum; i++)
     {
         this->matchedEntries[i] = false;
     }
 }
-bool Query :: matched()
+bool Query :: matched()                                                     // check if all entries matched with doc words
 {
     int sum = 0;
     for (int i = 0; i < this->entriesNum; i++)
@@ -111,7 +112,7 @@ bool Query :: matched()
     }
     return (sum == this->entriesNum);
 }
-void Query :: printMatchedEntries()
+void Query :: printMatchedEntries()                                         // for debugging
 {
     for (int i = 0; i < this->entriesNum; i++)
     {
@@ -123,12 +124,12 @@ bool* Query :: getMatchedEntries()
     return this->matchedEntries;
 }
 
-const int Query :: get_word_num() const
+const int Query :: getWordNum() const
 {
     return this->entriesNum;
 }
 
-const char* Query :: getText() const                                        // for debugging reasons
+const char* Query :: getText() const                                        // for debugging
 {
     return this->words;
 }
@@ -177,7 +178,7 @@ Document :: Document(DocID id, char * words)
     //std::cout << "Document with id = " << this->id << " is created!" << std::endl;
 
 }
-void Document :: printDocument() const
+void Document :: printDocument() const                                          // for debugging 
 {
     std::cout << "-------------------" << std::endl;
     std::cout << "Print text words :" << std::endl;
@@ -207,7 +208,7 @@ const word Document :: getWord(int word_num) const                              
     }
     return ptr;
 }
-const int Document :: get_word_num() const
+const int Document :: getWordNum() const
 {
     int count = 0;
     for (int i = 0; i < MAX_DOC_WORDS; i++)
@@ -234,6 +235,34 @@ Document :: ~Document()
 
 ////////////////////////////////////////////////////////////////////////////////////
 
+
+payloadNode :: payloadNode(QueryID id, unsigned int threshold, payloadNode* next) 
+{
+
+    this->id = id;
+    this->threshold = threshold;
+    this->next = next;
+}
+
+const QueryID payloadNode :: getId() const
+{
+    return this->id;
+}
+
+const unsigned int payloadNode :: getThreshold() const
+{
+    return this->threshold;
+}
+
+payloadNode *payloadNode :: getNext()
+{
+    return this->next;
+}
+
+void payloadNode :: setNext(payloadNode *newNext)
+{
+    this->next = newNext;
+}
 
 
 entry :: entry(const word keyword)
@@ -274,23 +303,17 @@ payloadNode* entry :: getPayload() const
 
 void entry :: addToPayload(QueryID id, unsigned int threshold)
 {
-    payloadNode* temp;
-    if (this->EmptyPayload()) 
+    if (this->emptyPayload()) 
     {
         this->payload = new payloadNode(id, threshold);
     } 
-    else if (this->payload->getId() > id) 
-    {
-        temp = this->payload;
-        this->payload = new payloadNode(id, threshold, temp);
+    else 
+    {   
+        payloadNode* new_head = new payloadNode(id, threshold);
+        payloadNode* old_head = this->payload;
+        new_head->setNext(old_head);
+        this->payload = new_head;
     } 
-    else if (this->payload->getId() == id) 
-    {
-        throw std::invalid_argument("Query already in payload");
-    } 
-    else {
-        this->payload->addNode(id,threshold);
-    }
 }
 
 void entry :: printPayload()
@@ -303,57 +326,38 @@ void entry :: printPayload()
     }
     std::cout << std::endl;
 }
-bool entry :: EmptyPayload() 
+
+bool entry :: emptyPayload() 
 {
     return (this->payload == NULL);
 }
 
 void entry :: deletePayloadNode(QueryID id) 
 {
-    payloadNode* temp, *curr = this->payload;
-    if (this->payload == NULL) 
+    payloadNode *curr = this->payload;
+    payloadNode *next = curr->getNext();
+    if (curr->getId() == id)
     {
-        std::cout << "ID NOT FOUND\n";
-    } 
-    else 
-    {
-        if (payload->getId() == id) 
-        {
-            temp = this->payload;
-            this->payload = temp->getNext();
-            delete temp;
-            if (this->payload != NULL) 
-            {
-                curr = payload->getNext();
-                temp = this->payload;
-            } 
-            else 
-            {
-                curr = NULL;
-            }
-        }
+        delete curr;
+        this->payload = next;
+        return;
     }
-    while (curr != NULL) 
+    while (curr != NULL)
     {
-        if (curr->getId() == id) 
+        if (curr->getNext()->getId() == id)
         {
-            temp->setNext(curr->getNext());
-            delete curr;
-            curr = temp->getNext();
-            break;
-        } 
-        else 
-        {
-            temp = curr;
-            curr = curr->getNext();
+            curr->setNext(curr->getNext()->getNext());
+            delete curr->getNext();
+            return;
         }
+        curr = curr->getNext();
     }
 }
 
 entry :: ~entry()
 {
     //std::cout <<"------------------------------" << this->keyword << std::endl;
-    payloadNode *prev,*curr = this->payload;
+    payloadNode *prev,*curr = this->payload;    // delete payload
     while (curr != NULL) 
     {
         prev = curr;
@@ -361,7 +365,7 @@ entry :: ~entry()
         delete prev;
         prev = NULL;
     }
-    delete[] this->keyword;
+    delete[] this->keyword;                     // delete word
     //std::cout << "Entry is deleted!" << std::endl;
 }
 
@@ -391,14 +395,11 @@ void entry_list :: addEntry(entry * new_entry)
     if (this->head == NULL)
     {
         this->head = new_entry;
-        //cout << this->head->getWord() << endl;
     }
     else
     {
         new_entry->setNext(this->head);
         this->head = new_entry;
-        //cout << this->head->getWord() << endl;
-        //cout << this->head->getNext()->getWord() << endl;
     }
     this->entryNum++;
 }
@@ -409,9 +410,10 @@ void entry_list :: printList()
 
     while (curr != NULL)                                        
     {
-        next = curr->getNext();                                 // save next entry
-        std::cout << curr->getWord() << std::endl;                                    // print entry
-        curr = next;                                            // go to next entry
+        next = curr->getNext();                                 
+        std::cout << curr->getWord() << std::endl;                                    
+        curr->printPayload();
+        curr = next;                                            
     }
 }
 
@@ -432,7 +434,7 @@ void entry_list :: removeEntry(entry * toRemove)
     }
     while (curr != NULL)                                        
     {
-        next = curr->getNext();                                 // save next entry
+        next = curr->getNext();                                 
         if (next == toRemove)                                    
         {
             curr->setNext(next->getNext());
@@ -440,7 +442,7 @@ void entry_list :: removeEntry(entry * toRemove)
             next = NULL;
             return;
         }
-        curr = next;                                            // go to next entry
+        curr = next;                                            
     }
 
 }

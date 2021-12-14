@@ -11,7 +11,7 @@
     void test_document(void);
     void test_entry(void);
     void test_entry_set_get_payload(void);
-    void test_entry_EmptyPayload(void);
+    void test_entry_emptyPayload(void);
     void test_entrylist(void);
     void test_binary_search(void);
     void test_query_binary_search(void);
