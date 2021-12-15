@@ -23,7 +23,7 @@ ErrorCode InitializeIndex()
         hammingIndexes = new indexNode*[27];
         for (int i = 0; i < 27; i++)
         {
-            hammingIndexes[i] = new indexNode(NULL, MT_HAMMING_DIST);
+            hammingIndexes[i] = new indexNode(NULL,1 ,0, MT_HAMMING_DIST);
         }
         exactHash = NULL;
         return EC_SUCCESS;
@@ -103,15 +103,17 @@ ErrorCode EndQuery(QueryID query_id)
 
 ErrorCode MatchDocument(DocID doc_id, const char *doc_str)
 {
+    
     try
-    {
+    {   
         Document *d = new Document(doc_id, (char *)doc_str);    // create document
         DocTable *DT;
-        DT = new DocTable();
+        DT = new DocTable(doc_id);
         DocumentDeduplication(d, DT);                           // deduplicate document
         DT->wordLookup();                                       // check for match
         delete d;
         delete DT;
+        
         return EC_SUCCESS;
     }
     catch (const std::exception &_)

@@ -46,6 +46,7 @@ ErrorCode destroy_entry_index(indexNode* ix);
 ErrorCode InitializeIndex();
 ErrorCode addToIndex(entry* toAdd, QueryID queryId, MatchType queryMatchingType, unsigned int threshold);
 ErrorCode removeFromIndex(const word givenWord, const QueryID queryId, const MatchType givenType);
+void printHammingTrees();
 
 class stackNode
 {

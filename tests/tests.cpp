@@ -299,7 +299,7 @@ void test_result_binary_search()
 
 void test_doc_table(void)
 {
-    DocTable *HT = new DocTable; // create hash table
+    DocTable *HT = new DocTable(1); // create hash table
     const word w = new char[MAX_WORD_LENGTH];
     strcpy(w, "hello");
     unsigned long hash = HT->addToBucket(hashFunction(w), w); // add word to hash table
@@ -382,7 +382,7 @@ void test_deduplication(void)
     char *d_words = new char[MAX_DOC_LENGTH]();
     strcpy(d_words, "hello world lorem ipsum hello world lorem ipsum");
     Document d(3, d_words);
-    DocTable *HT = new DocTable();
+    DocTable *HT = new DocTable(1);
     DocumentDeduplication(&d, HT);
     TEST_EXCEPTION(DocumentDeduplication(NULL, HT), std::exception);
     delete HT;

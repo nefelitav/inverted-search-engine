@@ -67,9 +67,9 @@ class DocTable                           // hash table where document words are 
     private:
         word **buckets;
         int *wordsPerBucket;
-
+        DocID tableID;
     public:
-        DocTable();
+        DocTable(DocID documentID);
         unsigned long addToBucket(unsigned long hash, const word w);
         void wordLookup();
         const word *getBucket(unsigned long hash) const;
