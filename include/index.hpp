@@ -3,7 +3,6 @@
 
 #include <iostream>
 #include "core.h"
-#include "structs.hpp"
 
 class entry;
 typedef char *word;
@@ -78,5 +77,6 @@ class Stack
 extern indexNode *editIndex;
 extern indexNode **hammingIndexes;
 extern void *exactHash;
+
 
 #endif  //INDEX

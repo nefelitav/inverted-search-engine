@@ -1,39 +1,28 @@
 #include "../include/structs.hpp"
+#include "../include/core.h"
 
 Query ::Query(QueryID id, char *words, MatchType match_type, unsigned int match_dist)
 {
-    this->words = new char[MAX_QUERY_LENGTH](); // allocate memory and set to zero, to avoid junk
     int i = 0, length = 0;
-    const char *c = " "; // delimiter
-    word token = strtok((char *)words, c);
-
-    while (i < MAX_QUERY_WORDS && token != NULL) // get all words from input but not more than MAX_QUERY_WORDS
+    word token = strtok((char *)words, " ");
+    while (token != NULL) // get all words from input but not more than MAX_QUERY_WORDS
     {
         length = strlen(token) + 1; // length of each word
         words += length;            // pointer to input
         if (*words == '\0')         // no more words in input
         {
-            if (length < MAX_WORD_LENGTH && length > MIN_WORD_LENGTH) // check that requirements are met
-            {
-                memcpy(this->words + (MAX_WORD_LENGTH + 1) * i, token, length);
-                i++;
-            }
+            memcpy(this->words + (MAX_WORD_LENGTH + 1) * i, token, length);
+            ++i;
             break;
         }
-        if (length < MAX_WORD_LENGTH && length > MIN_WORD_LENGTH)
-        {
-            memcpy(this->words + (MAX_WORD_LENGTH + 1) * i, token, length);
-            i++;
-        }
-        token = strtok(NULL, c);
+        memcpy(this->words + (MAX_WORD_LENGTH + 1) * i, token, length);
+        ++i;
+        token = strtok(NULL, " ");
     }
     this->entriesNum = i;                              // save number of entries
     this->matchedEntries = new bool[this->entriesNum]; // every cell corresponds to an entry
+    memset(this->matchedEntries, 0, this->entriesNum*(sizeof(bool)));
 
-    for (i = 0; i < this->entriesNum; i++)
-    {
-        this->matchedEntries[i] = false; // set by default to false
-    }
     this->id = id;
     this->match_type = match_type;
     this->match_dist = match_dist;
@@ -44,7 +33,7 @@ void Query ::printQuery() const // for debugging
 {
     std::cout << "-------------------" << std::endl;
     std::cout << "Print query words :" << std::endl;
-    for (int i = 0; i < MAX_QUERY_WORDS; i++)
+    for (int i = 0; i < MAX_QUERY_WORDS; ++i)
     {
         if (*(this->words + (MAX_WORD_LENGTH + 1) * i) == '\0')
         {
@@ -73,7 +62,7 @@ const word Query ::getWord(int word_num) const // array[i][j] --> arrary[i*(MAX_
         //std::cout << "Sorry, index out of range." << std::endl;
         return NULL;
     }
-    const word ptr = (this->words + word_num * (MAX_WORD_LENGTH + 1)); // find the word
+    const word ptr = (word)(this->words + word_num * (MAX_WORD_LENGTH + 1)); // find the word
     if (*ptr == '\0')                                                  // no more words
     {
         //std::cout << "Sorry, index out of range." << std::endl;
@@ -83,31 +72,9 @@ const word Query ::getWord(int word_num) const // array[i][j] --> arrary[i*(MAX_
 }
 void Query ::setTrue(const word entry_word) // entry matched with a doc word
 {
-    int len1 = strlen(entry_word);
-    int len2;
-    bool flag;
-    //std::cout<<this->getMatchedEntries()[0]<<"\n";
-
-    for (int i = 0; i < this->getWordNum(); i++)
+    for (int i = 0; i < this->getWordNum(); ++i)
     {
-        //std::cout<<this->getWord(i)<<" "<<entry_word<<"\n";
-        len2 = strlen(this->getWord(i));
-        flag = true;
-        if (len1 == len2)
-        {
-            for (int j = 0; j < len1; j++)
-            {
-                if (entry_word[j] != this->getWord(i)[j])
-                {
-                    flag = false;
-                }
-            }
-        }
-        else
-        {
-            flag = false;
-        }
-        if (flag == true)
+        if (!strcmp(entry_word, this->getWord(i)))
         {
             this->matchedEntries[i] = 1;
             break;
@@ -116,15 +83,12 @@ void Query ::setTrue(const word entry_word) // entry matched with a doc word
 }
 void Query ::setFalse() // set to default to start a new search with new doc
 {
-    for (int i = 0; i < this->entriesNum; i++)
-    {
-        this->matchedEntries[i] = false;
-    }
+    memset(this->matchedEntries, 0, this->entriesNum*(sizeof(bool)));
 }
 bool Query ::matched() // check if all entries matched with doc words
 {
     int sum = 0;
-    for (int i = 0; i < this->entriesNum; i++)
+    for (int i = 0; i < this->entriesNum; ++i)
     {
         sum += this->matchedEntries[i];
     }
@@ -132,7 +96,7 @@ bool Query ::matched() // check if all entries matched with doc words
 }
 void Query ::printMatchedEntries() // for debugging
 {
-    for (int i = 0; i < this->entriesNum; i++)
+    for (int i = 0; i < this->entriesNum; ++i)
     {
         std::cout << this->matchedEntries[i] << std::endl;
     }
@@ -147,14 +111,10 @@ const int Query ::getWordNum() const
     return this->entriesNum;
 }
 
-const char *Query ::getText() const // for debugging
-{
-    return this->words;
-}
+
 Query ::~Query()
 {
     delete[] this->matchedEntries;
-    delete[] this->words;
     //std::cout << "Query with id = " << this->id << " is deleted!" << std::endl;
 }
 
@@ -162,28 +122,21 @@ Query ::~Query()
 
 Document ::Document(DocID id, char *words)
 {
-    this->text = new char[MAX_DOC_LENGTH](); // allocate memory and set to zero, to avoid junk
+    memset(this->text, 0, MAX_DOC_LENGTH);
     int i = 0, length = 0;
-    const char *c = " "; // delimiter
-    word token = strtok((char *)words, c);
-    while (i < MAX_DOC_WORDS && token != NULL) // get all words from input but not more than MAX_QUERY_WORDS
+    word token = strtok((char *)words, " ");
+    while (token != NULL) // get all words from input but not more than MAX_QUERY_WORDS
     {
         length = strlen(token) + 1; // length of each word
         words += length;            // pointer to input
         if (*words == '\0')         // no more words in input
         {
-            if (length < MAX_WORD_LENGTH && length > MIN_WORD_LENGTH)
-            {
-                memcpy(this->text + (MAX_WORD_LENGTH + 1) * i, token, length);
-            }
+            memcpy(this->text + (MAX_WORD_LENGTH + 1) * i, token, length);
             break;
         }
-        if (length < MAX_WORD_LENGTH && length > MIN_WORD_LENGTH)
-        {
-            memcpy(this->text + (MAX_WORD_LENGTH + 1) * i, token, length);
-            i++;
-        }
-        token = strtok(NULL, c);
+        memcpy(this->text + (MAX_WORD_LENGTH + 1) * i, token, length);
+        ++i;
+        token = strtok(NULL, " ");
     }
     this->id = id;
     //std::cout << "Document with id = " << this->id << " is created!" << std::endl;
@@ -193,9 +146,9 @@ void Document ::printDocument() const // for debugging
     std::cout << "-------------------" << std::endl;
     std::cout << "Print text words :" << std::endl;
 
-    for (int i = 0; i < MAX_DOC_WORDS; i++)
+    for (int i = 0; i < MAX_DOC_WORDS; ++i)
     {
-        if (*(this->text + (MAX_WORD_LENGTH + 1) * i) == '\0')
+        if (*((char*)this->text + (MAX_WORD_LENGTH + 1) * i) == '\0')
         {
             return;
         }
@@ -209,7 +162,7 @@ const word Document ::getWord(int word_num) const // array[i][j] --> arrary[i*(M
         //cout << "Sorry, index out of range." << endl;
         return NULL;
     }
-    const word ptr = (this->text + word_num * (MAX_WORD_LENGTH + 1)); // find the word
+    const word ptr = (const word)(this->text + word_num * (MAX_WORD_LENGTH + 1)); // find the word
     if (*ptr == '\0')
     {
         //cout << "Sorry, index out of range." << endl;
@@ -217,26 +170,10 @@ const word Document ::getWord(int word_num) const // array[i][j] --> arrary[i*(M
     }
     return ptr;
 }
-const int Document ::getWordNum() const
-{
-    int count = 0;
-    for (int i = 0; i < MAX_DOC_WORDS; i++)
-    {
-        if (*(this->text + (MAX_WORD_LENGTH + 1) * i) == '\0')
-        {
-            return count;
-        }
-        count++;
-    }
-    return count;
-}
-char *Document ::getText() const
-{
-    return this->text;
-}
+
+
 Document ::~Document()
 {
-    delete[] this->text;
     //std::cout << "Document with id = " << this->id << " is deleted!" << std::endl;
 }
 
@@ -276,7 +213,6 @@ entry ::entry(const word keyword)
     {
         throw std::invalid_argument("Got NULL pointer");
     }
-    this->keyword = new char[MAX_WORD_LENGTH];
     strcpy(this->keyword, keyword);
     this->payload = NULL;
     this->next = NULL;
@@ -285,7 +221,7 @@ entry ::entry(const word keyword)
 
 const word entry ::getWord() const
 {
-    return this->keyword;
+    return (const word)this->keyword;
 }
 
 entry *entry ::getNext() const
@@ -315,8 +251,7 @@ void entry ::addToPayload(QueryID id, unsigned int threshold)
     else
     {
         payloadNode *new_head = new payloadNode(id, threshold);
-        payloadNode *old_head = this->payload;
-        new_head->setNext(old_head);
+        new_head->setNext(this->payload);
         this->payload = new_head;
     }
 }
@@ -375,7 +310,6 @@ entry ::~entry()
         delete prev;
         prev = NULL;
     }
-    delete[] this->keyword; // delete word
     //std::cout << "Entry is deleted!" << std::endl;
 }
 
@@ -410,7 +344,7 @@ void entry_list ::addEntry(entry *new_entry)
         new_entry->setNext(this->head);
         this->head = new_entry;
     }
-    this->entryNum++;
+    ++this->entryNum;
 }
 void entry_list ::printList()
 {
@@ -453,6 +387,7 @@ void entry_list ::removeEntry(entry *toRemove)
         }
         curr = next;
     }
+    --this->entryNum;
 }
 entry_list ::~entry_list()
 {

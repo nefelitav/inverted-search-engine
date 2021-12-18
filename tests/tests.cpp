@@ -1,14 +1,12 @@
 #include "tests.hpp"
 
-// Structs
+//////////////////////////// Structs ////////////////////////////
+
 void test_query(void)
 {
     char *q_words = new char[MAX_QUERY_LENGTH]();
     memcpy(q_words, "blue purple green black yellow", MAX_QUERY_LENGTH);
     Query q(0, q_words, MT_EXACT_MATCH, 0);
-
-    TEST_CHECK((q.getText() != NULL));              // well created query
-    TEST_CHECK((*(q.getText()) == 'b'));            // first letter
     TEST_CHECK(strcmp(q.getWord(0), "blue") == 0);
     TEST_CHECK(strcmp(q.getWord(2), "green") == 0);
     TEST_CHECK((q.getWord(6) == NULL));             // max query length = 5
@@ -24,9 +22,7 @@ void test_query(void)
     q.setTrue((char*)"green");
     q.setTrue((char*)"black");
     q.setTrue((char*)"yellow");
-    TEST_CHECK((q.matched() == true));
-
-
+    TEST_CHECK((q.matched() == true)); // everything to true -> its a match
     delete[] q_words;
 }
 
@@ -34,15 +30,12 @@ void test_document(void)
 {
     char *d_words = new char[MAX_DOC_LENGTH]();
     strcpy(d_words, "blue purple green black yellow blue purple green black yellow");
-    Document d(0, d_words);
-
-    TEST_CHECK((d.getText() != NULL));
-    TEST_CHECK((*(d.getText()) == 'b'));
-    TEST_CHECK((d.getWordNum() == 10));
-    TEST_CHECK(strcmp(d.getWord(0), "blue") == 0);
-    TEST_CHECK(strcmp(d.getWord(2), "green") == 0);
-    TEST_CHECK((d.getWord(10) == NULL));
-
+    Document* d = new Document(0, d_words);
+    TEST_CHECK(strcmp(d->getWord(0), "blue") == 0);
+    TEST_CHECK(strcmp(d->getWord(2), "green") == 0);
+    TEST_CHECK(strcmp(d->getWord(7), "green") == 0);
+    TEST_CHECK((d->getWord(10) == NULL));
+    delete d;
     delete[] d_words;
 }
 
@@ -114,6 +107,83 @@ void test_entry_emptyPayload(void)
     destroy_entry(testEntry1);
 }
 
+void test_payloadNode_constructor_getters(void)
+{
+    payloadNode *testNode = new payloadNode(1, 1);
+    TEST_CHECK(testNode->getId() == 1);
+    TEST_CHECK(testNode->getThreshold() == 1);
+    TEST_CHECK(testNode->getNext() == NULL);
+    delete testNode;
+}
+
+void test_payloadNode_setNext(void)
+{
+    payloadNode *testNode1 = new payloadNode(1, 1);
+    payloadNode *testNode2 = new payloadNode(2, 2);
+    // Check Initial State is NULL
+    TEST_CHECK(testNode1->getNext() == NULL);
+    TEST_CHECK(testNode2->getNext() == NULL);
+    // Test Setting to another Node
+    testNode1->setNext(testNode2);
+    TEST_CHECK(testNode1->getNext() == testNode2);
+    // Test Setting to NULL
+    testNode1->setNext(NULL);
+    TEST_CHECK(testNode1->getNext() == NULL);
+    delete testNode1;
+    delete testNode2;
+}
+
+void test_payload_addToPayload(void)
+{
+    // Create a test entry
+    char *testWord1 = (char *)"TESTWORD1";
+    entry *testEntry1;
+    create_entry(&testWord1, &testEntry1);
+
+    // Add payload with QueryID 2, check that it is accessible
+    testEntry1->addToPayload(2, 2);
+    TEST_CHECK(testEntry1->getPayload()->getId() == 2);
+    // Add payload with QueryID 3, check that both 2 and 3 are accessible
+    testEntry1->addToPayload(3, 3);
+    TEST_CHECK(testEntry1->getPayload()->getId() == 3);
+    TEST_CHECK(testEntry1->getPayload()->getNext()->getId() == 2);
+    // Add payload with QueryID 1, check that all 1, 2 and 3 are accessible
+    testEntry1->addToPayload(1, 1);
+    TEST_CHECK(testEntry1->getPayload()->getId() == 1);
+    TEST_CHECK(testEntry1->getPayload()->getNext()->getId() == 3);
+    TEST_CHECK(testEntry1->getPayload()->getNext()->getNext()->getId() == 2);
+
+    // Cleanup
+    destroy_entry(testEntry1);
+}
+
+void test_payload_deletePayloadNode(void)
+{
+    // Create entry with 3 payload nodes
+    char *testWord1 = (char *)"TESTWORD1";
+    entry *testEntry1;
+    create_entry(&testWord1, &testEntry1);
+    testEntry1->addToPayload(1, 1);
+    testEntry1->addToPayload(2, 2);
+    testEntry1->addToPayload(3, 3);
+
+    // Delete the node with QueryID 1 and check that it is removed from the list
+    testEntry1->deletePayloadNode(1);
+    TEST_CHECK(testEntry1->getPayload()->getId() == 3);
+    TEST_CHECK(testEntry1->getPayload()->getNext()->getId() == 2);
+
+    // Delete the node with QueryID 2 and check that it is removed from the list
+    testEntry1->deletePayloadNode(2);
+    TEST_CHECK(testEntry1->getPayload()->getId() == 3);
+
+    // Delete the node with QueryID 3 and check that the list is now empty
+    testEntry1->deletePayloadNode(3);
+    TEST_CHECK(testEntry1->emptyPayload());
+
+    // Cleanup
+    destroy_entry(testEntry1);
+}
+
 void test_entrylist(void)
 {
     char *q_words = new char[MAX_QUERY_LENGTH]();
@@ -172,7 +242,9 @@ void test_entrylist(void)
     delete[] q_words;
 }
 
-// Deduplication
+
+//////////////////////////// Hash Tables ////////////////////////////
+
 void test_binary_search(void)
 {
     word *words = new word[3];
@@ -264,17 +336,17 @@ void test_find_entry(void)
 {
     entry ** entries = new entry*[5]();
     int entries_until_now = 0;
-    entries[0] = new entry((char*)"a");
-    entries[1] = new entry((char*)"b");
+    entries[0] = new entry((char*)"z");
+    entries[1] = new entry((char*)"d");
     entries[2] = new entry((char*)"c");
-    entries[3] = new entry((char*)"d");
-    entries[4] = new entry((char*)"z");
+    entries[3] = new entry((char*)"b");
+    entries[4] = new entry((char*)"a");
 
     entries_until_now += 5;
-
-    //TEST_CHECK(findEntry(entries, 0, entries_until_now - 1, (char*)"a") == 0);
-    //TEST_CHECK(findEntry(entries, 0, entries_until_now - 1, (char*)"d") == 4);
+    TEST_CHECK(findEntry(entries, 0, entries_until_now - 1, (char*)"a") == 4);
+    TEST_CHECK(findEntry(entries, 0, entries_until_now - 1, (char*)"d") == 1);
     TEST_CHECK(findEntry(entries, 0, entries_until_now - 1, (char*)"c") == 2);
+    TEST_CHECK(findEntry(entries, 0, entries_until_now - 1, (char*)"k") == -1); // not found
     
     TEST_EXCEPTION(findEntry(entries, 0, entries_until_now - 1, NULL), std::exception); 
     TEST_CHECK(findEntry(NULL, 0, entries_until_now - 1, (char*)"c") == -1);  // bucket is empty
@@ -364,11 +436,6 @@ void test_entry_table(void)
     ET->addToBucket(hashFunction(w2), e2);
     TEST_CHECK(ET->getEntriesPerBucket(hashFunction(w2)) == 1);
     TEST_CHECK(ET->getBucket(hashFunction(w2))[0] == e2);
-    entry_list* result = NULL;
-    create_entry_list(&result);
-    //ET->wordLookup((char*)"hello", result);
-
-    destroy_entry_list(result);
 
     destroy_entry(e);
     destroy_entry(e2);
@@ -381,10 +448,11 @@ void test_deduplication(void)
 {
     char *d_words = new char[MAX_DOC_LENGTH]();
     strcpy(d_words, "hello world lorem ipsum hello world lorem ipsum");
-    Document d(3, d_words);
+    Document* d = new Document(3, d_words);
     DocTable *HT = new DocTable(1);
-    DocumentDeduplication(&d, HT);
+    DocumentDeduplication(d, HT);
     TEST_EXCEPTION(DocumentDeduplication(NULL, HT), std::exception);
+    delete d;
     delete HT;
     delete[] d_words;
 }
@@ -398,25 +466,9 @@ void test_hash_function(void)
 }
 
 
-void test_start_query(void)
-{
-    InitializeIndex();
-    char *q_words = new char[MAX_QUERY_LENGTH]();
-    memcpy(q_words, "hello people things going better", MAX_QUERY_LENGTH);
-    StartQuery(0, q_words, MT_EXACT_MATCH, 0);
 
-    TEST_ASSERT(strcmp(QT->getQuery(0)->getWord(0), "hello") == 0);                        // get first word of query with id = 0
-    TEST_ASSERT(strcmp(QT->getQuery(0)->getWord(1), "people") == 0);                       // get second word of query with id = 0
-    TEST_ASSERT(strcmp(QT->getBucket(hashFunctionById(0))[0]->getWord(1), "people") == 0); // get second word of bucket
-    TEST_ASSERT(QT->getQueriesPerBucket(hashFunctionById(0)) == 1);                        // one query in the bucket
-    QT->deleteQuery(0);
-    TEST_ASSERT(QT->getQueriesPerBucket(hashFunctionById(0)) == 0); // minus one
-    delete[] q_words;
+//////////////////////////// Distance Functions ////////////////////////////
 
-    DestroyIndex();
-}
-
-//////////////////////////// Distance Functionss ////////////////////////////
 void test_exact_match(void)
 {
     word word1 = (word) "hello";
@@ -438,13 +490,10 @@ void test_hamming(void)
     word word2 = (word) "hello";
     word word3 = (word) "hellno";
     word word4 = (word) "hellO";
-    const word ptrNull = NULL;
     // Test distance for good input
     TEST_CHECK(hammingDistance(word1, word2) == 0);
     TEST_CHECK(hammingDistance(word1, word4) == 1);
-    // Test exceptions for bad input (NULL Pointers)
-    TEST_EXCEPTION(hammingDistance(ptrNull, word1), std::exception);
-    TEST_EXCEPTION(hammingDistance(ptrNull, ptrNull), std::exception);
+    // Test exception for different size words (NULL Pointers)
     TEST_EXCEPTION(hammingDistance(word1, word3), std::exception);
 }
 
@@ -455,18 +504,14 @@ void test_edit(void)
     word word3 = (word) "hellno";
     word word4 = (word) "hellO";
     word word5 = (word) "_hello";
-    const word ptrNull = NULL;
-    // Test distance for good input
     TEST_CHECK(editDistance(word1, word2) == 0);
     TEST_CHECK(editDistance(word1, word3) == 1);
     TEST_CHECK(editDistance(word1, word4) == 1);
     TEST_CHECK(editDistance(word1, word5) == 1);
-    // Test exceptions for bad input (NULL Pointers)
-    TEST_EXCEPTION(editDistance(ptrNull, word1), std::exception);
-    TEST_EXCEPTION(editDistance(ptrNull, ptrNull), std::exception);
 }
 
 //////////////////////////// Stack ////////////////////////////
+
 void test_stack_add(void)
 {
     // Setup
@@ -639,6 +684,7 @@ void test_stackNode_pop(void)
 }
 
 //////////////////////////// Index ////////////////////////////
+
 void test_indexNode_constructor_addEntry(void)
 {
     // Setup
@@ -658,7 +704,6 @@ void test_indexNode_constructor_addEntry(void)
     indexNode *head;
 
     // Test creating with exact match (considered invalid for tree creation)
-    TEST_EXCEPTION(head = new indexNode(testEntry1, 1, 1, MT_EXACT_MATCH), std::exception);
 
     // Test insertion and exceptions when adding duplicates
     head = new indexNode(testEntry1);
@@ -1011,7 +1056,7 @@ void test_lookup_entry_index(void)
 
 void test_addToIndex(void)
 {
-char *testWord1 = (char *)"TESTWORD1"; // Parent
+    char *testWord1 = (char *)"TESTWORD1"; // Parent
     char *testWord2 = (char *)"TESTWORD2"; // Child diff=1
     char *testWord3 = (char *)"TESTWOR22"; // Child diff=2
     char *testWord4 = (char *)"TESTWORD3"; // Child diff=1,1
@@ -1255,88 +1300,19 @@ void test_removeFromIndex(void)
     destroy_entry_list(test_list);
 }
 
-//////////////////////////// Payload ////////////////////////////
 
-void test_payloadNode_constructor_getters(void)
-{
-    payloadNode *testNode = new payloadNode(1, 1);
-    TEST_CHECK(testNode->getId() == 1);
-    TEST_CHECK(testNode->getThreshold() == 1);
-    TEST_CHECK(testNode->getNext() == NULL);
-    delete testNode;
-}
-
-void test_payloadNode_setNext(void)
-{
-    payloadNode *testNode1 = new payloadNode(1, 1);
-    payloadNode *testNode2 = new payloadNode(2, 2);
-    // Check Initial State is NULL
-    TEST_CHECK(testNode1->getNext() == NULL);
-    TEST_CHECK(testNode2->getNext() == NULL);
-    // Test Setting to another Node
-    testNode1->setNext(testNode2);
-    TEST_CHECK(testNode1->getNext() == testNode2);
-    // Test Setting to NULL
-    testNode1->setNext(NULL);
-    TEST_CHECK(testNode1->getNext() == NULL);
-    delete testNode1;
-    delete testNode2;
-}
-
-void test_payload_addToPayload(void)
-{
-    // Create a test entry
-    char *testWord1 = (char *)"TESTWORD1";
-    entry *testEntry1;
-    create_entry(&testWord1, &testEntry1);
-
-    // Add payload with QueryID 2, check that it is accessible
-    testEntry1->addToPayload(2, 2);
-    TEST_CHECK(testEntry1->getPayload()->getId() == 2);
-
-    // Add payload with QueryID 3, check that both 2 and 3 are accessible
-    testEntry1->addToPayload(3, 3);
-    TEST_CHECK(testEntry1->getPayload()->getId() == 2);
-    TEST_CHECK(testEntry1->getPayload()->getNext()->getId() == 3);
-
-    // Add payload with QueryID 1, check that all 1, 2 and 3 are accessible
-    testEntry1->addToPayload(1, 1);
-    TEST_CHECK(testEntry1->getPayload()->getId() == 1);
-    TEST_CHECK(testEntry1->getPayload()->getNext()->getId() == 2);
-    TEST_CHECK(testEntry1->getPayload()->getNext()->getNext()->getId() == 3);
-
-    // Cleanup
-    destroy_entry(testEntry1);
-}
-
-void test_payload_deletePayloadNode(void)
-{
-    // Create entry with 3 payload nodes
-    char *testWord1 = (char *)"TESTWORD1";
-    entry *testEntry1;
-    create_entry(&testWord1, &testEntry1);
-    testEntry1->addToPayload(1, 1);
-    testEntry1->addToPayload(2, 2);
-    testEntry1->addToPayload(3, 3);
-
-    // Delete the node with QueryID 1 and check that it is removed from the list
-    testEntry1->deletePayloadNode(1);
-    TEST_CHECK(testEntry1->getPayload()->getId() == 2);
-    TEST_CHECK(testEntry1->getPayload()->getNext()->getId() == 3);
-
-    // Delete the node with QueryID 2 and check that it is removed from the list
-    testEntry1->deletePayloadNode(2);
-    TEST_CHECK(testEntry1->getPayload()->getId() == 3);
-
-    // Delete the node with QueryID 3 and check that the list is now empty
-    testEntry1->deletePayloadNode(3);
-    TEST_CHECK(testEntry1->emptyPayload());
-
-    // Cleanup
-    destroy_entry(testEntry1);
-}
 
 //////////////////////////// Result ////////////////////////////
+
+void test_merge_sort(void)
+{
+    QueryID queryIds[10] = {12, 2, 4, 1, 7, 57, 83, 5, 89, 9};
+    mergeSort(queryIds, 0, 9);
+    TEST_CHECK((queryIds[0] == 1));
+    TEST_CHECK((queryIds[1] == 2));
+    TEST_CHECK((queryIds[9] == 89));
+    TEST_CHECK((queryIds[8] == 83));
+}
 
 void test_result_storeResult(void)
 {   
@@ -1360,11 +1336,115 @@ void test_result_storeResult(void)
     TEST_CHECK(resultList->getNext()->getNumRes() == 2);
     TEST_CHECK(resultList->getNext()->getQueries() == testQ2);
 
+    // delete list because normally main would delete it
+    result *prev, *curr = resultList;
+    while (curr)
+    {
+        prev = curr;
+        curr = curr->getNext();
+        delete prev;
+    }
     // Cleanup
     delete[] testQ1;
     delete[] testQ2;
     DestroyIndex();
 }
+
+//////////////////////////// Interface ////////////////////////////
+
+void test_InitializeIndex_DestroyIndex(void)
+{
+    InitializeIndex();
+    // everything well created
+    TEST_CHECK((EntryList != NULL));
+    TEST_CHECK((QT != NULL));
+    TEST_CHECK((ET != NULL));
+    TEST_CHECK((editIndex != NULL));
+    for(int i = 0; i < 27; i++)
+    {
+        TEST_CHECK((hammingIndexes[i] != NULL));
+    }
+    DestroyIndex();
+}
+
+void test_StartQuery_EndQuery(void)
+{
+    InitializeIndex();
+    char *q_words = new char[MAX_QUERY_LENGTH]();
+
+    // create queries and delete them and check if they are well inserted in structs
+    memcpy(q_words, "blue purple green black yellow", MAX_QUERY_LENGTH);
+    StartQuery(0, q_words, MT_EXACT_MATCH, 0);
+    TEST_CHECK((QT->getQueriesPerBucket(hashFunctionById(0)) == 1));
+    TEST_CHECK((EntryList->getEntryNum() == 5));
+    TEST_CHECK((ET->getEntriesPerBucket(hashFunction((char*)"blue")) == 1)); // well inserted in entry table
+    TEST_CHECK(((ET->getBucket(hashFunction((char*)"blue"))[0])->getPayload()->getId() == 0));  
+    EndQuery(0);
+    TEST_CHECK(((ET->getBucket(hashFunction((char*)"blue"))[0])->getPayload() == NULL));
+    TEST_CHECK((ET->getEntriesPerBucket(hashFunction((char*)"blue")) == 1)); // still in there but with NULL payload
+
+    memcpy(q_words, "blue purple green black yellow", MAX_QUERY_LENGTH);
+    StartQuery(1, q_words, MT_EDIT_DIST, 1);
+    TEST_CHECK((QT->getQueriesPerBucket(hashFunctionById(1)) == 1));
+    TEST_CHECK((EntryList->getEntryNum() == 10));
+    TEST_CHECK((strcmp(editIndex->getEntry()->getWord(), "blue") == 0)); // well inserted in index
+
+    memcpy(q_words, "blue purple green black yellow", MAX_QUERY_LENGTH);
+    StartQuery(2, q_words, MT_HAMMING_DIST, 2);
+    TEST_CHECK((QT->getQueriesPerBucket(hashFunctionById(1)) == 1));
+    TEST_CHECK((EntryList->getEntryNum() == 15));
+    TEST_CHECK((strcmp(hammingIndexes[0]->getEntry()->getWord(), "blue") == 0)); // well inserted in index
+
+    EndQuery(2);
+    TEST_CHECK((hammingIndexes[0]->getEntry()->getPayload() == NULL)); // well deleted
+    EndQuery(1);
+    TEST_CHECK((editIndex->getEntry()->getPayload() == NULL)); // well deleted
+
+    delete[] q_words;
+    DestroyIndex();
+}
+
+void test_ExactMatch_WordLookup(void)
+{
+    InitializeIndex();
+    char *q_words = new char[MAX_QUERY_LENGTH]();
+    memcpy(q_words, "blue purple green black yellow", MAX_QUERY_LENGTH);
+    // create query
+    StartQuery(0, q_words, MT_EXACT_MATCH, 0);
+    // create document
+    char *d_words = new char[MAX_DOC_LENGTH]();
+    strcpy(d_words, "blue purple green black yellow blue purple green black yellow");
+    Document* d = new Document(0, d_words);
+    // deduplicate document 
+    DocTable *DT;
+    DT = new DocTable(0);
+    DocumentDeduplication(d, DT);
+
+    // initialize entrylist with potential results   
+    entry_list *result = NULL;
+    create_entry_list(&result);
+
+    // check for match                        
+    for (int bucket = 0; bucket < MAX_BUCKETS; ++bucket) // for each bucket
+    {
+        if (DT->getWordsPerBucket(bucket))
+        {
+            for (int word = 0; word < DT->getWordsPerBucket(bucket); ++word) // for each word 
+            {
+                ET->wordLookup(DT->getBucket(bucket)[word], result); 
+            }
+        }
+    } 
+    TEST_CHECK((result->getEntryNum() == 5)); // 5 common words found
+
+    delete d;
+    delete DT;
+    delete[] d_words;
+    delete[] q_words;
+    destroy_entry_list(result);
+    DestroyIndex();
+}
+
 
 void test_GetNextAvailRes(void)
 {
@@ -1416,7 +1496,6 @@ TEST_LIST = {
     {"Find Entry", test_find_entry},
     {"Hash Function", test_hash_function},
     {"Document Deduplication", test_deduplication},
-    {"Start Query", test_start_query},
     {"Doc Table", test_doc_table},
     {"Query Table", test_query_table},
     {"Entry Table", test_entry_table},
@@ -1441,8 +1520,12 @@ TEST_LIST = {
     {"Add word to index", test_addToIndex},
     {"payloadNode Constructor, Getters", test_payloadNode_constructor_getters},
     {"payloadNode setNext", test_payloadNode_setNext},
-    //{"payload addToPayload", test_payload_addToPayload},
-    //{"payload deleteNode", test_payload_deletePayloadNode},
-    //{"store result", test_result_storeResult},
-    //{"GetNextAvailRes", test_GetNextAvailRes},
+    {"payload addToPayload", test_payload_addToPayload},
+    {"payload deleteNode", test_payload_deletePayloadNode},
+    {"Merge Sort", test_merge_sort},
+    {"store result", test_result_storeResult},
+    {"InitializeIndex and DestroyIndex", test_InitializeIndex_DestroyIndex},
+    {"StartQuery and EndQuery", test_StartQuery_EndQuery},
+    {"ExactMatch WordLookup", test_ExactMatch_WordLookup},
+    {"GetNextAvailRes", test_GetNextAvailRes},
     {NULL, NULL}};

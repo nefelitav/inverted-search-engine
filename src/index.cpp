@@ -1,12 +1,9 @@
 #include "../include/index.hpp"
 #include "../include/utilities.hpp"
+#include "../include/structs.hpp"
 
 indexNode ::indexNode(entry *input, QueryID id, unsigned int threshold, MatchType matchingMetric)
 {
-    if (matchingMetric != MT_HAMMING_DIST && matchingMetric != MT_EDIT_DIST)
-    {
-        throw std::invalid_argument("Invalid Distance Metric");
-    }
     this->MatchingType = matchingMetric;
     this->content = input;
     this->children = NULL;
@@ -22,24 +19,24 @@ ErrorCode indexNode ::addEntry(entry *input, QueryID id, unsigned int threshold)
 
     unsigned int distance;
     // Check Input
-    if (input == NULL)
+    if (!input)
     {
         throw std::invalid_argument("Got NULL pointer");
     }
 
     // If this node was created as a NULL head node, populate it
-    if (this->content == NULL)
+    if (!this->content)
     {
         this->content = input;
     }
     else
     {
         // Get distance for given metric
-        if (this->getMatchingType() == MT_HAMMING_DIST)
+        if (this->MatchingType == MT_HAMMING_DIST)
         {
             distance = hammingDistance(this->content->getWord(), input->getWord());
         }
-        else if (this->getMatchingType() == MT_EDIT_DIST)
+        else if (this->MatchingType == MT_EDIT_DIST)
         {
             distance = editDistance(this->content->getWord(), input->getWord());
         }
@@ -48,9 +45,8 @@ ErrorCode indexNode ::addEntry(entry *input, QueryID id, unsigned int threshold)
             return EC_FAIL;
         }
         // If the entry already exists, add to payload
-        if (distance == 0)
+        if (!distance)
         {
-
             try
             {
                 this->content->addToPayload(id, threshold);
@@ -62,16 +58,16 @@ ErrorCode indexNode ::addEntry(entry *input, QueryID id, unsigned int threshold)
             }
             return EC_SUCCESS;
         }
-        if (this->children == NULL)
+        if (!this->children)
         {
             //If there are no children create new list with the input in the first node
-            this->children = new indexList(input, distance, this->getMatchingType(), id, threshold);
+            this->children = new indexList(input, distance, this->MatchingType, id, threshold);
         }
         else if (this->children->getDistanceFromParent() > distance)
-        { // Children list exists, first child has bigger dist
-
+        { 
+            // Children list exists, first child has bigger dist
             indexList *oldFirstChild = this->children;
-            this->children = new indexList(input, distance, this->getMatchingType(), id, threshold, oldFirstChild);
+            this->children = new indexList(input, distance, this->MatchingType, id, threshold, oldFirstChild);
         }
         else
         { // Children list exists, new entry has equal or greater dist than first child
@@ -92,7 +88,7 @@ ErrorCode indexNode ::addEntry(entry *input, QueryID id, unsigned int threshold)
 
 int indexNode ::printTree(int depth)
 {
-    if (this->content == NULL)
+    if (!this->content)
     {
         std::cout << "EMPTY\n";
         return 0;
@@ -101,7 +97,7 @@ int indexNode ::printTree(int depth)
               << "\n";
     //this->content->printPayload();
 
-    if (this->children != NULL)
+    if (this->children)
     {
         this->children->printList(depth);
     }
@@ -123,7 +119,7 @@ indexNode ::~indexNode()
 
 void printHammingTrees()
 {
-    for (int k = 0; k < 27; k++)
+    for (int k = 0; k < 27; ++k)
     {
         std::cout << (k + 4) << ": \n";
         hammingIndexes[k]->printTree();
@@ -134,21 +130,12 @@ void printHammingTrees()
 
 ErrorCode lookup_entry_index(const word w, entry_list *result, MatchType queryMatchingType)
 {
-    std::string s = "life";
-    int n = s.length();
-    char char_array[n + 1];
-    strcpy(char_array, s.c_str());
-
-    std::string s2 = "file";
-    int n2 = s2.length();
-    char char_array2[n2 + 1];
-    strcpy(char_array2, s2.c_str());
 
     unsigned int threshold = 3;
     unsigned int distance;
     indexNode *ix;
     // Check input
-    if (w == NULL)
+    if (!w)
     {
         throw std::invalid_argument("Got NULL pointer");
     }
@@ -173,17 +160,8 @@ ErrorCode lookup_entry_index(const word w, entry_list *result, MatchType queryMa
     {
         ix = hammingIndexes[strlen(w) - 4];
     }
-    else if (queryMatchingType == MT_EXACT_MATCH)
-    {
-        delete stack;
-        return EC_SUCCESS;
-    }
-    else
-    {
-        return EC_FAIL;
-    }
 
-    if (ix->getEntry() == NULL)
+    if (!ix->getEntry())
     {
         delete stack;
         return EC_SUCCESS;
@@ -205,31 +183,25 @@ ErrorCode lookup_entry_index(const word w, entry_list *result, MatchType queryMa
         {
             distance = editDistance(currNode->getEntry()->getWord(), w);
         }
-        else
-        {
-            return EC_FAIL;
-        }
+
         // Add to results if close enough and the entry exists
-        if (currNode->getEntry()->emptyPayload() == false)
+        currPayloadNode = currNode->getEntry()->getPayload();
+        while (currPayloadNode)
         {
-            currPayloadNode = currNode->getEntry()->getPayload();
-            while (currPayloadNode != NULL)
+            if (currPayloadNode->getThreshold() >= distance)
             {
-                if ((int)currPayloadNode->getThreshold() >= (int)distance)
+                if (!tempEntry)
                 {
-                    if (tempEntry == NULL)
-                    {
-                        tempEntry = new entry(currNode->getEntry()->getWord());
-                    }
-                    tempEntry->addToPayload(currPayloadNode->getId(), currPayloadNode->getThreshold());
+                    tempEntry = new entry(currNode->getEntry()->getWord());
                 }
-                currPayloadNode = currPayloadNode->getNext();
+                tempEntry->addToPayload(currPayloadNode->getId(), currPayloadNode->getThreshold());
             }
-            if (tempEntry != NULL)
-            {
-                result->addEntry(tempEntry);
-                tempEntry = NULL;
-            }
+            currPayloadNode = currPayloadNode->getNext();
+        }
+        if (tempEntry)
+        {
+            result->addEntry(tempEntry);
+            tempEntry = NULL;
         }
 
         // Add any applicable children to examine later
@@ -238,12 +210,12 @@ ErrorCode lookup_entry_index(const word w, entry_list *result, MatchType queryMa
         {
 
             // If the child meets the criteria, add it to the stack
-            if ((int)(currChild->getDistanceFromParent()) >= (int)distance - (int)threshold && (int)(currChild->getDistanceFromParent()) <= (int)distance + (int)threshold)
+            if ((int)(currChild->getDistanceFromParent()) >= (int)distance - (int)threshold && (currChild->getDistanceFromParent()) <= distance + threshold)
             {
                 toadd = currChild->getNode();
                 stack->add(&toadd);
             }
-            else if ((int)(currChild->getDistanceFromParent()) > (int)distance + (int)threshold)
+            else if ((currChild->getDistanceFromParent()) > distance + threshold)
             {
                 // Children are ordered by distance, if one in not acceptable we can skip the rest
                 break;
@@ -260,13 +232,9 @@ ErrorCode lookup_entry_index(const word w, entry_list *result, MatchType queryMa
 
 ErrorCode addToIndex(entry *toAdd, QueryID queryId, MatchType queryMatchingType, unsigned int threshold)
 {
-    if (toAdd == NULL)
+    if (!toAdd)
     {
         throw std::invalid_argument("Got NULL pointer");
-    }
-    if (queryMatchingType != MT_EDIT_DIST && queryMatchingType != MT_EXACT_MATCH && queryMatchingType != MT_HAMMING_DIST)
-    {
-        throw std::invalid_argument("Invalid Matching Type");
     }
 
     try
@@ -283,10 +251,6 @@ ErrorCode addToIndex(entry *toAdd, QueryID queryId, MatchType queryMatchingType,
         {
             ET->addToBucket(hashFunction(toAdd->getWord()), toAdd);
         }
-        else
-        {
-            return EC_FAIL;
-        }
         return EC_SUCCESS;
     }
     catch (const std::exception &_)
@@ -301,7 +265,7 @@ ErrorCode removeFromIndex(const word givenWord, const QueryID queryId, const Mat
     //     std::cout<<"Removing: "<<givenWord<<" of ID "<<queryId<<"\n";
     // }
     // Check input
-    if (givenWord == NULL)
+    if (!givenWord)
     {
         throw std::invalid_argument("Got NULL pointer to word");
     }
@@ -330,10 +294,7 @@ ErrorCode removeFromIndex(const word givenWord, const QueryID queryId, const Mat
             ET->deleteQueryId(givenWord, queryId);
             return EC_SUCCESS;
         }
-        else
-        {
-            return EC_FAIL;
-        }
+
 
         // Store the children of current node, if any
         indexList *currChild;
@@ -357,10 +318,7 @@ ErrorCode removeFromIndex(const word givenWord, const QueryID queryId, const Mat
             {
                 distance = editDistance(currNode->getEntry()->getWord(), givenWord);
             }
-            else
-            {
-                return EC_FAIL;
-            }
+
 
             // Delete payload entry if found
             if (currNode->getEntry()->emptyPayload() == false && distance == 0)
@@ -374,12 +332,12 @@ ErrorCode removeFromIndex(const word givenWord, const QueryID queryId, const Mat
             while (currChild)
             {
                 // If the child meets the criteria, add it to the stack
-                if ((int)(currChild->getDistanceFromParent()) >= (int)distance - (int)threshold && (int)(currChild->getDistanceFromParent()) <= (int)distance + (int)threshold)
+                if ((int)(currChild->getDistanceFromParent()) >= (int)distance - (int)threshold && (currChild->getDistanceFromParent()) <= distance + threshold)
                 {
                     toadd = currChild->getNode();
                     stack->add(&toadd);
                 }
-                else if ((int)(currChild->getDistanceFromParent()) > (int)distance + (int)threshold)
+                else if ((currChild->getDistanceFromParent()) > distance + threshold)
                 {
                     // Children are ordered by distance, if one in not acceptable we can skip the rest
                     break;
@@ -415,15 +373,12 @@ ErrorCode destroy_entry_index(indexNode *ix)
 
 stackNode ::stackNode(indexNode *input, stackNode *oldHead)
 {
-    if (input == NULL)
+    if (!input)
     {
         throw std::invalid_argument("Got NULL pointer");
     }
-    else
-    {
-        this->entry = input;
-        this->next = oldHead;
-    }
+    this->entry = input;
+    this->next = oldHead;
 }
 void stackNode ::pop(indexNode **content, stackNode **newHead)
 {
@@ -445,18 +400,15 @@ Stack ::Stack()
 
 void Stack ::add(indexNode **input)
 {
-    if (input == NULL)
+    if (!input)
     {
         throw std::invalid_argument("Got NULL pointer");
     }
-    else if (*input == NULL)
+    else if (!*input)
     {
         throw std::invalid_argument("Got pointer to NULL pointer");
     }
-    else
-    {
-        this->head = new stackNode(*input, this->head);
-    }
+    this->head = new stackNode(*input, this->head);
 }
 indexNode *Stack ::pop()
 {
@@ -464,12 +416,9 @@ indexNode *Stack ::pop()
     if (this->head)
     {
         this->head->pop(&nodeToReturn, &this->head);
+        return nodeToReturn;
     }
-    else
-    {
-        nodeToReturn = NULL;
-    }
-    return nodeToReturn;
+    return NULL;
 }
 
 int Stack ::getSize()
@@ -478,7 +427,7 @@ int Stack ::getSize()
     stackNode *currNode = this->head;
     while (currNode)
     {
-        count++;
+        ++count;
         currNode = currNode->getNext();
     }
     return count;
@@ -489,10 +438,6 @@ int Stack ::getSize()
 indexList ::indexList(entry *content, unsigned int distance, MatchType matchingMetric, QueryID id, unsigned int threshold, indexList *next)
 {
     // Check input
-    if (content == NULL)
-    {
-        throw std::invalid_argument("Got NULL pointer");
-    }
     if (matchingMetric != MT_HAMMING_DIST && matchingMetric != MT_EDIT_DIST)
     {
         throw std::invalid_argument("Invalid Distance Metric");
@@ -500,6 +445,10 @@ indexList ::indexList(entry *content, unsigned int distance, MatchType matchingM
     if (distance == 0)
     {
         throw std::invalid_argument("Invalid Distance Value");
+    }
+    if (!content)
+    {
+        throw std::invalid_argument("Got NULL pointer");
     }
     // Point to the next list node and set distance from parrent for this node
     this->next = next;
@@ -515,42 +464,38 @@ unsigned int indexList ::getDistanceFromParent() const
 
 int indexList ::addToList(entry *content, unsigned int distance, QueryID id, unsigned int threshold)
 {
-    if (content == NULL)
+    if (!content)
     {
         throw std::invalid_argument("Got NULL pointer");
     }
-    if (distance == 0)
-    {
-        throw std::invalid_argument("Invalid Distance Value");
-    }
 
     indexList *next = this->next;
+
     if (distance == this->distanceFromParent)
     { // If we have the same distance as this node, push lower in the tree
         this->node->addEntry(content, id, threshold);
+        return 0;
     }
     else if (this->next)
     { // If we are not in the last node
-        if (distance >= this->next->getDistanceFromParent())
+        if (distance >= this->next->distanceFromParent)
         { // If the next node has distance lower than the input, pass input along
             this->next->addToList(content, distance, id, threshold);
         }
-        else
+        else if (this->node->getMatchingType() == MT_EDIT_DIST)
         { // Else if the next node has higher distance, create a new list node between this one and the next
-            if (this->node->getMatchingType() == MT_EDIT_DIST)
-                this->next = new indexList(content, distance, this->node->getMatchingType(), id, threshold, next);
+            this->next = new indexList(content, distance, this->node->getMatchingType(), id, threshold, next);
         }
+        return 0;
     }
-    else
-    { // If there is no next node, create a new node after this
-        this->next = new indexList(content, distance, this->node->getMatchingType(), id, threshold, next);
-    }
+    // If there is no next node, create a new node after this
+    this->next = new indexList(content, distance, this->node->getMatchingType(), id, threshold, next);
     return 0;
 }
 
 void indexList ::printList(int depth)
 {
-    for (int i = 0; i <= depth * 3 + 1; i++)
+    for (int i = 0; i <= depth * 3 + 1; ++i)
     {
         std::cout << " ";
     }

@@ -23,7 +23,7 @@ ErrorCode InitializeIndex()
         hammingIndexes = new indexNode*[27];
         for (int i = 0; i < 27; i++)
         {
-            hammingIndexes[i] = new indexNode(NULL,1 ,0, MT_HAMMING_DIST);
+            hammingIndexes[i] = new indexNode(NULL, 1, 0, MT_HAMMING_DIST);
         }
         exactHash = NULL;
         return EC_SUCCESS;
@@ -49,6 +49,7 @@ ErrorCode StartQuery(QueryID query_id, const char *query_str, MatchType match_ty
         }
         while (w != NULL)
         {
+            //std::cout << w<<"-------------" << std::endl;
             create_entry(&w, &tempEntry);
             EntryList->addEntry(tempEntry);
             tempEntry->addToPayload(query_id, match_dist);
@@ -56,6 +57,62 @@ ErrorCode StartQuery(QueryID query_id, const char *query_str, MatchType match_ty
             i++;
             w = q->getWord(i);
         }
+        return EC_SUCCESS;
+    }
+    catch (const std::exception &_)
+    {
+        return EC_FAIL;
+    }
+    return EC_NO_AVAIL_RES;
+}
+
+
+
+ErrorCode MatchDocument(DocID doc_id, const char *doc_str)
+{
+    
+    try
+    {   
+        Document *d = new Document(doc_id, (char *)doc_str);    // create document
+        DocTable *DT;
+        DT = new DocTable(doc_id);
+        DocumentDeduplication(d, DT);                           // deduplicate document
+        DT->wordLookup();                                       // check for match
+        delete d;
+        delete DT;
+        return EC_SUCCESS;
+    }
+    catch (const std::exception &_)
+    {
+        return EC_FAIL;
+    }
+    return EC_NO_AVAIL_RES;
+}
+
+ErrorCode GetNextAvailRes(DocID *p_doc_id, unsigned int *p_num_res, QueryID **p_query_ids)
+{
+    result *temp = NULL;
+    if (resultList == NULL)
+    {
+        return EC_NO_AVAIL_RES;
+    }
+    else
+    {
+        *p_doc_id = resultList->getDocID();
+        *p_num_res = resultList->getNumRes();
+        *p_query_ids = resultList->getQueries();
+        temp = resultList;
+        resultList = resultList->getNext();
+        delete temp;
+        return EC_SUCCESS;
+    }
+}
+
+ErrorCode EndQuery(QueryID query_id)
+{
+    try
+    {
+        QT->deleteQuery(query_id);      // delete query from hash table and its entries from index
         return EC_SUCCESS;
     }
     catch (const std::exception &_)
@@ -85,58 +142,4 @@ ErrorCode DestroyIndex()
         return EC_FAIL;
     }
     return EC_NO_AVAIL_RES;
-}
-
-ErrorCode EndQuery(QueryID query_id)
-{
-    try
-    {
-        QT->deleteQuery(query_id);      // delete query from hash table and its entries from index
-        return EC_SUCCESS;
-    }
-    catch (const std::exception &_)
-    {
-        return EC_FAIL;
-    }
-    return EC_NO_AVAIL_RES;
-}
-
-ErrorCode MatchDocument(DocID doc_id, const char *doc_str)
-{
-    
-    try
-    {   
-        Document *d = new Document(doc_id, (char *)doc_str);    // create document
-        DocTable *DT;
-        DT = new DocTable(doc_id);
-        DocumentDeduplication(d, DT);                           // deduplicate document
-        DT->wordLookup();                                       // check for match
-        delete d;
-        delete DT;
-        
-        return EC_SUCCESS;
-    }
-    catch (const std::exception &_)
-    {
-        return EC_FAIL;
-    }
-    return EC_NO_AVAIL_RES;
-}
-ErrorCode GetNextAvailRes(DocID *p_doc_id, unsigned int *p_num_res, QueryID **p_query_ids)
-{
-    result *temp = NULL;
-    if (resultList == NULL)
-    {
-        return EC_NO_AVAIL_RES;
-    }
-    else
-    {
-        *p_doc_id = resultList->getDocID();
-        *p_num_res = resultList->getNumRes();
-        *p_query_ids = resultList->getQueries();
-        temp = resultList;
-        resultList = resultList->getNext();
-        delete temp;
-        return EC_SUCCESS;
-    }
 }

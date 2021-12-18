@@ -1,9 +1,7 @@
 #ifndef STRUCTS
 #define STRUCTS
 
-#include <iostream>
 #include <cstring>
-#include "core.h"
 #include "index.hpp"
 
 typedef char* word;
@@ -11,7 +9,8 @@ class payloadNode;
 
 class Query {
     private:
-        char* words;                 // saving words in a 1d array instead of a 2d to save time (contiguous allocation)            
+        //char* words;                 // saving words in a 1d array instead of a 2d to save time (contiguous allocation)            
+        char words[MAX_QUERY_LENGTH];
         QueryID id;
         MatchType match_type;
         unsigned int match_dist;
@@ -21,7 +20,6 @@ class Query {
         Query(QueryID id, char * words, MatchType match_type, unsigned int match_dist);
         void printQuery() const;                                                            
         const word getWord(int word_num) const;                                                         
-        const char* getText() const;
         const QueryID getId() const;                                                             
         const int getWordNum() const;
         const MatchType getMatchingType() const;                                                             
@@ -37,14 +35,12 @@ class Query {
 
 class Document {
     private:
-        char* text;                 // saving words in a 1d array instead of a 2d to save time (contiguous allocation)   
+        char* text[MAX_DOC_LENGTH];                 // saving words in a 1d array instead of a 2d to save time (contiguous allocation)   
         DocID id;
     public:
         Document(DocID id, char * words); 
         void printDocument() const;
         const word getWord(int word_num) const;                      
-        char* getText() const;
-        const int getWordNum() const;
         ~Document();
 };
 
@@ -65,7 +61,7 @@ class payloadNode {
 
 class entry {
     private:
-        word keyword;
+        char keyword[MAX_WORD_LENGTH];
         payloadNode* payload;
         entry* next;
     public:

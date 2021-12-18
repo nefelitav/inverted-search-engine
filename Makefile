@@ -37,7 +37,7 @@ run: $(OUT)
 	./$(OUT)
 
 run_test: test
-	./test
+	./test 
 
 valgrind: $(OUT)
 	valgrind --leak-check=full --show-leak-kinds=all  --track-origins=yes ./$(OUT)
