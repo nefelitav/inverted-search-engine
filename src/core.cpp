@@ -16,11 +16,11 @@ ErrorCode InitializeIndex()
 {
     try
     {
-        create_entry_list(&EntryList);
-        QT = new QueryTable();
+        create_entry_list(&EntryList);  // Create the global entry list
+        QT = new QueryTable();  // // Create the global query and entry hash tables
         ET = new EntryTable();
-        editIndex = new indexNode(NULL);
-        hammingIndexes = new indexNode*[27];
+        editIndex = new indexNode(NULL);    // Create the edit index with a null node
+        hammingIndexes = new indexNode*[27];    // Create the 27 hamming indexes for each word length from 4 to 31
         for (int i = 0; i < 27; i++)
         {
             hammingIndexes[i] = new indexNode(NULL, 1, 0, MT_HAMMING_DIST);

@@ -399,27 +399,7 @@ matchedQuery *matchedQueryList ::getHead()
 {
     return this->head;
 }
-void matchedQueryList ::removeQuery(matchedQuery *toRemove)
-{
-    matchedQuery *curr = this->head;
-    matchedQuery *next = curr->getNext();
-    if (curr == toRemove)
-    {
-        delete curr;
-        this->head = next;
-        return;
-    }
-    while (curr)
-    {
-        if (curr->getNext() == toRemove)
-        {
-            curr->setNext(curr->getNext()->getNext());
-            delete toRemove;
-            return;
-        }
-        curr = curr->getNext();
-    }
-}
+
 matchedQueryList ::~matchedQueryList()
 {
     matchedQuery *prev, *curr = this->head;
@@ -754,9 +734,11 @@ void storeResult(int numRes, DocID document, QueryID *queries)
     result *temp = NULL;
     if (!resultList)
     {
+        // If the list is empty create a new node at the head
         resultList = new result(numRes, document, queries);
         return;
     }
+    // Else insert a node
     temp = new result(numRes, document, queries);
     resultList->addResult(temp);
 }

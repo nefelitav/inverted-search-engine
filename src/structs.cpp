@@ -29,20 +29,6 @@ Query ::Query(QueryID id, char *words, MatchType match_type, unsigned int match_
     //std::cout<<"ID: "<<id<<" Match Type "<<this->match_type<<" Match Dist "<<this->match_dist<<"\n";
 }
 
-void Query ::printQuery() const // for debugging
-{
-    std::cout << "-------------------" << std::endl;
-    std::cout << "Print query words :" << std::endl;
-    for (int i = 0; i < MAX_QUERY_WORDS; ++i)
-    {
-        if (*(this->words + (MAX_WORD_LENGTH + 1) * i) == '\0')
-        {
-            return;
-        }
-        std::cout << this->words + (MAX_WORD_LENGTH + 1) * i << std::endl;
-    }
-    std::cout << "-------------------" << std::endl;
-}
 const QueryID Query ::getId() const
 {
     return this->id;
@@ -122,8 +108,8 @@ Query ::~Query()
 
 Document ::Document(DocID id, char *words)
 {
-    memset(this->text, 0, MAX_DOC_LENGTH);
     int i = 0, length = 0;
+    this->wordCount = 0;
     word token = strtok((char *)words, " ");
     while (token != NULL) // get all words from input but not more than MAX_QUERY_WORDS
     {
@@ -137,27 +123,15 @@ Document ::Document(DocID id, char *words)
         memcpy(this->text + (MAX_WORD_LENGTH + 1) * i, token, length);
         ++i;
         token = strtok(NULL, " ");
+        this->wordCount++;
     }
     this->id = id;
     //std::cout << "Document with id = " << this->id << " is created!" << std::endl;
 }
-void Document ::printDocument() const // for debugging
-{
-    std::cout << "-------------------" << std::endl;
-    std::cout << "Print text words :" << std::endl;
 
-    for (int i = 0; i < MAX_DOC_WORDS; ++i)
-    {
-        if (*((char*)this->text + (MAX_WORD_LENGTH + 1) * i) == '\0')
-        {
-            return;
-        }
-        std::cout << this->text + (MAX_WORD_LENGTH + 1) * i << std::endl;
-    }
-}
 const word Document ::getWord(int word_num) const // array[i][j] --> arrary[i*(MAX_WORD_LENGTH + 1)]
 {
-    if (word_num >= MAX_DOC_WORDS) // out of range
+    if (word_num >= this->wordCount) // out of range
     {
         //cout << "Sorry, index out of range." << endl;
         return NULL;
@@ -244,15 +218,33 @@ payloadNode *entry ::getPayload() const
 
 void entry ::addToPayload(QueryID id, unsigned int threshold)
 {
+    payloadNode* curr;
+    payloadNode *new_node;
     if (this->emptyPayload())
     {
         this->payload = new payloadNode(id, threshold);
     }
     else
     {
-        payloadNode *new_head = new payloadNode(id, threshold);
-        new_head->setNext(this->payload);
-        this->payload = new_head;
+        if(this->payload->getThreshold() < threshold){
+            curr = this->payload;
+            new_node = new payloadNode(id, threshold);
+            new_node->setNext(curr);
+            this->payload = new_node;
+            return;
+            
+        }
+        curr = this->payload;
+        while(curr->getNext()){
+            if(curr->getNext()->getThreshold()>threshold){
+                curr = curr->getNext();
+            }else{
+                break;
+            }
+        }
+        new_node = new payloadNode(id, threshold);
+        new_node->setNext(curr->getNext());
+        curr->setNext(new_node);
     }
 }
 

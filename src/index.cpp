@@ -31,7 +31,7 @@ ErrorCode indexNode ::addEntry(entry *input, QueryID id, unsigned int threshold)
     }
     else
     {
-        // Get distance for given metric
+        // Get distance for given metric, else return error
         if (this->MatchingType == MT_HAMMING_DIST)
         {
             distance = hammingDistance(this->content->getWord(), input->getWord());
@@ -58,6 +58,8 @@ ErrorCode indexNode ::addEntry(entry *input, QueryID id, unsigned int threshold)
             }
             return EC_SUCCESS;
         }
+
+        // If the node under examination is not the same as the given entry
         if (!this->children)
         {
             //If there are no children create new list with the input in the first node
@@ -65,12 +67,12 @@ ErrorCode indexNode ::addEntry(entry *input, QueryID id, unsigned int threshold)
         }
         else if (this->children->getDistanceFromParent() > distance)
         { 
-            // Children list exists, first child has bigger dist
+            // Children list exists, first child has bigger distance
             indexList *oldFirstChild = this->children;
             this->children = new indexList(input, distance, this->MatchingType, id, threshold, oldFirstChild);
         }
         else
-        { // Children list exists, new entry has equal or greater dist than first child
+        { // Children list exists, new entry has equal or greater distance than first child
             try
             { // Give the entry to the list to handle
                 this->children->addToList(input, distance, id, threshold);
@@ -88,14 +90,14 @@ ErrorCode indexNode ::addEntry(entry *input, QueryID id, unsigned int threshold)
 
 int indexNode ::printTree(int depth)
 {
+    // For debugging
     if (!this->content)
     {
         std::cout << "EMPTY\n";
         return 0;
     }
-    std::cout << "Word: " << this->content->getWord() << "  Payload: "
-              << "\n";
-    //this->content->printPayload();
+    std::cout << "Word: " << this->content->getWord() << "  Payload: "<< "\n";
+    this->content->printPayload();
 
     if (this->children)
     {
@@ -119,6 +121,7 @@ indexNode ::~indexNode()
 
 void printHammingTrees()
 {
+    // For debugging
     for (int k = 0; k < 27; ++k)
     {
         std::cout << (k + 4) << ": \n";
@@ -131,7 +134,7 @@ void printHammingTrees()
 ErrorCode lookup_entry_index(const word w, entry_list *result, MatchType queryMatchingType)
 {
 
-    unsigned int threshold = 3;
+    unsigned int threshold = 3; // Threshold set at 3, the max possible distance of a query.
     unsigned int distance;
     indexNode *ix;
     // Check input
@@ -152,6 +155,7 @@ ErrorCode lookup_entry_index(const word w, entry_list *result, MatchType queryMa
     Stack *stack = new Stack();
     indexNode *toadd;
 
+    // Select the index to search in
     if (queryMatchingType == MT_EDIT_DIST)
     {
         ix = editIndex;
@@ -161,6 +165,7 @@ ErrorCode lookup_entry_index(const word w, entry_list *result, MatchType queryMa
         ix = hammingIndexes[strlen(w) - 4];
     }
 
+    // If empty, return no result
     if (!ix->getEntry())
     {
         delete stack;
@@ -195,11 +200,15 @@ ErrorCode lookup_entry_index(const word w, entry_list *result, MatchType queryMa
                     tempEntry = new entry(currNode->getEntry()->getWord());
                 }
                 tempEntry->addToPayload(currPayloadNode->getId(), currPayloadNode->getThreshold());
+            }else{
+                // If we get to a payload with more distance break, they are stored with descending order
+                break;
             }
             currPayloadNode = currPayloadNode->getNext();
         }
         if (tempEntry)
         {
+            // Add to result, if populated
             result->addEntry(tempEntry);
             tempEntry = NULL;
         }
@@ -239,6 +248,7 @@ ErrorCode addToIndex(entry *toAdd, QueryID queryId, MatchType queryMatchingType,
 
     try
     {
+        // Add to appropriate index
         if (queryMatchingType == MT_EDIT_DIST)
         {
             editIndex->addEntry(toAdd, queryId, threshold);
@@ -261,9 +271,6 @@ ErrorCode addToIndex(entry *toAdd, QueryID queryId, MatchType queryMatchingType,
 
 ErrorCode removeFromIndex(const word givenWord, const QueryID queryId, const MatchType givenType)
 {
-    // if(givenType == MT_HAMMING_DIST){
-    //     std::cout<<"Removing: "<<givenWord<<" of ID "<<queryId<<"\n";
-    // }
     // Check input
     if (!givenWord)
     {
@@ -415,6 +422,7 @@ indexNode *Stack ::pop()
     indexNode *nodeToReturn;
     if (this->head)
     {
+        // Return and the first node and set the next one as head
         this->head->pop(&nodeToReturn, &this->head);
         return nodeToReturn;
     }
