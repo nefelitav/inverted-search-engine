@@ -17,8 +17,7 @@
     linkcolor=black,
     filecolor=magenta,      
     urlcolor=cyan,
-    pdftitle={Overleaf Example},
-    pdfpagemode=FullScreen,
+    pdftitle={Project Part 2},
     }
 \setlength{\droptitle}{10em}
 
@@ -132,6 +131,8 @@ The classes we designed:
   It also contains a one-dimensional array of characters. The same as for the Query class applies here. It consists of an id and a 1d array of characters.
   \item \textbf{Entry}
   It contains a word, a payload and a pointer to the next entry. The payload is a list that stores the query ids and thresholds that correspond to the queries that contain the word of the entry.The class is composed of a constructor, destructor, some getters, setters and also some print functions for debugging. Moreover, there are some methods that are related to the payload functionality, such as deleting a queryid from payload or adding a queryid to payload. Exception is thrown if the input is NULL.
+  \item \textbf{payloadNode}
+  It contains the QueryID of a specific query, the distance within which a word is considered a match for this query, and a pointer to the next payloadNode, if it exists. Since the list of payloadNodes is created in an descending order by the appropriate functions of the corresponding Entry, time can be saved during lookup were the search starts from the most lax distance requirements and stops on the first payload node whose requirements cannot be met, being sure that the following nodes' requirements will be as strict as, or stricter than, the requirements of the last node. 
   \item \textbf{Entrylist} 
   It contains a pointer to an entry, which is the head of the list of entries. When adding an entry to the entrylist, the new entry always becomes the head of the list, pointing either to NULL (if it is the first item of the list) or to the old head. The class is composed of a constructor, destructor, some getters, setters and also some print functions for debugging. Exception is thrown if the input is NULL.
   When deleting the entrylist, we ensure that all the entries are deleted too.
@@ -153,6 +154,8 @@ The classes we designed:
   This class is used as part of the IndexNode, in order to store each node's children nodes. It contains a pointer to the next indexList node, a pointer to the indexNode it is storing and the distance of this indexNode from its parent. The objects of this list are sorted with regard to distance from their parent node, from lowest to highest, each one being created directly where it should belong, after the node with the next smallest difference and before the one with the next biggest. This class features a constructor, getters for the various contents, a print method for debugging and the addToList method, that manages the creation of new nodes in the correct place in the list. The reason for selecting this data structure is twofold. The first reason is minimising memory use; While using a static array of pointers was an option, as the maximum number of children is implicitly known (we are given the maximum size of a word as 31, so the maximum number of differences two words can have is at maximum 31), doing this would require that every node takes up the maximum amount of space. The second reason in speed on lookup. As the list is sorted with regard to distance, and the criteria for pruning sub-trees when searching through the tree are based on distance, we can stop examining the list of children when the first one does not meet the criteria, being sure that the next one certainly will not fit them, as it is more distant to the parent than the one we just turned down. 
   \item \textbf{IndexNode}
   This class is the main building block of the tree. It stores the enumeration of the distance function of the tree, to be used when creating new nodes or searching in order to calculate the distance between nodes, a pointer to the entry it contains, and a pointer to a list of its children if they exist. It features a constructor and destructor,getters for its members and a print function for debugging purposes. It also features addEntry, a function that manages the insertion of new entries, which is called in a recursive manner , by calling the addToList method described above, which in turn calls add addEntry on the appropriate child with the same difference to the parent node as the given word (if it exists). This way, the given entry is sent down the appropriate sub-tree until it can be assigned as a child node to an existing node. 
+   \item \textbf{matchedQuery}
+   Each object of this class stores the QueryID of a Query that matched a word with an entry in the index. This allows for the easier access to the queries that have any possibility of being matches to the document, as well as for resetting the status of matched words for any query that had at least one matched word. The matchedQueryList class serves as an interface for the management of the list.
 \end{itemize}
 The main functions we implemented:
 \begin{itemize}
@@ -176,10 +179,11 @@ The main functions we implemented:
   Deallocation of the aforementioned structs.
   \item \textbf{MatchDocument}
   It creates a new document, it deduplicates its words and it searches if they match with any query words. It accomplishes that accessing all indices and getting an entrylist which contains all query entries that matched with at least one document word. Afterwards, using the Result Hash Table, and by checking the matchedEntries boolean array in the Query struct, we are able to find the queries, of which all the entries matched with some document words. If only some query entries matched, then this is not a match. In any case, the boolean array of these specific queries should be set back to false, so that they are ready for the next search with a different document. Finally, the results are added to a list, which is then processed by GetNextAvailRes.
+  \clearpage
   \item \textbf{GetNextAvailRes}
   This function returns the results of the matching, that means the query ids of the queries that matched with a document(sorted), the document id and the number of results. The query ids were sorted using Merge Sort.
   \end{itemize}
 \end{itemize}
 \section{Conclusion}
-Finally, the program finds all the correct results and takes around 4500 milliseconds, when tested on the University machines, which is rather satisfactory. This can,also, be seen in the results.txt file of our Github repository.
+Finally, the program finds all the correct results and takes around 1900 milliseconds, when tested on the University machines, which is rather satisfactory. This can,also, be seen in the results.txt file of our Github repository.
 \end{document}

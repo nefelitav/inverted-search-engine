@@ -59,4 +59,9 @@ void test_InitializeIndex_DestroyIndex(void);
 void test_StartQuery_EndQuery(void);
 void test_GetNextAvailRes(void);
 void test_ExactMatch_WordLookup(void);
+void test_result_constructor_getters(void);
+void test_result_addResult(void);
+void test_matchedQuery_constructor_getters(void);
+void test_matchedQuery_setNext(void);
+void test_matchedQueryList_constructor_addToList_getHead(void);
 #endif  //TESTS

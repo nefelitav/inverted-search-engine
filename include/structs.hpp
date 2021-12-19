@@ -18,7 +18,6 @@ class Query {
         int entriesNum;
     public:
         Query(QueryID id, char * words, MatchType match_type, unsigned int match_dist);
-        void printQuery() const;                                                            
         const word getWord(int word_num) const;                                                         
         const QueryID getId() const;                                                             
         const int getWordNum() const;
@@ -37,9 +36,9 @@ class Document {
     private:
         char* text[MAX_DOC_LENGTH];                 // saving words in a 1d array instead of a 2d to save time (contiguous allocation)   
         DocID id;
+        int wordCount;
     public:
         Document(DocID id, char * words); 
-        void printDocument() const;
         const word getWord(int word_num) const;                      
         ~Document();
 };

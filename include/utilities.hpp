@@ -46,7 +46,6 @@ class matchedQueryList                 // list of matched queries
         void addToList(QueryID id);
         void printList();
         matchedQuery *getHead();
-        void removeQuery(matchedQuery *q);
         ~matchedQueryList();
 };
 
