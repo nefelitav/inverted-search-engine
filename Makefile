@@ -1,16 +1,13 @@
 FILES = src/
 TEST_FILES = tests/
-OBJS = main.o utilities.o structs.o index.o core.o
+OBJS = utilities.o structs.o index.o core.o libcore.so
 TEST_OBJ = tests.o utilities.o structs.o index.o core.o
 OUT	= main
 CC	 = g++
-FLAGS = -g -c -Wall -std=c++11 
+FLAGS = -g -c -Wall -fPIC -std=c++11 
 
-all: $(OBJS)
-	$(CC) -g $(OBJS) -o $(OUT) 
-
-main.o: $(FILES)main.cpp
-	$(CC) $(FLAGS) $(FILES)main.cpp 
+all: $(OBJS) $(FILES)main.cpp 
+	$(CC) -g -Wall -fPIC -I. -std=c++11 -o main $(FILES)main.cpp ./libcore.so
 
 utilities.o: $(FILES)utilities.cpp
 	$(CC) $(FLAGS) $(FILES)utilities.cpp
@@ -20,6 +17,9 @@ structs.o: $(FILES)structs.cpp
 
 index.o: $(FILES)index.cpp
 	$(CC) $(FLAGS) $(FILES)index.cpp
+
+libcore.so: $(FILES)core.o
+	$(CC) -shared -fPIC  -o libcore.so core.o structs.o index.o utilities.o -lc
 
 core.o: $(FILES)core.cpp
 	$(CC) $(FLAGS) $(FILES)core.cpp
