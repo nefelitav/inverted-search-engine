@@ -2,6 +2,7 @@
 #include "../include/core.h"
 #include "../include/utilities.hpp"
 #include "../include/index.hpp"
+#include "../include/thread.hpp"
 
 // some globals
 entry_list *EntryList;
@@ -11,11 +12,14 @@ indexNode *editIndex;
 indexNode **hammingIndexes;
 void *exactHash;
 result* resultList;
+bool globalExit;
+JobScheduler* scheduler;
 
 ErrorCode InitializeIndex()
 {
     try
-    {
+    {   
+        scheduler = new JobScheduler(NUM_THREADS);
         create_entry_list(&EntryList);  // Create the global entry list
         QT = new QueryTable();  // // Create the global query and entry hash tables
         ET = new EntryTable();
@@ -126,6 +130,7 @@ ErrorCode DestroyIndex()
 {
     try
     {
+        globalExit = true;
         delete editIndex;
         for (int i = 0; i < 27; i++)
         {
@@ -135,6 +140,7 @@ ErrorCode DestroyIndex()
         destroy_entry_list(EntryList);
         delete QT;
         delete ET;
+        delete scheduler;
         return EC_SUCCESS;
     }
     catch (const std::exception &_)

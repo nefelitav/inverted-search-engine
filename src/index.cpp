@@ -134,9 +134,7 @@ void printHammingTrees()
 ErrorCode lookup_entry_index(const word w, entry_list *result, MatchType queryMatchingType)
 {
 
-    unsigned int threshold = 3; // Threshold set at 3, the max possible distance of a query.
     unsigned int distance;
-    indexNode *ix;
     // Check input
     if (!w)
     {
@@ -152,28 +150,27 @@ ErrorCode lookup_entry_index(const word w, entry_list *result, MatchType queryMa
     entry *tempEntry = NULL;
 
     // Nodes to be examined next
-    Stack *stack = new Stack();
+    Stack stack;
     indexNode *toadd;
+    indexNode *currNode;
+
 
     // Select the index to search in
     if (queryMatchingType == MT_EDIT_DIST)
     {
-        ix = editIndex;
+        currNode = editIndex;
     }
     else if (queryMatchingType == MT_HAMMING_DIST)
     {
-        ix = hammingIndexes[strlen(w) - 4];
+        currNode = hammingIndexes[strlen(w) - 4];
     }
 
     // If empty, return no result
-    if (!ix->getEntry())
+    if (!currNode->getEntry())
     {
-        delete stack;
         return EC_SUCCESS;
     }
 
-    // Start the search with the root of the tree
-    indexNode *currNode = ix;
 
     // Main loop
     while (currNode)
@@ -219,12 +216,12 @@ ErrorCode lookup_entry_index(const word w, entry_list *result, MatchType queryMa
         {
 
             // If the child meets the criteria, add it to the stack
-            if ((int)(currChild->getDistanceFromParent()) >= (int)distance - (int)threshold && (currChild->getDistanceFromParent()) <= distance + threshold)
+            if ((int)(currChild->getDistanceFromParent()) >= (int)distance - 3 && (currChild->getDistanceFromParent()) <= distance + 3)
             {
                 toadd = currChild->getNode();
-                stack->add(&toadd);
+                stack.add(&toadd);
             }
-            else if ((currChild->getDistanceFromParent()) > distance + threshold)
+            else if ((currChild->getDistanceFromParent()) > distance + 3)
             {
                 // Children are ordered by distance, if one in not acceptable we can skip the rest
                 break;
@@ -233,9 +230,8 @@ ErrorCode lookup_entry_index(const word w, entry_list *result, MatchType queryMa
         }
 
         // Get the next item to be examined
-        currNode = stack->pop();
+        currNode = stack.pop();
     }
-    delete stack;
     return EC_SUCCESS;
 }
 
@@ -307,7 +303,7 @@ ErrorCode removeFromIndex(const word givenWord, const QueryID queryId, const Mat
         indexList *currChild;
 
         // Nodes to be examined next
-        Stack *stack = new Stack();
+        Stack stack;
         indexNode *toadd;
 
         // Start the search with the root of the tree
@@ -331,7 +327,6 @@ ErrorCode removeFromIndex(const word givenWord, const QueryID queryId, const Mat
             if (currNode->getEntry()->emptyPayload() == false && distance == 0)
             {
                 currNode->getEntry()->deletePayloadNode(queryId);
-                delete stack;
                 return EC_SUCCESS;
             }
             // Add any applicable children to examine later
@@ -342,7 +337,7 @@ ErrorCode removeFromIndex(const word givenWord, const QueryID queryId, const Mat
                 if ((int)(currChild->getDistanceFromParent()) >= (int)distance - (int)threshold && (currChild->getDistanceFromParent()) <= distance + threshold)
                 {
                     toadd = currChild->getNode();
-                    stack->add(&toadd);
+                    stack.add(&toadd);
                 }
                 else if ((currChild->getDistanceFromParent()) > distance + threshold)
                 {
@@ -352,9 +347,8 @@ ErrorCode removeFromIndex(const word givenWord, const QueryID queryId, const Mat
                 currChild = currChild->getNext();
             }
             // Get the next item to be examined
-            currNode = stack->pop();
+            currNode = stack.pop();
         }
-        delete stack;
         return EC_SUCCESS;
     }
     catch (const std::exception &_)
