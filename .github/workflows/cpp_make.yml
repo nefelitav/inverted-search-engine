@@ -1,9 +1,9 @@
 name: C/C++ CI
 on:
   push:
-    branches: [ main ]
+    branches: [ main, parallelization ]
   pull_request:
-    branches: [ main ]
+    branches: [ main, parallelization ]
 jobs:
   build:
     runs-on: ubuntu-latest

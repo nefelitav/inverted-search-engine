@@ -2,7 +2,7 @@
 #include "../include/core.h"
 #include "../include/utilities.hpp"
 #include "../include/index.hpp"
-#include "../include/thread.hpp"
+#include "../include/jobscheduler.hpp"
 
 // some globals
 entry_list *EntryList;

@@ -134,7 +134,7 @@ void printHammingTrees()
 ErrorCode lookup_entry_index(const word w, entry_list *result, MatchType queryMatchingType)
 {
 
-    unsigned int distance;
+    unsigned int distance = 0;
     // Check input
     if (!w)
     {
@@ -152,7 +152,7 @@ ErrorCode lookup_entry_index(const word w, entry_list *result, MatchType queryMa
     // Nodes to be examined next
     Stack stack;
     indexNode *toadd;
-    indexNode *currNode;
+    indexNode *currNode = NULL;
 
 
     // Select the index to search in
@@ -278,7 +278,7 @@ ErrorCode removeFromIndex(const word givenWord, const QueryID queryId, const Mat
         throw std::invalid_argument("Invalid Matching Type");
     }
 
-    unsigned int distance;
+    unsigned int distance = 0;
     unsigned int threshold = 0;
     indexNode *ix;
 
