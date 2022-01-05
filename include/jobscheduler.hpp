@@ -29,6 +29,7 @@ class jobNode
         jobNode(Job *job);
         jobNode* getNext();
         void setNext(jobNode* newJob);
+        Job* getJob();
         ~jobNode();
 };
 
@@ -65,9 +66,13 @@ class JobScheduler
         ~JobScheduler();
 };
 
+ErrorCode simpleJob(void *givenInt);
 void* threadMain(void *arg);
 
 extern JobScheduler *scheduler;
 extern bool globalExit;
+extern pthread_mutex_t queueLock;
+extern pthread_mutex_t emptyLock;
+extern pthread_cond_t emptyQueueCond;
 
 #endif // THREAD

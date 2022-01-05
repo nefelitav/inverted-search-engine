@@ -21,7 +21,7 @@ jobscheduler.o: $(FILES)jobscheduler.cpp
 index.o: $(FILES)index.cpp
 	$(CC) $(FLAGS) $(FILES)index.cpp
 
-libcore.so: $(FILES)core.o
+libcore.so: $(FILES)core.cpp $(FILES)jobscheduler.cpp $(FILES)structs.cpp $(FILES)utilities.cpp $(FILES)index.cpp
 	$(CC) -shared -fPIC -pthread -O3 -o libcore.so core.o jobscheduler.o structs.o index.o utilities.o -lc
 
 core.o: $(FILES)core.cpp

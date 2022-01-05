@@ -11,25 +11,27 @@ EntryTable *ET;
 indexNode *editIndex;
 indexNode **hammingIndexes;
 void *exactHash;
-result* resultList;
+result *resultList;
 bool globalExit;
-JobScheduler* scheduler;
+JobScheduler *scheduler;
 
 ErrorCode InitializeIndex()
 {
     try
-    {   
+    {
+        pthread_mutex_lock(&queueLock);
         scheduler = new JobScheduler(NUM_THREADS);
-        create_entry_list(&EntryList);  // Create the global entry list
-        QT = new QueryTable();  // // Create the global query and entry hash tables
+        create_entry_list(&EntryList); // Create the global entry list
+        QT = new QueryTable();         // // Create the global query and entry hash tables
         ET = new EntryTable();
-        editIndex = new indexNode(NULL);    // Create the edit index with a null node
-        hammingIndexes = new indexNode*[27];    // Create the 27 hamming indexes for each word length from 4 to 31
+        editIndex = new indexNode(NULL);      // Create the edit index with a null node
+        hammingIndexes = new indexNode *[27]; // Create the 27 hamming indexes for each word length from 4 to 31
         for (int i = 0; i < 27; i++)
         {
             hammingIndexes[i] = new indexNode(NULL, 1, 0, MT_HAMMING_DIST);
         }
         exactHash = NULL;
+        pthread_mutex_unlock(&queueLock);
         return EC_SUCCESS;
     }
     catch (const std::exception &_)
@@ -42,11 +44,11 @@ ErrorCode StartQuery(QueryID query_id, const char *query_str, MatchType match_ty
 {
     try
     {
-        Query *q = new Query(query_id, (char *)query_str, match_type, match_dist);  // create query
-        QT->addToBucket(hashFunctionById(query_id), q);                             // store it in hash table
+        Query *q = new Query(query_id, (char *)query_str, match_type, match_dist); // create query
+        QT->addToBucket(hashFunctionById(query_id), q);                            // store it in hash table
         int i = 0;
         entry *tempEntry;
-        word w = q->getWord(0);                                                     // get every entry of query
+        word w = q->getWord(0); // get every entry of query
         if (w == NULL)
         {
             return EC_FAIL;
@@ -57,7 +59,7 @@ ErrorCode StartQuery(QueryID query_id, const char *query_str, MatchType match_ty
             create_entry(&w, &tempEntry);
             EntryList->addEntry(tempEntry);
             tempEntry->addToPayload(query_id, match_dist);
-            addToIndex(tempEntry, query_id, match_type, match_dist);                // add entry to the appropriate index
+            addToIndex(tempEntry, query_id, match_type, match_dist); // add entry to the appropriate index
             i++;
             w = q->getWord(i);
         }
@@ -70,18 +72,20 @@ ErrorCode StartQuery(QueryID query_id, const char *query_str, MatchType match_ty
     return EC_NO_AVAIL_RES;
 }
 
-
-
 ErrorCode MatchDocument(DocID doc_id, const char *doc_str)
 {
-    
+
     try
-    {   
-        Document *d = new Document(doc_id, (char *)doc_str);    // create document
+    {
+        int* intToPrint = new int(doc_id);
+        ErrorCode (*job)(void *) = simpleJob;
+        Job* jobToAdd = new Job(job,(void*)intToPrint);
+        scheduler->submit_job(jobToAdd);
+        Document *d = new Document(doc_id, (char *)doc_str); // create document
         DocTable *DT;
         DT = new DocTable(doc_id);
-        DocumentDeduplication(d, DT);                           // deduplicate document
-        DT->wordLookup();                                       // check for match
+        DocumentDeduplication(d, DT); // deduplicate document
+        DT->wordLookup();             // check for match
         delete d;
         delete DT;
         return EC_SUCCESS;
@@ -116,7 +120,7 @@ ErrorCode EndQuery(QueryID query_id)
 {
     try
     {
-        QT->deleteQuery(query_id);      // delete query from hash table and its entries from index
+        QT->deleteQuery(query_id); // delete query from hash table and its entries from index
         return EC_SUCCESS;
     }
     catch (const std::exception &_)
@@ -131,6 +135,7 @@ ErrorCode DestroyIndex()
     try
     {
         globalExit = true;
+        pthread_cond_broadcast(&emptyQueueCond);
         delete editIndex;
         for (int i = 0; i < 27; i++)
         {

@@ -163,6 +163,8 @@ ErrorCode lookup_entry_index(const word w, entry_list *result, MatchType queryMa
     else if (queryMatchingType == MT_HAMMING_DIST)
     {
         currNode = hammingIndexes[strlen(w) - 4];
+    }else{
+        return EC_FAIL;
     }
 
     // If empty, return no result
@@ -184,6 +186,8 @@ ErrorCode lookup_entry_index(const word w, entry_list *result, MatchType queryMa
         else if (queryMatchingType == MT_EDIT_DIST)
         {
             distance = editDistance(currNode->getEntry()->getWord(), w);
+        }else{
+            return EC_FAIL;
         }
 
         // Add to results if close enough and the entry exists
@@ -320,6 +324,8 @@ ErrorCode removeFromIndex(const word givenWord, const QueryID queryId, const Mat
             else if (currNode->getMatchingType() == MT_EDIT_DIST)
             {
                 distance = editDistance(currNode->getEntry()->getWord(), givenWord);
+            }else{
+                return EC_FAIL;
             }
 
 
