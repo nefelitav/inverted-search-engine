@@ -1,5 +1,8 @@
 #include "../include/structs.hpp"
 #include "../include/core.h"
+#include "../include/jobscheduler.hpp"
+
+pthread_mutex_t strTokLock = PTHREAD_MUTEX_INITIALIZER;           // Mutex protecting strTok access during Document Creation
 
 Query ::Query(QueryID id, char *words, MatchType match_type, unsigned int match_dist)
 {
@@ -21,7 +24,7 @@ Query ::Query(QueryID id, char *words, MatchType match_type, unsigned int match_
     }
     this->entriesNum = i;                              // save number of entries
     this->matchedEntries = new bool[this->entriesNum]; // every cell corresponds to an entry
-    memset(this->matchedEntries, 0, this->entriesNum*(sizeof(bool)));
+    memset(this->matchedEntries, 0, this->entriesNum * (sizeof(bool)));
 
     this->id = id;
     this->match_type = match_type;
@@ -49,7 +52,7 @@ const word Query ::getWord(int word_num) const // array[i][j] --> arrary[i*(MAX_
         return NULL;
     }
     const word ptr = (word)(this->words + word_num * (MAX_WORD_LENGTH + 1)); // find the word
-    if (*ptr == '\0')                                                  // no more words
+    if (*ptr == '\0')                                                        // no more words
     {
         //std::cout << "Sorry, index out of range." << std::endl;
         return NULL;
@@ -69,7 +72,7 @@ void Query ::setTrue(const word entry_word) // entry matched with a doc word
 }
 void Query ::setFalse() // set to default to start a new search with new doc
 {
-    memset(this->matchedEntries, 0, this->entriesNum*(sizeof(bool)));
+    memset(this->matchedEntries, 0, this->entriesNum * (sizeof(bool)));
 }
 bool Query ::matched() // check if all entries matched with doc words
 {
@@ -97,6 +100,16 @@ const int Query ::getWordNum() const
     return this->entriesNum;
 }
 
+Query::Query(const Query &oldQuery)
+{
+    this->id = oldQuery.id;
+    this->match_dist = oldQuery.match_dist;
+    this->match_type = oldQuery.match_type;
+    this->entriesNum = oldQuery.entriesNum;
+    this->matchedEntries = new bool[this->entriesNum];
+    memset(this->matchedEntries, 0, this->entriesNum * (sizeof(bool)));
+    memcpy(this->words, oldQuery.words, MAX_QUERY_LENGTH);
+}
 
 Query ::~Query()
 {
@@ -110,7 +123,8 @@ Document ::Document(DocID id, char *words)
 {
     int i = 0, length = 0;
     this->wordCount = 0;
-    word token = strtok((char *)words, " ");
+    char* strTokSavePtr = NULL;
+    word token = strtok_r((char *)words, " ",&strTokSavePtr);
     while (token != NULL) // get all words from input but not more than MAX_QUERY_WORDS
     {
         length = strlen(token) + 1; // length of each word
@@ -122,7 +136,7 @@ Document ::Document(DocID id, char *words)
         }
         memcpy(this->text + (MAX_WORD_LENGTH + 1) * i, token, length);
         ++i;
-        token = strtok(NULL, " ");
+        token = strtok_r(NULL, " ",&strTokSavePtr);
         this->wordCount++;
     }
     this->id = id;
@@ -144,7 +158,6 @@ const word Document ::getWord(int word_num) const // array[i][j] --> arrary[i*(M
     }
     return ptr;
 }
-
 
 Document ::~Document()
 {
@@ -218,7 +231,7 @@ payloadNode *entry ::getPayload() const
 
 void entry ::addToPayload(QueryID id, unsigned int threshold)
 {
-    payloadNode* curr;
+    payloadNode *curr;
     payloadNode *new_node;
     if (this->emptyPayload())
     {
@@ -226,19 +239,23 @@ void entry ::addToPayload(QueryID id, unsigned int threshold)
     }
     else
     {
-        if(this->payload->getThreshold() < threshold){
+        if (this->payload->getThreshold() < threshold)
+        {
             curr = this->payload;
             new_node = new payloadNode(id, threshold);
             new_node->setNext(curr);
             this->payload = new_node;
             return;
-            
         }
         curr = this->payload;
-        while(curr->getNext()){
-            if(curr->getNext()->getThreshold()>threshold){
+        while (curr->getNext())
+        {
+            if (curr->getNext()->getThreshold() > threshold)
+            {
                 curr = curr->getNext();
-            }else{
+            }
+            else
+            {
                 break;
             }
         }
@@ -268,7 +285,7 @@ void entry ::deletePayloadNode(QueryID id)
 {
     payloadNode *curr = this->payload;
     payloadNode *next = curr->getNext();
-    payloadNode* temp;
+    payloadNode *temp;
     if (curr->getId() == id)
     {
         delete curr;

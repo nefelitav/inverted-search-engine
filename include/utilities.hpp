@@ -2,7 +2,7 @@
 #define UTILITIES
 #define MIN(a, b, c) ((a) < (b) ? ((a) < (c) ? (a) : (c)) : ((b) < (c) ? (b) : (c)))
 #include "structs.hpp"
-
+#include "jobscheduler.hpp"
 class result
 {
     private:
@@ -10,7 +10,6 @@ class result
         DocID doc_id;
         QueryID *query_ids;
         result *next;
-
     public:
         result(int numRes, DocID document, QueryID *queries);
         void addResult(result *toAdd);
@@ -60,7 +59,7 @@ class DocTable                           // hash table where document words are 
     public:
         DocTable(DocID id);
         unsigned long addToBucket(unsigned long hash, const word w);
-        void wordLookup();
+        ErrorCode wordLookup();
         const word *getBucket(unsigned long hash) const;
         void printBucket(unsigned long hash) const;
         void printTable() const;
@@ -80,6 +79,7 @@ class QueryTable     // hash table where all queries are stored, so that i can a
 
     public:
         QueryTable();
+        QueryTable* cloneQueryTable();
         unsigned long addToBucket(unsigned long hash, Query *q);
         Query **getBucket(unsigned long hash) const;
         void printBucket(unsigned long hash) const;
@@ -123,7 +123,7 @@ class ResultTable {         // hash table where query ids are stored, deduplicat
         void printBucket(unsigned long hash) const;
         void printTable() const;
         Query* getQuery(QueryID id);
-        matchedQueryList* checkMatch();
+        matchedQueryList* checkMatch(QueryTable* tempTable);
         const int getQueriesPerBucket(unsigned long hash) const;
         ~ResultTable();
 };

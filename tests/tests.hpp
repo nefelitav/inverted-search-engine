@@ -6,6 +6,7 @@
 #include "../include/utilities.hpp"
 #include "../include/structs.hpp"
 #include "../include/index.hpp"
+#include "../include/jobscheduler.hpp"
 
 // structs
 void test_query(void);
@@ -64,4 +65,4 @@ void test_result_addResult(void);
 void test_matchedQuery_constructor_getters(void);
 void test_matchedQuery_setNext(void);
 void test_matchedQueryList_constructor_addToList_getHead(void);
-#endif  //TESTS
+#endif //TESTS

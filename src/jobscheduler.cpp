@@ -1,12 +1,45 @@
 #include "../include/jobscheduler.hpp"
+#include "../include/structs.hpp"
+#include "../include/utilities.hpp"
+#include <sys/types.h>
+#include <cstring>
 
-pthread_mutex_t queueLock;
-pthread_mutex_t emptyLock;
-pthread_cond_t emptyQueueCond = PTHREAD_COND_INITIALIZER;
+pthread_mutex_t queueLock = PTHREAD_MUTEX_INITIALIZER;
+pthread_cond_t queueEmptyCond = PTHREAD_COND_INITIALIZER;
+pthread_cond_t resEmptyCond = PTHREAD_COND_INITIALIZER;
+
+MatchDocumentArgs ::MatchDocumentArgs(DocID doc_id, const char *doc_str)
+{
+    this->doc_id = doc_id;
+    memcpy(this->doc_str, doc_str, MAX_DOC_LENGTH);
+}
+
+const DocID MatchDocumentArgs ::getDocId() const
+{
+    return this->doc_id;
+}
+
+const char *MatchDocumentArgs ::getDocStr() const
+{
+    return this->doc_str;
+}
+
+ErrorCode MatchDocumentJob(void *args)
+{
+    Document *d = new Document(((MatchDocumentArgs *)args)->getDocId(), (char *)(((MatchDocumentArgs *)args)->getDocStr())); // create document
+    DocTable *DT;
+    DT = new DocTable(((MatchDocumentArgs *)args)->getDocId());
+    DocumentDeduplication(d, DT); // deduplicate document
+    DT->wordLookup();             // check for match
+    delete d;
+    delete DT;
+    delete (MatchDocumentArgs *)args;
+
+    return EC_SUCCESS;
+}
 
 ErrorCode simpleJob(void *givenInt)
 {
-
     int *modInt = (int *)givenInt;
     std::cout << *modInt << "\n";
     delete modInt;
@@ -16,33 +49,43 @@ ErrorCode simpleJob(void *givenInt)
 void *threadMain(void *arg)
 {
     jobNode *job = NULL;
-    std::cout << "Started Thread\n";
-    while (1)
-    { // Bad practice, TODO replace with do while...
-
+    while (!globalExit)
+    {
         pthread_mutex_lock(&queueLock);
-        
-        if (scheduler->getQueue()->isEmpty() && globalExit)
+        while (scheduler->getQueue()->isEmpty()) // Wait while JobQueue is empty
         {
-            pthread_mutex_unlock(&queueLock);
-            break;
+            if (globalExit) // If program exited while this thread was waiting, exit
+            {
+                pthread_mutex_unlock(&queueLock);
+                return NULL;
+            }
+            pthread_cond_wait(&queueEmptyCond, &queueLock);
         }
-        if (scheduler->getQueue()->isEmpty())
-        {
-            pthread_cond_wait(&emptyQueueCond, &emptyLock);
-        }
-        else
-        {
-            job = scheduler->getQueue()->pop();
-            job->getJob()->getFunc()(job->getJob()->getArgs());
-            pthread_cond_signal(&emptyQueueCond);
-        }
-
+        job = scheduler->getQueue()->pop(); // Execute Job
         pthread_mutex_unlock(&queueLock);
+        job->getJob()->getFunc()(job->getJob()->getArgs());
+
         delete job;
     }
-    std::cout << "Thread Done\n";
     return NULL;
+}
+
+///////////////////////////////// Job /////////////////////////////////
+
+Job ::Job(ErrorCode (*job)(void *), void *args)
+{
+    this->job = job;
+    this->args = args;
+}
+
+fptr Job ::getFunc()
+{
+    return this->job;
+}
+
+void *Job ::getArgs()
+{
+    return this->args;
 }
 
 ///////////////////////////////// jobNode /////////////////////////////////
@@ -77,34 +120,44 @@ jobNode ::~jobNode()
 
 JobQueue ::JobQueue()
 {
-    this->firstNode = NULL;
-    this->lastNode = NULL;
+    this->first = NULL;
+    this->last = NULL;
     this->currSize = 0;
+}
+
+jobNode *JobQueue ::getFirst()
+{
+    return this->first;
+}
+
+jobNode *JobQueue ::getLast()
+{
+    return this->last;
 }
 
 int JobQueue ::getSize()
 {
-    return currSize;
+    return this->currSize;
 }
 
 bool JobQueue ::isEmpty()
 {
-    return (currSize == 0);
+    return (this->currSize == 0);
 }
 
 void JobQueue ::push(Job *job)
 {
-    if (this->lastNode == NULL)
+    if (this->last == NULL)
     {
         // empty queue
-        this->lastNode = new jobNode(job);
-        this->firstNode = this->lastNode;
+        this->last = new jobNode(job);
+        this->first = this->last;
     }
     else
     {
         jobNode *newJob = new jobNode(job);
-        this->lastNode->setNext(newJob);
-        this->lastNode = this->lastNode->getNext();
+        this->last->setNext(newJob);
+        this->last = this->last->getNext();
     }
     this->currSize++;
 }
@@ -115,15 +168,32 @@ jobNode *JobQueue ::pop()
     {
         return NULL;
     }
-    jobNode *toReturn = this->firstNode;
-    this->firstNode = this->firstNode->getNext();
+    jobNode *toReturn = this->first;
+    if (this->first == this->last)
+    {
+        this->last = NULL;
+    }
+    this->first = this->first->getNext();
     this->currSize--;
     return toReturn;
 }
 
+void JobQueue ::printQueue()
+{
+    jobNode *curr = this->first;
+    std::cout << "############################################" << std::endl;
+    while (curr != NULL)
+    {
+        jobNode *next = curr->getNext();
+        std::cout << ((MatchDocumentArgs *)(curr->getJob()->getArgs()))->getDocId() << std::endl;
+        curr = next;
+    }
+    std::cout << "############################################" << std::endl;
+}
+
 JobQueue ::~JobQueue()
 {
-    jobNode *curr = this->firstNode;
+    jobNode *curr = this->first;
     while (curr != NULL)
     {
         jobNode *next = curr->getNext();
@@ -132,36 +202,17 @@ JobQueue ::~JobQueue()
     }
 }
 
-///////////////////////////////// Job /////////////////////////////////
-
-Job ::Job(ErrorCode (*job)(void *), void *args)
-{
-    this->job = job;
-    this->args = args;
-}
-
-fptr Job ::getFunc()
-{
-    return this->job;
-}
-
-void *Job ::getArgs()
-{
-    return this->args;
-}
-
 //////////////////////// JobScheduler ////////////////////////////
 
 JobScheduler ::JobScheduler(int execution_threads)
 {
-    std ::cout << "Created Scheduler\n";
     globalExit = false;
     this->q = new JobQueue();
     this->execution_threads = execution_threads;
     this->tids = new pthread_t[execution_threads];
     for (int i = 0; i < this->execution_threads; i++)
     {
-        pthread_create(&(this->tids[i]), NULL, &threadMain, NULL);
+        pthread_create(&this->tids[i], NULL, &threadMain, NULL);
     }
 }
 
@@ -188,11 +239,9 @@ pthread_t *JobScheduler ::getThreadIds()
 
 JobScheduler ::~JobScheduler()
 {
-    globalExit = true;
     for (int i = 0; i < this->execution_threads; i++)
     {
         pthread_join(this->tids[i], NULL);
-        std ::cout << "Killed Thread\n";
     }
     delete this->q;
     delete[] this->tids;

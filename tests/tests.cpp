@@ -1482,6 +1482,7 @@ void test_GetNextAvailRes(void)
 {
     // Create 2 result entries
     InitializeIndex();
+    unfinishedDocs = 2; // Emulate Docs at the Queue
     QueryID *testQ1 = new QueryID[1];
     testQ1[0] = 3;
     QueryID *testQ2 = new QueryID[2];
@@ -1489,14 +1490,13 @@ void test_GetNextAvailRes(void)
     testQ2[1] = 5;
     storeResult(1, (DocID)1, testQ1);
     storeResult(2, (DocID)2, testQ2);
-
     // The variables that will receive the result
     unsigned int receivedNum;
     DocID receivedDocID;
     QueryID *receivedQueryIDs;
-
     // Check that the first result is received properly
     GetNextAvailRes(&receivedDocID, &receivedNum, &receivedQueryIDs);
+    
     TEST_CHECK(receivedDocID == 1);
     TEST_CHECK(receivedNum == 1);
     TEST_CHECK(receivedQueryIDs == testQ1);

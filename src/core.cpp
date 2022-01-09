@@ -14,15 +14,17 @@ void *exactHash;
 result *resultList;
 bool globalExit;
 JobScheduler *scheduler;
-
+int unfinishedDocs;
+pthread_mutex_t resultLock = PTHREAD_MUTEX_INITIALIZER;
 ErrorCode InitializeIndex()
 {
     try
     {
         pthread_mutex_lock(&queueLock);
+        unfinishedDocs = 0;
         scheduler = new JobScheduler(NUM_THREADS);
         create_entry_list(&EntryList); // Create the global entry list
-        QT = new QueryTable();         // // Create the global query and entry hash tables
+        QT = new QueryTable();         // Create the global query and entry hash tables
         ET = new EntryTable();
         editIndex = new indexNode(NULL);      // Create the edit index with a null node
         hammingIndexes = new indexNode *[27]; // Create the 27 hamming indexes for each word length from 4 to 31
@@ -44,6 +46,12 @@ ErrorCode StartQuery(QueryID query_id, const char *query_str, MatchType match_ty
 {
     try
     {
+        pthread_mutex_lock(&queueLock);
+        if (unfinishedDocs != 0)
+        {
+            pthread_cond_wait(&queueEmptyCond, &queueLock);
+        }
+        pthread_mutex_unlock(&queueLock);
         Query *q = new Query(query_id, (char *)query_str, match_type, match_dist); // create query
         QT->addToBucket(hashFunctionById(query_id), q);                            // store it in hash table
         int i = 0;
@@ -55,7 +63,6 @@ ErrorCode StartQuery(QueryID query_id, const char *query_str, MatchType match_ty
         }
         while (w != NULL)
         {
-            //std::cout << w<<"-------------" << std::endl;
             create_entry(&w, &tempEntry);
             EntryList->addEntry(tempEntry);
             tempEntry->addToPayload(query_id, match_dist);
@@ -63,6 +70,7 @@ ErrorCode StartQuery(QueryID query_id, const char *query_str, MatchType match_ty
             i++;
             w = q->getWord(i);
         }
+
         return EC_SUCCESS;
     }
     catch (const std::exception &_)
@@ -74,20 +82,17 @@ ErrorCode StartQuery(QueryID query_id, const char *query_str, MatchType match_ty
 
 ErrorCode MatchDocument(DocID doc_id, const char *doc_str)
 {
-
     try
     {
-        int* intToPrint = new int(doc_id);
-        ErrorCode (*job)(void *) = simpleJob;
-        Job* jobToAdd = new Job(job,(void*)intToPrint);
+        unfinishedDocs++;
+        MatchDocumentArgs *args = new MatchDocumentArgs(doc_id, doc_str);
+        ErrorCode (*job)(void *) = MatchDocumentJob;
+        Job *jobToAdd = new Job(job, (void *)args);
+        pthread_mutex_lock(&queueLock);
         scheduler->submit_job(jobToAdd);
-        Document *d = new Document(doc_id, (char *)doc_str); // create document
-        DocTable *DT;
-        DT = new DocTable(doc_id);
-        DocumentDeduplication(d, DT); // deduplicate document
-        DT->wordLookup();             // check for match
-        delete d;
-        delete DT;
+        pthread_mutex_unlock(&queueLock);
+        pthread_cond_signal(&queueEmptyCond);
+
         return EC_SUCCESS;
     }
     catch (const std::exception &_)
@@ -99,9 +104,15 @@ ErrorCode MatchDocument(DocID doc_id, const char *doc_str)
 
 ErrorCode GetNextAvailRes(DocID *p_doc_id, unsigned int *p_num_res, QueryID **p_query_ids)
 {
+    pthread_mutex_lock(&resultLock);
+    if (unfinishedDocs != 0 || resultList == NULL)
+    {
+        pthread_cond_wait(&resEmptyCond, &resultLock);
+    }
     result *temp = NULL;
     if (resultList == NULL)
     {
+        pthread_mutex_unlock(&resultLock);
         return EC_NO_AVAIL_RES;
     }
     else
@@ -112,6 +123,7 @@ ErrorCode GetNextAvailRes(DocID *p_doc_id, unsigned int *p_num_res, QueryID **p_
         temp = resultList;
         resultList = resultList->getNext();
         delete temp;
+        pthread_mutex_unlock(&resultLock);
         return EC_SUCCESS;
     }
 }
@@ -120,7 +132,14 @@ ErrorCode EndQuery(QueryID query_id)
 {
     try
     {
+        pthread_mutex_lock(&queueLock);
+        if (unfinishedDocs != 0)
+        {
+            pthread_cond_wait(&queueEmptyCond, &queueLock);
+        }
+        pthread_mutex_unlock(&queueLock);
         QT->deleteQuery(query_id); // delete query from hash table and its entries from index
+
         return EC_SUCCESS;
     }
     catch (const std::exception &_)
@@ -135,7 +154,7 @@ ErrorCode DestroyIndex()
     try
     {
         globalExit = true;
-        pthread_cond_broadcast(&emptyQueueCond);
+        pthread_cond_broadcast(&queueEmptyCond);
         delete editIndex;
         for (int i = 0; i < 27; i++)
         {

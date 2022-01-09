@@ -18,6 +18,8 @@ class Query {
         int entriesNum;
     public:
         Query(QueryID id, char * words, MatchType match_type, unsigned int match_dist);
+        Query(const Query &oldQuery);
+        Query* cloneQuery();
         const word getWord(int word_num) const;                                                         
         const QueryID getId() const;                                                             
         const int getWordNum() const;

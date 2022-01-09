@@ -5,6 +5,8 @@ TEST_OBJ = utilities.o structs.o index.o jobscheduler.o core.o tests.o
 OUT	= main
 CC	 = g++
 FLAGS = -g -c -pthread -Wall -O3 -fPIC -std=c++11 
+TEST_FLAGS = -g -c -pthread -Wall -fPIC -std=c++11 
+
 
 all: $(OBJS) $(FILES)main.cpp 
 	$(CC) -g -Wall -fPIC -I. -O3 -pthread -std=c++11 -o main $(FILES)main.cpp ./libcore.so
@@ -28,10 +30,10 @@ core.o: $(FILES)core.cpp
 	$(CC) $(FLAGS) $(FILES)core.cpp
 
 tests.o: $(TEST_FILES)tests.cpp
-	$(CC) $(FLAGS) $(TEST_FILES)tests.cpp
+	$(CC) $(TEST_FLAGS) $(TEST_FILES)tests.cpp
 
 test: $(TEST_OBJ)
-	$(CC) -Wall -fPIC -I. -O3 -pthread -std=c++11 -o -g $(TEST_OBJ) -o test
+	$(CC) -Wall -fPIC -I. -pthread -std=c++11 -o -g $(TEST_OBJ) -o test
 
 clean:
 	rm -f $(OBJS) $(OUT) $(FILES)core.o tests.o test 
