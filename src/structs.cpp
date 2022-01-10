@@ -2,13 +2,12 @@
 #include "../include/core.h"
 #include "../include/jobscheduler.hpp"
 
-pthread_mutex_t strTokLock = PTHREAD_MUTEX_INITIALIZER;           // Mutex protecting strTok access during Document Creation
-
 Query ::Query(QueryID id, char *words, MatchType match_type, unsigned int match_dist)
 {
     int i = 0, length = 0;
-    word token = strtok((char *)words, " ");
-    while (token != NULL) // get all words from input but not more than MAX_QUERY_WORDS
+    char* strTokSavePtr = NULL;
+    word token = strtok_r((char *)words, " ", &strTokSavePtr); // used instead of strtok, since it is thread safe
+    while (token != NULL)           // get all words from input 
     {
         length = strlen(token) + 1; // length of each word
         words += length;            // pointer to input
@@ -20,7 +19,7 @@ Query ::Query(QueryID id, char *words, MatchType match_type, unsigned int match_
         }
         memcpy(this->words + (MAX_WORD_LENGTH + 1) * i, token, length);
         ++i;
-        token = strtok(NULL, " ");
+        token = strtok_r(NULL, " ", &strTokSavePtr);
     }
     this->entriesNum = i;                              // save number of entries
     this->matchedEntries = new bool[this->entriesNum]; // every cell corresponds to an entry
@@ -29,7 +28,6 @@ Query ::Query(QueryID id, char *words, MatchType match_type, unsigned int match_
     this->id = id;
     this->match_type = match_type;
     this->match_dist = match_dist;
-    //std::cout<<"ID: "<<id<<" Match Type "<<this->match_type<<" Match Dist "<<this->match_dist<<"\n";
 }
 
 const QueryID Query ::getId() const
@@ -100,7 +98,7 @@ const int Query ::getWordNum() const
     return this->entriesNum;
 }
 
-Query::Query(const Query &oldQuery)
+Query ::Query(const Query &oldQuery) // copy constructor used to have a local query table which helps in parallelization
 {
     this->id = oldQuery.id;
     this->match_dist = oldQuery.match_dist;
@@ -124,8 +122,8 @@ Document ::Document(DocID id, char *words)
     int i = 0, length = 0;
     this->wordCount = 0;
     char* strTokSavePtr = NULL;
-    word token = strtok_r((char *)words, " ",&strTokSavePtr);
-    while (token != NULL) // get all words from input but not more than MAX_QUERY_WORDS
+    word token = strtok_r((char *)words, " ", &strTokSavePtr);
+    while (token != NULL) // get all words from input 
     {
         length = strlen(token) + 1; // length of each word
         words += length;            // pointer to input
@@ -136,7 +134,7 @@ Document ::Document(DocID id, char *words)
         }
         memcpy(this->text + (MAX_WORD_LENGTH + 1) * i, token, length);
         ++i;
-        token = strtok_r(NULL, " ",&strTokSavePtr);
+        token = strtok_r(NULL, " ", &strTokSavePtr);
         this->wordCount++;
     }
     this->id = id;
@@ -157,11 +155,6 @@ const word Document ::getWord(int word_num) const // array[i][j] --> arrary[i*(M
         return NULL;
     }
     return ptr;
-}
-
-Document ::~Document()
-{
-    //std::cout << "Document with id = " << this->id << " is deleted!" << std::endl;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////
@@ -398,10 +391,7 @@ void entry_list ::removeEntry(entry *toRemove)
     }
     --this->entryNum;
 }
-entry_list ::~entry_list()
-{
-    //std::cout << "Entry list is deleted!" << std::endl;
-}
+
 
 ////////////////////////////////////////////////////////////////////////////////////
 
@@ -459,11 +449,11 @@ ErrorCode destroy_entry_list(entry_list *el) // first delete entries and then li
         entry *curr = el->getHead(); // pointer to head of list
         entry *next = NULL;
 
-        while (curr != NULL) // if null -> end of list
+        while (curr != NULL) // delete entries
         {
-            next = curr->getNext(); // save next entry
-            destroy_entry(curr);    // delete entry
-            curr = next;            // go to next entry
+            next = curr->getNext(); 
+            destroy_entry(curr);   
+            curr = next;            
         }
         delete el; // delete entrylist
         el = NULL;

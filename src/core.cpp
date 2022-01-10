@@ -14,19 +14,24 @@ void *exactHash;
 result *resultList;
 bool globalExit;
 JobScheduler *scheduler;
-int unfinishedDocs;
+int unfinishedDocs = 0;
+int unfinishedQueries = 0;
+
 pthread_mutex_t resultLock = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t unfinishedQueriesLock = PTHREAD_MUTEX_INITIALIZER;
+
 ErrorCode InitializeIndex()
 {
     try
     {
-        pthread_mutex_lock(&queueLock);
+        pthread_mutex_lock(&queueLock);        
         unfinishedDocs = 0;
         scheduler = new JobScheduler(NUM_THREADS);
-        create_entry_list(&EntryList); // Create the global entry list
-        QT = new QueryTable();         // Create the global query and entry hash tables
+        create_entry_list(&EntryList);        // Create the global entry list
+        QT = new QueryTable();                // Create the global query and entry hash tables
         ET = new EntryTable();
         editIndex = new indexNode(NULL);      // Create the edit index with a null node
+
         hammingIndexes = new indexNode *[27]; // Create the 27 hamming indexes for each word length from 4 to 31
         for (int i = 0; i < 27; i++)
         {
@@ -46,31 +51,17 @@ ErrorCode StartQuery(QueryID query_id, const char *query_str, MatchType match_ty
 {
     try
     {
+        pthread_mutex_lock(&unfinishedQueriesLock);
+        unfinishedQueries++;
+        pthread_mutex_unlock(&unfinishedQueriesLock);
+        StartQueryArgs *args = new StartQueryArgs(query_id, query_str, match_type, match_dist); // create a class with the job args
+        ErrorCode (*job)(void *) = StartQueryJob;
+        Job *jobToAdd = new Job(job, (void *)args); // create job
         pthread_mutex_lock(&queueLock);
-        if (unfinishedDocs != 0)
-        {
-            pthread_cond_wait(&queueEmptyCond, &queueLock);
-        }
+        scheduler->submit_job(jobToAdd); // push job to queue
         pthread_mutex_unlock(&queueLock);
-        Query *q = new Query(query_id, (char *)query_str, match_type, match_dist); // create query
-        QT->addToBucket(hashFunctionById(query_id), q);                            // store it in hash table
-        int i = 0;
-        entry *tempEntry;
-        word w = q->getWord(0); // get every entry of query
-        if (w == NULL)
-        {
-            return EC_FAIL;
-        }
-        while (w != NULL)
-        {
-            create_entry(&w, &tempEntry);
-            EntryList->addEntry(tempEntry);
-            tempEntry->addToPayload(query_id, match_dist);
-            addToIndex(tempEntry, query_id, match_type, match_dist); // add entry to the appropriate index
-            i++;
-            w = q->getWord(i);
-        }
-
+        pthread_cond_signal(&queueEmptyCond); // no more empty -> can continue executing jobs
+    
         return EC_SUCCESS;
     }
     catch (const std::exception &_)
@@ -85,13 +76,20 @@ ErrorCode MatchDocument(DocID doc_id, const char *doc_str)
     try
     {
         unfinishedDocs++;
-        MatchDocumentArgs *args = new MatchDocumentArgs(doc_id, doc_str);
+        pthread_mutex_lock(&unfinishedQueriesLock);
+        if (unfinishedQueries != 0)
+        {
+            pthread_cond_wait(&unfinishedQueriesCond, &unfinishedQueriesLock);
+        }
+        pthread_mutex_unlock(&unfinishedQueriesLock);
+        
+        MatchDocumentArgs *args = new MatchDocumentArgs(doc_id, doc_str); // create a class with the job args
         ErrorCode (*job)(void *) = MatchDocumentJob;
-        Job *jobToAdd = new Job(job, (void *)args);
+        Job *jobToAdd = new Job(job, (void *)args); // create job
         pthread_mutex_lock(&queueLock);
-        scheduler->submit_job(jobToAdd);
+        scheduler->submit_job(jobToAdd); // push job to queue
         pthread_mutex_unlock(&queueLock);
-        pthread_cond_signal(&queueEmptyCond);
+        pthread_cond_signal(&queueEmptyCond); // no more empty -> can continue executing jobs
 
         return EC_SUCCESS;
     }
@@ -105,7 +103,7 @@ ErrorCode MatchDocument(DocID doc_id, const char *doc_str)
 ErrorCode GetNextAvailRes(DocID *p_doc_id, unsigned int *p_num_res, QueryID **p_query_ids)
 {
     pthread_mutex_lock(&resultLock);
-    if (unfinishedDocs != 0 || resultList == NULL)
+    if (unfinishedDocs != 0 || resultList == NULL) // wait until all match document jobs are done and the result list is not empty
     {
         pthread_cond_wait(&resEmptyCond, &resultLock);
     }
@@ -132,14 +130,16 @@ ErrorCode EndQuery(QueryID query_id)
 {
     try
     {
-        pthread_mutex_lock(&queueLock);
-        if (unfinishedDocs != 0)
+        pthread_mutex_lock(&unfinishedQueriesLock);  // wait until all start query jobs are done -> otherwise we might delete something that is not allocated yet
+        if (unfinishedQueries != 0)
         {
-            pthread_cond_wait(&queueEmptyCond, &queueLock);
+            pthread_cond_wait(&unfinishedQueriesCond, &unfinishedQueriesLock);
         }
-        pthread_mutex_unlock(&queueLock);
-        QT->deleteQuery(query_id); // delete query from hash table and its entries from index
-
+        pthread_mutex_unlock(&unfinishedQueriesLock);
+        pthread_mutex_lock(&queryTableLock);        // protect query table, which is a global class
+        QT->deleteQuery(query_id);                  // delete query from hash table and its entries from index
+        pthread_mutex_unlock(&queryTableLock);
+        
         return EC_SUCCESS;
     }
     catch (const std::exception &_)
@@ -154,7 +154,10 @@ ErrorCode DestroyIndex()
     try
     {
         globalExit = true;
+        // unblock all threads blocked on the condition variables
         pthread_cond_broadcast(&queueEmptyCond);
+        pthread_cond_broadcast(&resEmptyCond);
+        pthread_cond_broadcast(&unfinishedQueriesCond);
         delete editIndex;
         for (int i = 0; i < 27; i++)
         {

@@ -3,6 +3,7 @@
 #define MIN(a, b, c) ((a) < (b) ? ((a) < (c) ? (a) : (c)) : ((b) < (c) ? (b) : (c)))
 #include "structs.hpp"
 #include "jobscheduler.hpp"
+
 class result
 {
     private:

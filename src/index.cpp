@@ -2,6 +2,10 @@
 #include "../include/utilities.hpp"
 #include "../include/structs.hpp"
 
+pthread_mutex_t hammingLock[27];
+pthread_mutex_t editLock = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t exactLock = PTHREAD_MUTEX_INITIALIZER;
+
 indexNode ::indexNode(entry *input, QueryID id, unsigned int threshold, MatchType matchingMetric)
 {
     this->MatchingType = matchingMetric;
@@ -19,13 +23,13 @@ ErrorCode indexNode ::addEntry(entry *input, QueryID id, unsigned int threshold)
 
     unsigned int distance;
     // Check Input
-    if (!input)
+    if (input == NULL)
     {
         throw std::invalid_argument("Got NULL pointer");
     }
 
     // If this node was created as a NULL head node, populate it
-    if (!this->content)
+    if (this->content == NULL)
     {
         this->content = input;
     }
@@ -45,7 +49,7 @@ ErrorCode indexNode ::addEntry(entry *input, QueryID id, unsigned int threshold)
             return EC_FAIL;
         }
         // If the entry already exists, add to payload
-        if (!distance)
+        if (distance == 0)
         {
             try
             {
@@ -56,11 +60,12 @@ ErrorCode indexNode ::addEntry(entry *input, QueryID id, unsigned int threshold)
                 throw std::runtime_error("Entry by same query already in the tree");
                 return EC_FAIL;
             }
+
             return EC_SUCCESS;
         }
 
         // If the node under examination is not the same as the given entry
-        if (!this->children)
+        if (this->children == NULL)
         {
             //If there are no children create new list with the input in the first node
             this->children = new indexList(input, distance, this->MatchingType, id, threshold);
@@ -91,7 +96,7 @@ ErrorCode indexNode ::addEntry(entry *input, QueryID id, unsigned int threshold)
 int indexNode ::printTree(int depth)
 {
     // For debugging
-    if (!this->content)
+    if (this->content == NULL)
     {
         std::cout << "EMPTY\n";
         return 0;
@@ -136,7 +141,7 @@ ErrorCode lookup_entry_index(const word w, entry_list *result, MatchType queryMa
 
     unsigned int distance = 0;
     // Check input
-    if (!w)
+    if (w == NULL)
     {
         throw std::invalid_argument("Got NULL pointer");
     }
@@ -163,12 +168,14 @@ ErrorCode lookup_entry_index(const word w, entry_list *result, MatchType queryMa
     else if (queryMatchingType == MT_HAMMING_DIST)
     {
         currNode = hammingIndexes[strlen(w) - 4];
-    }else{
+    }
+    else
+    {
         return EC_FAIL;
     }
 
     // If empty, return no result
-    if (!currNode->getEntry())
+    if (currNode->getEntry() == NULL)
     {
         return EC_SUCCESS;
     }
@@ -186,7 +193,9 @@ ErrorCode lookup_entry_index(const word w, entry_list *result, MatchType queryMa
         else if (queryMatchingType == MT_EDIT_DIST)
         {
             distance = editDistance(currNode->getEntry()->getWord(), w);
-        }else{
+        }
+        else
+        {
             return EC_FAIL;
         }
 
@@ -196,12 +205,14 @@ ErrorCode lookup_entry_index(const word w, entry_list *result, MatchType queryMa
         {
             if (currPayloadNode->getThreshold() >= distance)
             {
-                if (!tempEntry)
+                if (tempEntry == NULL)
                 {
                     tempEntry = new entry(currNode->getEntry()->getWord());
                 }
                 tempEntry->addToPayload(currPayloadNode->getId(), currPayloadNode->getThreshold());
-            }else{
+            }
+            else
+            {
                 // If we get to a payload with more distance break, they are stored with descending order
                 break;
             }
@@ -241,26 +252,33 @@ ErrorCode lookup_entry_index(const word w, entry_list *result, MatchType queryMa
 
 ErrorCode addToIndex(entry *toAdd, QueryID queryId, MatchType queryMatchingType, unsigned int threshold)
 {
-    if (!toAdd)
+    if (toAdd == NULL)
     {
         throw std::invalid_argument("Got NULL pointer");
     }
 
     try
     {
-        // Add to appropriate index
+        // Add to appropriate index // protect each index
         if (queryMatchingType == MT_EDIT_DIST)
         {
+            pthread_mutex_lock(&editLock);
             editIndex->addEntry(toAdd, queryId, threshold);
+            pthread_mutex_unlock(&editLock);
         }
         else if (queryMatchingType == MT_HAMMING_DIST)
         {
+            pthread_mutex_lock(&hammingLock[strlen(toAdd->getWord()) - 4]);
             hammingIndexes[strlen(toAdd->getWord()) - 4]->addEntry(toAdd, queryId, threshold);
+            pthread_mutex_unlock(&hammingLock[strlen(toAdd->getWord()) - 4]);
         }
         else if (queryMatchingType == MT_EXACT_MATCH)
         {
+            pthread_mutex_lock(&exactLock);
             ET->addToBucket(hashFunction(toAdd->getWord()), toAdd);
+            pthread_mutex_unlock(&exactLock);
         }
+
         return EC_SUCCESS;
     }
     catch (const std::exception &_)
@@ -272,7 +290,7 @@ ErrorCode addToIndex(entry *toAdd, QueryID queryId, MatchType queryMatchingType,
 ErrorCode removeFromIndex(const word givenWord, const QueryID queryId, const MatchType givenType)
 {
     // Check input
-    if (!givenWord)
+    if (givenWord == NULL)
     {
         throw std::invalid_argument("Got NULL pointer to word");
     }
@@ -324,7 +342,9 @@ ErrorCode removeFromIndex(const word givenWord, const QueryID queryId, const Mat
             else if (currNode->getMatchingType() == MT_EDIT_DIST)
             {
                 distance = editDistance(currNode->getEntry()->getWord(), givenWord);
-            }else{
+            }
+            else
+            {
                 return EC_FAIL;
             }
 
@@ -380,7 +400,7 @@ ErrorCode destroy_entry_index(indexNode *ix)
 
 stackNode ::stackNode(indexNode *input, stackNode *oldHead)
 {
-    if (!input)
+    if (input == NULL)
     {
         throw std::invalid_argument("Got NULL pointer");
     }
@@ -407,11 +427,11 @@ Stack ::Stack()
 
 void Stack ::add(indexNode **input)
 {
-    if (!input)
+    if (input == NULL)
     {
         throw std::invalid_argument("Got NULL pointer");
     }
-    else if (!*input)
+    else if (*input == NULL)
     {
         throw std::invalid_argument("Got pointer to NULL pointer");
     }
@@ -454,7 +474,7 @@ indexList ::indexList(entry *content, unsigned int distance, MatchType matchingM
     {
         throw std::invalid_argument("Invalid Distance Value");
     }
-    if (!content)
+    if (content == NULL)
     {
         throw std::invalid_argument("Got NULL pointer");
     }
@@ -472,7 +492,7 @@ unsigned int indexList ::getDistanceFromParent() const
 
 int indexList ::addToList(entry *content, unsigned int distance, QueryID id, unsigned int threshold)
 {
-    if (!content)
+    if (content == NULL)
     {
         throw std::invalid_argument("Got NULL pointer");
     }

@@ -9,8 +9,7 @@ class payloadNode;
 
 class Query {
     private:
-        //char* words;                 // saving words in a 1d array instead of a 2d to save time (contiguous allocation)            
-        char words[MAX_QUERY_LENGTH];
+        char words[MAX_QUERY_LENGTH]; // saving words in a 1d array instead of a 2d to save time (contiguous allocation)
         QueryID id;
         MatchType match_type;
         unsigned int match_dist;
@@ -19,7 +18,6 @@ class Query {
     public:
         Query(QueryID id, char * words, MatchType match_type, unsigned int match_dist);
         Query(const Query &oldQuery);
-        Query* cloneQuery();
         const word getWord(int word_num) const;                                                         
         const QueryID getId() const;                                                             
         const int getWordNum() const;
@@ -42,7 +40,6 @@ class Document {
     public:
         Document(DocID id, char * words); 
         const word getWord(int word_num) const;                      
-        ~Document();
 };
 
 
@@ -90,7 +87,6 @@ class entry_list {
         entry* getNext(entry* e) const;
         void printList();    
         void removeEntry(entry * toRemove);
-        ~entry_list();
 };
 
 

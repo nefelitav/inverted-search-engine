@@ -1408,6 +1408,12 @@ void test_StartQuery_EndQuery(void)
     // create queries and delete them and check if they are well inserted in structs
     memcpy(q_words, "blue purple green black yellow", MAX_QUERY_LENGTH);
     StartQuery(0, q_words, MT_EXACT_MATCH, 0);
+    pthread_mutex_lock(&unfinishedQueriesLock);
+    if (unfinishedQueries != 0)
+    {
+        pthread_cond_wait(&unfinishedQueriesCond, &unfinishedQueriesLock);
+    }
+    pthread_mutex_unlock(&unfinishedQueriesLock);
     TEST_CHECK((QT->getQueriesPerBucket(hashFunctionById(0)) == 1));
     TEST_CHECK((EntryList->getEntryNum() == 5));
     TEST_CHECK((ET->getEntriesPerBucket(hashFunction((char *)"blue")) == 1)); // well inserted in entry table
@@ -1418,12 +1424,24 @@ void test_StartQuery_EndQuery(void)
 
     memcpy(q_words, "blue purple green black yellow", MAX_QUERY_LENGTH);
     StartQuery(1, q_words, MT_EDIT_DIST, 1);
+    pthread_mutex_lock(&unfinishedQueriesLock);
+    if (unfinishedQueries != 0)
+    {
+        pthread_cond_wait(&unfinishedQueriesCond, &unfinishedQueriesLock);
+    }
+    pthread_mutex_unlock(&unfinishedQueriesLock);
     TEST_CHECK((QT->getQueriesPerBucket(hashFunctionById(1)) == 1));
     TEST_CHECK((EntryList->getEntryNum() == 10));
     TEST_CHECK((strcmp(editIndex->getEntry()->getWord(), "blue") == 0)); // well inserted in index
 
     memcpy(q_words, "blue purple green black yellow", MAX_QUERY_LENGTH);
     StartQuery(2, q_words, MT_HAMMING_DIST, 2);
+    pthread_mutex_lock(&unfinishedQueriesLock);
+    if (unfinishedQueries != 0)
+    {
+        pthread_cond_wait(&unfinishedQueriesCond, &unfinishedQueriesLock);
+    }
+    pthread_mutex_unlock(&unfinishedQueriesLock);
     TEST_CHECK((QT->getQueriesPerBucket(hashFunctionById(1)) == 1));
     TEST_CHECK((EntryList->getEntryNum() == 15));
     TEST_CHECK((strcmp(hammingIndexes[0]->getEntry()->getWord(), "blue") == 0)); // well inserted in index
@@ -1444,6 +1462,12 @@ void test_ExactMatch_WordLookup(void)
     memcpy(q_words, "blue purple green black yellow", MAX_QUERY_LENGTH);
     // create query
     StartQuery(0, q_words, MT_EXACT_MATCH, 0);
+    pthread_mutex_lock(&unfinishedQueriesLock);
+    if (unfinishedQueries != 0)
+    {
+        pthread_cond_wait(&unfinishedQueriesCond, &unfinishedQueriesLock);
+    }
+    pthread_mutex_unlock(&unfinishedQueriesLock);
     // create document
     char *d_words = new char[MAX_DOC_LENGTH]();
     strcpy(d_words, "blue purple green black yellow blue purple green black yellow");
