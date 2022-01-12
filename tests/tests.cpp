@@ -1520,7 +1520,7 @@ void test_GetNextAvailRes(void)
     QueryID *receivedQueryIDs;
     // Check that the first result is received properly
     GetNextAvailRes(&receivedDocID, &receivedNum, &receivedQueryIDs);
-    
+
     TEST_CHECK(receivedDocID == 1);
     TEST_CHECK(receivedNum == 1);
     TEST_CHECK(receivedQueryIDs == testQ1);
@@ -1566,6 +1566,60 @@ void test_matchedQueryList_constructor_addToList_getHead(void)
     TEST_CHECK(testList->getHead()->getId() == 2);
     TEST_CHECK(testList->getHead()->getNext()->getId() == 1);
     delete testList;
+}
+
+void test_job(void)
+{
+    char *d_words = new char[MAX_DOC_LENGTH]();
+    strcpy(d_words, "blue purple green black yellow blue purple green black yellow");
+    MatchDocumentArgs *testArgs = new MatchDocumentArgs(1, d_words);
+    Job *testJob = new Job(MatchDocumentJob, testArgs);
+    TEST_CHECK(((MatchDocumentArgs *)(testJob->getArgs()))->getDocId() == 1);
+    TEST_CHECK(strcmp(((MatchDocumentArgs *)(testJob->getArgs()))->getDocStr(), d_words) == 0);
+    delete testJob;
+    delete[] d_words;
+    delete testArgs;
+}
+
+void test_JobScheduler_create_destroy_get(void)
+{
+    TEST_CHECK(scheduler == NULL);
+
+    pthread_mutex_lock(&queueLock);
+    scheduler = new JobScheduler(10);
+    pthread_mutex_unlock(&queueLock);
+
+    TEST_CHECK(scheduler != NULL);
+
+    pthread_mutex_lock(&queueLock);
+    TEST_CHECK(scheduler->getQueue()->isEmpty());
+    pthread_mutex_unlock(&queueLock);
+
+    TEST_CHECK(scheduler->getThreads() == 10);
+    globalExit = true;
+    pthread_cond_broadcast(&queueEmptyCond);
+    pthread_cond_broadcast(&resEmptyCond);
+    pthread_cond_broadcast(&unfinishedQueriesCond);
+    delete scheduler;
+    scheduler = NULL;
+}
+
+void test_JobScheduler_submitJob(void)
+{
+    InitializeIndex();
+    pthread_mutex_lock(&queueLock);
+    TEST_CHECK(scheduler->getQueue()->isEmpty());
+    pthread_mutex_unlock(&queueLock);
+
+    StartQuery(0, "WORD", MT_EDIT_DIST, 1);
+    EndQuery(0);
+    pthread_mutex_lock(&unfinishedQueriesLock);
+    if (unfinishedQueries != 0)
+    {
+        pthread_cond_wait(&unfinishedQueriesCond, &unfinishedQueriesLock);
+    }
+    DestroyIndex();
+    pthread_mutex_unlock(&unfinishedQueriesLock);
 }
 
 TEST_LIST = {
@@ -1620,4 +1674,7 @@ TEST_LIST = {
     {"matchedQuery constructor and getters", test_matchedQuery_constructor_getters},
     {"matchedQuery setNext", test_matchedQuery_setNext},
     {"matchedQueryList constructor addToList getHead", test_matchedQueryList_constructor_addToList_getHead},
+    {"job", test_job},
+    {"JobScheduler constructor, destructor and get functions", test_JobScheduler_create_destroy_get},
+    {"JobScheduler submitJob", test_JobScheduler_submitJob},
     {NULL, NULL}};

@@ -59,8 +59,8 @@ ErrorCode StartQuery(QueryID query_id, const char *query_str, MatchType match_ty
         Job *jobToAdd = new Job(job, (void *)args); // create job
         pthread_mutex_lock(&queueLock);
         scheduler->submit_job(jobToAdd); // push job to queue
-        pthread_mutex_unlock(&queueLock);
         pthread_cond_signal(&queueEmptyCond); // no more empty -> can continue executing jobs
+        pthread_mutex_unlock(&queueLock);
     
         return EC_SUCCESS;
     }
@@ -75,7 +75,9 @@ ErrorCode MatchDocument(DocID doc_id, const char *doc_str)
 {
     try
     {
+        pthread_mutex_lock(&resultLock);
         unfinishedDocs++;
+        pthread_mutex_unlock(&resultLock);
         pthread_mutex_lock(&unfinishedQueriesLock);
         if (unfinishedQueries != 0)
         {
@@ -88,8 +90,9 @@ ErrorCode MatchDocument(DocID doc_id, const char *doc_str)
         Job *jobToAdd = new Job(job, (void *)args); // create job
         pthread_mutex_lock(&queueLock);
         scheduler->submit_job(jobToAdd); // push job to queue
-        pthread_mutex_unlock(&queueLock);
         pthread_cond_signal(&queueEmptyCond); // no more empty -> can continue executing jobs
+        pthread_mutex_unlock(&queueLock);
+        
 
         return EC_SUCCESS;
     }

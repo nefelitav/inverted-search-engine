@@ -125,8 +125,9 @@ ErrorCode DocTable ::wordLookup() // search for every word of this doc, if they 
 
     pthread_mutex_lock(&resultLock); // protect resultList, which is a global variable
     storeResult(size, this->tableID, matchedQueries);
-    pthread_mutex_unlock(&resultLock);
+    
     pthread_cond_signal(&resEmptyCond); // resultList is not empty and we can move on to getNextAvailRes
+    pthread_mutex_unlock(&resultLock);
     delete results;
     delete RT;
     delete localTable;
