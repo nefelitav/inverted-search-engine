@@ -307,13 +307,16 @@ Query *QueryTable ::getQuery(QueryID id)
 
 void QueryTable ::deleteQuery(QueryID id)
 {
+
     unsigned long hash = hashFunctionById(id);
     int pos = findQuery(this->buckets[hash], 0, this->queriesPerBucket[hash] - 1, id); // find query position
     for (int i = 0; i < MAX_QUERY_WORDS; ++i) // remove every entry of this query from index
     {
         if (this->buckets[hash][pos]->getWord(i))
         {
+            pthread_mutex_lock(&queryTableLock);        // protect query table, which is a global class
             removeFromIndex(this->buckets[hash][pos]->getWord(i), id, this->buckets[hash][pos]->getMatchingType());
+            pthread_mutex_unlock(&queryTableLock);
         }
     }
     delete this->buckets[hash][pos];

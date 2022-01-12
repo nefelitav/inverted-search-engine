@@ -10,8 +10,6 @@
 The current project is a modified version of The SIGMOD 2013 Programming Contest.
 The application tackles the task of receiving a stream of documents and queries and matching them up, utilizing different metrics. The goal is to minimize the system response time.
 
-
-
 ### Compile & Run
 ```
 $ make && make run
@@ -19,6 +17,10 @@ $ make && make run
 ### Memcheck
 ```
 $ make valgrind
+```
+### Detect data races
+```
+$ make helgrind
 ```
 ### Clean
 ```
@@ -28,7 +30,15 @@ $ make clean
 ```
 $ make test && make run_test
 ```
-### Memcheck Test
+### Memcheck on Tests
 ```
 $ make valgrind_test
+```
+### Detect data races on Tests
+```
+$ make valgrind_test
+```
+### Run 100 times to test threads
+```
+$ ./run_100_times.sh
 ```

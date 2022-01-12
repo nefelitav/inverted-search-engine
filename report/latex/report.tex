@@ -57,16 +57,28 @@ Software Development for Information Systems \LARGE Inverted Search Engine}
 \newpage
 \section{Introduction} \large
 The current project is a modified version of The SIGMOD 2013 Programming Contest.
-The application tackles the task of receiving a stream of documents and queries and matching them up, utilizing different metrics.
+The application tackles the task of receiving a stream of documents and queries and matching them up, utilizing different metrics and techniques. \\ \\
+The metrics:
+\begin{itemize}
+    \item Exact Match
+    \item Hamming Distance
+    \item Edit Distance
+\end{itemize}
+The techniques:
+\begin{itemize}
+    \item Hashing of the entry words for exact matching
+    \item BK Tree for edit and hamming distance
+\end{itemize}
 The goal is to minimize the system response time. \\ \\
 The program is implemented in C++ language, using Object-Oriented Programming, taking advantage of Encapsulation, Abstraction, Data Security and organization.
+\newpage
 \section{Methodology}
 \subsection{Version Control}
 The code we implemented can be found in
 \href{https://github.com/NefeliTav/Software-Development-for-Information-Systems}{Github}. \\
 We used Version Control to keep track of our changes, make sure that our code is safe and most of all, to be able to collaborate as a team.
 In our repository we have included a Makefile, to automate the build and testing stage of the program.  \\ 
-Communicate with the application using the following CLI commands:
+Communication with the application is accomplished using the following CLI commands:
 \begin{itemize}
   \item \textbf{make} (compile)
   \item \textbf{make run} (run)
@@ -76,7 +88,18 @@ Communicate with the application using the following CLI commands:
   \item \textbf{make run\_test} (run tests)
   \item \textbf{make valgrind\_test} (check memory in testing code)
 \end{itemize}
-Furthermore, the repository includes a README file, where we explain basic concepts of the project.
+Furthermore, the repository includes a README file, where basic concepts of the project are explained.
+\subsection{Compilation}
+The flags used in the compilation of the program:
+\begin{itemize}
+  \item \textbf{-g} : It tells the compiler to generate and embed debug information.
+  \item \textbf{-pthread} : It enables the use of the pthread library.
+  \item \textbf{-Wall} : It enables all compiler's warning messages.
+  \item \textbf{-O3} : It offers optimization for code size and execution time.
+  \item \textbf{-fPIC} : It ensures that the code built into shared libraries is position-independent, so that the shared library can readily be loaded at any address in memory.
+  \item \textbf{-std=c++11} : It enables c++11.
+  \item \textbf{-I} : It adds include directory of header files.
+\end{itemize}
 \subsection{Testing}
 We have performed Unit Testing, using Acutest, which helped us realize the importance of test-driven programming in creating efficient, maintainable and quality software. In our tests we tried to brainstorm of all possible extreme cases to make sure that our program does not crash, but deals with exceptions.\\
 In addition to that, we experimented with Github Actions, creating a Continuous Integration pipeline, to automate the workflow and ensure there are no bugs in the new features we add each time.\\
@@ -103,30 +126,25 @@ Finally, we used Valgrind to find memory leaks and thus, ensure that we are buil
     before computing xy={l=15pt},
   }
 [repository
-    [include
-      [core.h]
-      [index.hpp]
-      [structs.hpp]
-      [utilities.hpp]
-    ]
     [src
       [main.cpp]
       [index.cpp]
       [structs.cpp]
       [utilities.cpp]
       [core.cpp]
+      [jobscheduler.cpp]
     ]
     [tests
       [tests.cpp]
-      [tests.hpp]
     ]
 ]
 \end{forest}
+\newpage
 \section{Implementation Description}
 The classes we designed:
 \begin{itemize}
   \item \textbf{Query}
-  It contains a one-dimensional array of characters, where the words from the input are stored. We chose to use a 1d array, instead of a 2d, in order to save time by minimizing the times we read from disk, since the whole array can be stored in RAM (contiguous allocation). So, to access a word saved in Query (getWord function) instead of array[i][j] (2d array hypothesis) we return $arrary[i*(MAX\_WORD\_LENGTH + 1)]$ .The class is composed of a constructor, destructor some getters and also some print functions for debugging. In order to copy blocks of memory from the input to the Query, we used memcpy, which is the most efficient way to perform such a task. Also, we used strtok to handle word extraction from strings.  The string input of the Query "consists of a space separated set of words. The length of any word will be at least $MIN\_WORD\_LENGTH$ characters and at most $MAX\_WORD\_LENGTH$ characters. The number of words in a query will not exceed $MAX\_QUERY\_WORDS$ words. "query\_str" contains at least one non-space character. "query\_str" contains only lower case letters from 'a' to 'z' and space characters", as stated by Sigmod. The Query struct also contains a match\_type (Exact, Hamming, Edit Distance) and a match\_distance (0,1,2,3), which indicate the kind of match we should apply. Finally, this struct has also a boolean array with the size equal to the number of entries of the query, that indicates which entries have matched with the words of a document. This array is set to false by default and is set again to false when we try to match it with another document.
+  It contains a one-dimensional array of characters, where the words from the input are stored. We chose to use a 1d array, instead of a 2d, in order to save time by minimizing the times we read from disk, since the whole array can be stored in RAM (contiguous allocation). So, to access a word saved in Query (getWord function) instead of array[i][j] (2d array hypothesis) we return $arrary[i*(MAX\_WORD\_LENGTH + 1)]$ .The class is composed of a constructor, destructor some getters and also some print functions for debugging. In order to copy blocks of memory from the input to the Query, we used memcpy, which is the most efficient way to perform such a task. Also, we used strtok\_r to handle word extraction from strings, in a thread safe way. The string input of the Query "consists of a space separated set of words. The length of any word will be at least $MIN\_WORD\_LENGTH$ characters and at most $MAX\_WORD\_LENGTH$ characters. The number of words in a query will not exceed $MAX\_QUERY\_WORDS$ words. "query\_str" contains at least one non-space character. "query\_str" contains only lower case letters from 'a' to 'z' and space characters", as stated by Sigmod. The Query struct also contains a match\_type (Exact, Hamming, Edit Distance) and a match\_distance (0,1,2,3), which indicate the kind of match we should apply. Finally, this struct has also a boolean array with the size equal to the number of entries of the query, that indicates which entries have matched with the words of a document. This array is set to false by default and is set again to false when we try to match it with another document.
   \item \textbf{Document} 
   It also contains a one-dimensional array of characters. The same as for the Query class applies here. It consists of an id and a 1d array of characters.
   \item \textbf{Entry}
@@ -179,11 +197,23 @@ The main functions we implemented:
   Deallocation of the aforementioned structs.
   \item \textbf{MatchDocument}
   It creates a new document, it deduplicates its words and it searches if they match with any query words. It accomplishes that accessing all indices and getting an entrylist which contains all query entries that matched with at least one document word. Afterwards, using the Result Hash Table, and by checking the matchedEntries boolean array in the Query struct, we are able to find the queries, of which all the entries matched with some document words. If only some query entries matched, then this is not a match. In any case, the boolean array of these specific queries should be set back to false, so that they are ready for the next search with a different document. Finally, the results are added to a list, which is then processed by GetNextAvailRes.
-  \clearpage
   \item \textbf{GetNextAvailRes}
-  This function returns the results of the matching, that means the query ids of the queries that matched with a document(sorted), the document id and the number of results. The query ids were sorted using Merge Sort.
+  This function returns the results of the matching, that means the query ids of the queries that matched with a document, the document id and the number of results. The query ids were sorted using Merge Sort.
   \end{itemize}
 \end{itemize}
+\section{Design Choices}
+Some design choices we made in order to improve the time results are the following:
+\begin{itemize}
+    \item Allocating continuous blocks of memory, using 1d arrays, instead of 2d, for example to store the query and the document strings. In this way the arrays are kept in cache.
+    \item Using memcpy and strcpy to copy strings/bytes and avoiding redundant iterations.
+    \item Using hash tables for deduplication (e.g. DocTable, ResultTable) or to achieve faster lookup (e.g. QueryTable, EntryTable). Lookup, insertion and deletion in a hash table without collisions has a complexity of O(1), which is very fast, in comparison with other methods.
+\end{itemize}
+\section{Parallelization}
+The parallelized parts of the execution are the following:
+\begin{itemize}
+\item MatchDocument
+\item StartQuery
+\end{itemize}
 \section{Conclusion}
-Finally, the program finds all the correct results and takes around 1900 milliseconds, when tested on the University machines, which is rather satisfactory. This can,also, be seen in the results.txt file of our Github repository.
+During this assignment, we had the opportunity to do research on plenty of concepts and technologies. We familiarized with Unit Testing, Version Control, Multithreading, which all helped us build quality software, efficient and maintainable and realize the importance of creating solutions to everyday problems building Information Systems.
 \end{document}

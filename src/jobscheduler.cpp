@@ -286,7 +286,10 @@ JobScheduler ::JobScheduler(int execution_threads)
 
 int JobScheduler ::submit_job(Job *job)
 {
+    pthread_mutex_lock(&queueLock);
     this->q->push(job);
+    pthread_cond_signal(&queueEmptyCond); // no more empty -> can continue executing jobs
+    pthread_mutex_unlock(&queueLock);
     return 0;
 }
 

@@ -65,4 +65,10 @@ void test_result_addResult(void);
 void test_matchedQuery_constructor_getters(void);
 void test_matchedQuery_setNext(void);
 void test_matchedQueryList_constructor_addToList_getHead(void);
+// multithreading
+void test_job(void);
+void test_JobScheduler_create_destroy_get(void);
+void test_JobScheduler_submitJob(void);
+void test_clone_querytable(void);
+void test_args(void);
 #endif //TESTS
