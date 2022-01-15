@@ -393,14 +393,13 @@ void test_query_table(void)
     memcpy(q_words, "blue purple green black yellow", MAX_QUERY_LENGTH);
     Query *q = new Query(0, q_words, MT_EXACT_MATCH, 0);
     Query *q2 = new Query(0, q_words, MT_EXACT_MATCH, 0);
-
     unsigned long hash = QT->addToBucket(hashFunctionById(q->getId()), q); // add query to hash table
     TEST_CHECK((hash == hashFunctionById(q->getId())));
-    TEST_CHECK((QT->getQueriesPerBucket(hash) == 1));                                              // one query in this bucket
-    hash = QT->addToBucket(hashFunctionById(q2->getId()), q2);                                     // add the exact same queryid to hash table
+    TEST_CHECK((QT->getQueriesPerBucket(hash) == 1)); // one query in this bucket
+    hash = QT->addToBucket(hashFunctionById(q2->getId()), q2);
     TEST_CHECK((QT->getQueriesPerBucket(hash) == 1));                                              // still one query , coz duplicates are not added
     TEST_CHECK((QT->getBucket(hash)[0] != QT->getBucket(hash)[1] && QT->getBucket(hash)[0] == q)); // check that the second query wasnt added
-    TEST_EXCEPTION(QT->addToBucket(hashFunctionById(0), NULL), std::exception);                    // pass NULL as query
+    TEST_EXCEPTION(QT->addToBucket(hashFunctionById(0), NULL), std::exception);
 
     delete[] q_words;
     delete QT;
@@ -1612,12 +1611,17 @@ void test_JobScheduler_submitJob(void)
     pthread_mutex_unlock(&queueLock);
 
     StartQuery(0, "WORD", MT_EDIT_DIST, 1);
+    StartQuery(1, "WORD", MT_HAMMING_DIST, 2);
+    StartQuery(2, "WORD", MT_EXACT_MATCH, 3);
     EndQuery(0);
+    EndQuery(1);
+    EndQuery(2);
     pthread_mutex_lock(&unfinishedQueriesLock);
     if (unfinishedQueries != 0)
     {
         pthread_cond_wait(&unfinishedQueriesCond, &unfinishedQueriesLock);
     }
+    TEST_CHECK(scheduler->getQueue()->isEmpty());
     DestroyIndex();
     pthread_mutex_unlock(&unfinishedQueriesLock);
 }
@@ -1631,11 +1635,11 @@ void test_clone_querytable(void)
     Query *q2 = new Query(1, q_words, MT_EXACT_MATCH, 0);
 
     unsigned long hash = QT->addToBucket(hashFunctionById(q->getId()), q);
-    unsigned long hash2 = QT->addToBucket(hashFunctionById(q2->getId()), q2);   
+    unsigned long hash2 = QT->addToBucket(hashFunctionById(q2->getId()), q2);
 
-    QueryTable* localTable = QT->cloneQueryTable();                                  
-    TEST_CHECK((localTable->getQueriesPerBucket(hash) == 1));    
-    TEST_CHECK((localTable->getQueriesPerBucket(hash2) == 1));                                              
+    QueryTable *localTable = QT->cloneQueryTable();
+    TEST_CHECK((localTable->getQueriesPerBucket(hash) == 1));
+    TEST_CHECK((localTable->getQueriesPerBucket(hash2) == 1));
     TEST_CHECK((localTable->getQuery(0)->getId() == q->getId()));
     TEST_CHECK((strcmp(localTable->getQuery(0)->getWord(0), q->getWord(0)) == 0));
     TEST_CHECK((localTable->getQuery(1)->getId() == q2->getId()));
@@ -1650,11 +1654,11 @@ void test_args(void)
 {
     char *d_words = new char[MAX_DOC_LENGTH]();
     strcpy(d_words, "blue purple green black yellow blue purple green black yellow");
-    MatchDocumentArgs* args_md = new MatchDocumentArgs(1, d_words);
+    MatchDocumentArgs *args_md = new MatchDocumentArgs(1, d_words);
     TEST_CHECK(args_md->getDocId() == 1);
     TEST_CHECK((strcmp(args_md->getDocStr(), d_words) == 0));
 
-    StartQueryArgs* args_sq = new StartQueryArgs(2, "blue purple green", MT_EDIT_DIST, 3);
+    StartQueryArgs *args_sq = new StartQueryArgs(2, "blue purple green", MT_EDIT_DIST, 3);
     TEST_CHECK(args_sq->getQueryId() == 2);
     TEST_CHECK((strcmp(args_sq->getQueryStr(), "blue purple green") == 0));
     TEST_CHECK(args_sq->getMatchType() == MT_EDIT_DIST);
@@ -1666,60 +1670,60 @@ void test_args(void)
 }
 
 TEST_LIST = {
-    // {"Query", test_query},
-    // {"Document", test_document},
-    // {"Entry", test_entry},
-    // {"Entry payload Set and Get", test_entry_set_get_payload},
-    // {"Entry emptyPayload", test_entry_emptyPayload},
-    // {"EntryList", test_entrylist},
-    // {"Binary Search", test_binary_search},
-    // {"Query Binary Search", test_query_binary_search},
-    // {"Entry Binary Search", test_entry_binary_search},
-    // {"Result Binary Search", test_result_binary_search},
-    // {"Find Query", test_find_query},
-    // {"Find Entry", test_find_entry},
-    // {"Hash Function", test_hash_function},
-    // {"Document Deduplication", test_deduplication},
-    // {"Doc Table", test_doc_table},
-    // {"Query Table", test_query_table},
-    // {"Entry Table", test_entry_table},
-    // {"Exact Match", test_exact_match},
-    // {"Hamming Distance", test_hamming},
-    // {"Edit Distance", test_edit},
-    // {"Stack Add", test_stack_add},
-    // {"Stack Pop", test__stack_pop},
-    // {"Create StackNode", test_stackNode_create},
-    // {"StackNode Pop", test_stackNode_pop},
-    // {"indexNode Constructor and Add Entry", test_indexNode_constructor_addEntry},
-    // {"indexNode getEntry", test_indexNode_getEntry},
-    // {"indexNode getChildren", test_indexNode_getChildren},
-    // {"indexNode getMatchingType", test_indexNode_getMatchingType},
-    // {"indexList Constructor", test_indexList_constructor},
-    // {"indexList addEntry", test_indexList_addToList},
-    // {"indexList getDistanceFromParent", test_indexList_getDistanceFromParent},
-    // {"indexList getNode", test_indexList_getNode},
-    // {"indexList getNext", test_indexList_getNext},
+    {"Query", test_query},
+    {"Document", test_document},
+    {"Entry", test_entry},
+    {"Entry payload Set and Get", test_entry_set_get_payload},
+    {"Entry emptyPayload", test_entry_emptyPayload},
+    {"EntryList", test_entrylist},
+    {"Binary Search", test_binary_search},
+    {"Query Binary Search", test_query_binary_search},
+    {"Entry Binary Search", test_entry_binary_search},
+    {"Result Binary Search", test_result_binary_search},
+    {"Find Query", test_find_query},
+    {"Find Entry", test_find_entry},
+    {"Hash Function", test_hash_function},
+    {"Document Deduplication", test_deduplication},
+    {"Doc Table", test_doc_table},
+    {"Query Table", test_query_table},
+    {"Entry Table", test_entry_table},
+    {"Exact Match", test_exact_match},
+    {"Hamming Distance", test_hamming},
+    {"Edit Distance", test_edit},
+    {"Stack Add", test_stack_add},
+    {"Stack Pop", test__stack_pop},
+    {"Create StackNode", test_stackNode_create},
+    {"StackNode Pop", test_stackNode_pop},
+    {"indexNode Constructor and Add Entry", test_indexNode_constructor_addEntry},
+    {"indexNode getEntry", test_indexNode_getEntry},
+    {"indexNode getChildren", test_indexNode_getChildren},
+    {"indexNode getMatchingType", test_indexNode_getMatchingType},
+    {"indexList Constructor", test_indexList_constructor},
+    {"indexList addEntry", test_indexList_addToList},
+    {"indexList getDistanceFromParent", test_indexList_getDistanceFromParent},
+    {"indexList getNode", test_indexList_getNode},
+    {"indexList getNext", test_indexList_getNext},
     {"lookup_entry_index", test_lookup_entry_index},
     {"Remove word from index", test_removeFromIndex},
-    // {"Add word to index", test_addToIndex},
-    // {"payloadNode Constructor, Getters", test_payloadNode_constructor_getters},
-    // {"payloadNode setNext", test_payloadNode_setNext},
-    // {"payload addToPayload", test_payload_addToPayload},
-    // {"payload deleteNode", test_payload_deletePayloadNode},
-    // {"Merge Sort", test_merge_sort},
-    // {"result constructor and getter functions", test_result_constructor_getters},
-    // {"addResult", test_result_addResult},
-    // {"store result", test_result_storeResult},
-    // {"InitializeIndex and DestroyIndex", test_InitializeIndex_DestroyIndex},
-    // {"StartQuery and EndQuery", test_StartQuery_EndQuery},
-    // {"ExactMatch WordLookup", test_ExactMatch_WordLookup},
-    // {"GetNextAvailRes", test_GetNextAvailRes},
-    // {"matchedQuery constructor and getters", test_matchedQuery_constructor_getters},
-    // {"matchedQuery setNext", test_matchedQuery_setNext},
-    // {"matchedQueryList constructor addToList getHead", test_matchedQueryList_constructor_addToList_getHead},
-    // {"job", test_job},
-    // {"JobScheduler constructor, destructor and get functions", test_JobScheduler_create_destroy_get},
-    // {"JobScheduler submitJob", test_JobScheduler_submitJob},
-    // {"cloneQueryTable", test_clone_querytable},
-    // {"args classes", test_args},
+    {"Add word to index", test_addToIndex},
+    {"payloadNode Constructor, Getters", test_payloadNode_constructor_getters},
+    {"payloadNode setNext", test_payloadNode_setNext},
+    {"payload addToPayload", test_payload_addToPayload},
+    {"payload deleteNode", test_payload_deletePayloadNode},
+    {"Merge Sort", test_merge_sort},
+    {"result constructor and getter functions", test_result_constructor_getters},
+    {"addResult", test_result_addResult},
+    {"store result", test_result_storeResult},
+    {"InitializeIndex and DestroyIndex", test_InitializeIndex_DestroyIndex},
+    {"StartQuery and EndQuery", test_StartQuery_EndQuery},
+    {"ExactMatch WordLookup", test_ExactMatch_WordLookup},
+    {"GetNextAvailRes", test_GetNextAvailRes},
+    {"matchedQuery constructor and getters", test_matchedQuery_constructor_getters},
+    {"matchedQuery setNext", test_matchedQuery_setNext},
+    {"matchedQueryList constructor addToList getHead", test_matchedQueryList_constructor_addToList_getHead},
+    {"job", test_job},
+    {"JobScheduler constructor, destructor and get functions", test_JobScheduler_create_destroy_get},
+    {"JobScheduler submitJob", test_JobScheduler_submitJob},
+    {"cloneQueryTable", test_clone_querytable},
+    {"args classes", test_args},
     {NULL, NULL}};

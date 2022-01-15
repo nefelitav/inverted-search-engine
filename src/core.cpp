@@ -16,21 +16,24 @@ bool globalExit;
 JobScheduler *scheduler;
 int unfinishedDocs = 0;
 int unfinishedQueries = 0;
+OperationType previousOperation;
 
 pthread_mutex_t resultLock = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t unfinishedQueriesLock = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t previousOperationLock = PTHREAD_MUTEX_INITIALIZER;
+
 
 ErrorCode InitializeIndex()
 {
     try
     {
-        pthread_mutex_lock(&queueLock);        
+        pthread_mutex_lock(&queueLock);
         scheduler = new JobScheduler(NUM_THREADS);
         pthread_mutex_unlock(&queueLock);
-        create_entry_list(&EntryList);        // Create the global entry list
-        QT = new QueryTable();                // Create the global query and entry hash tables
+        create_entry_list(&EntryList); // Create the global entry list
+        QT = new QueryTable();         // Create the global query and entry hash tables
         ET = new EntryTable();
-        editIndex = new indexNode(NULL);      // Create the edit index with a null node
+        editIndex = new indexNode(NULL); // Create the edit index with a null node
 
         hammingIndexes = new indexNode *[27]; // Create the 27 hamming indexes for each word length from 4 to 31
         for (int i = 0; i < 27; i++)
@@ -38,6 +41,10 @@ ErrorCode InitializeIndex()
             hammingIndexes[i] = new indexNode(NULL, 1, 0, MT_HAMMING_DIST);
         }
         exactHash = NULL;
+        pthread_mutex_lock(&previousOperationLock);
+        previousOperation = INITIALIZE_INDEX;
+        pthread_mutex_unlock(&previousOperationLock);
+
         return EC_SUCCESS;
     }
     catch (const std::exception &_)
@@ -56,8 +63,10 @@ ErrorCode StartQuery(QueryID query_id, const char *query_str, MatchType match_ty
         StartQueryArgs *args = new StartQueryArgs(query_id, query_str, match_type, match_dist); // create a class with the job args
         ErrorCode (*job)(void *) = StartQueryJob;
         Job *jobToAdd = new Job(job, (void *)args); // create job
-        scheduler->submit_job(jobToAdd); // push job to queue
-    
+        scheduler->submit_job(jobToAdd);            // push job to queue
+        pthread_mutex_lock(&previousOperationLock);
+        previousOperation = START_QUERY;
+        pthread_mutex_unlock(&previousOperationLock);
         return EC_SUCCESS;
     }
     catch (const std::exception &_)
@@ -79,12 +88,21 @@ ErrorCode MatchDocument(DocID doc_id, const char *doc_str)
         {
             pthread_cond_wait(&unfinishedQueriesCond, &unfinishedQueriesLock);
         }
+
+        pthread_mutex_lock(&previousOperationLock);
+        if(previousOperation!=MATCH_DOCUMENT){
+            scheduler->cloneLocalQT();
+        }
+        pthread_mutex_unlock(&previousOperationLock);
+
         pthread_mutex_unlock(&unfinishedQueriesLock);
         MatchDocumentArgs *args = new MatchDocumentArgs(doc_id, doc_str); // create a class with the job args
         ErrorCode (*job)(void *) = MatchDocumentJob;
         Job *jobToAdd = new Job(job, (void *)args); // create job
-        scheduler->submit_job(jobToAdd); // push job to queue
-        
+        scheduler->submit_job(jobToAdd);            // push job to queue
+        pthread_mutex_lock(&previousOperationLock);
+        previousOperation = MATCH_DOCUMENT;
+        pthread_mutex_unlock(&previousOperationLock);
         return EC_SUCCESS;
     }
     catch (const std::exception &_)
@@ -114,22 +132,23 @@ ErrorCode GetNextAvailRes(DocID *p_doc_id, unsigned int *p_num_res, QueryID **p_
     resultList = resultList->getNext();
     delete temp;
     return EC_SUCCESS;
-    
 }
 
 ErrorCode EndQuery(QueryID query_id)
 {
     try
     {
-        pthread_mutex_lock(&unfinishedQueriesLock);  // wait until all start query jobs are done -> otherwise we might delete something that is not allocated yet
+        pthread_mutex_lock(&unfinishedQueriesLock); // wait until all start query jobs are done -> otherwise we might delete something that is not allocated yet
         if (unfinishedQueries != 0)
         {
             pthread_cond_wait(&unfinishedQueriesCond, &unfinishedQueriesLock);
         }
         pthread_mutex_unlock(&unfinishedQueriesLock);
 
-        QT->deleteQuery(query_id);                  // delete query from hash table and its entries from index
-        
+        QT->deleteQuery(query_id); // delete query from hash table and its entries from index
+        pthread_mutex_lock(&previousOperationLock);
+        previousOperation = END_QUERY;
+        pthread_mutex_unlock(&previousOperationLock);
         return EC_SUCCESS;
     }
     catch (const std::exception &_)

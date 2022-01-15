@@ -10,6 +10,7 @@ indexNode ::indexNode(entry *input, QueryID id, unsigned int threshold, MatchTyp
 {
     this->MatchingType = matchingMetric;
     this->content = input;
+    this->indexNodeLock = PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP;
     this->children = NULL;
 }
 
@@ -18,9 +19,18 @@ MatchType indexNode ::getMatchingType()
     return this->MatchingType;
 }
 
+void indexNode::lockIndexNode()
+{
+    pthread_mutex_lock(&this->indexNodeLock);
+}
+
+void indexNode::unlockIndexNode()
+{
+    pthread_mutex_unlock(&this->indexNodeLock);
+}
+
 ErrorCode indexNode ::addEntry(entry *input, QueryID id, unsigned int threshold)
 {
-
     unsigned int distance;
     // Check Input
     if (input == NULL)
@@ -32,6 +42,7 @@ ErrorCode indexNode ::addEntry(entry *input, QueryID id, unsigned int threshold)
     if (this->content == NULL)
     {
         this->content = input;
+        this->unlockIndexNode();
     }
     else
     {
@@ -46,6 +57,7 @@ ErrorCode indexNode ::addEntry(entry *input, QueryID id, unsigned int threshold)
         }
         else
         {
+            this->unlockIndexNode();
             return EC_FAIL;
         }
         // If the entry already exists, add to payload
@@ -60,7 +72,7 @@ ErrorCode indexNode ::addEntry(entry *input, QueryID id, unsigned int threshold)
                 throw std::runtime_error("Entry by same query already in the tree");
                 return EC_FAIL;
             }
-
+            this->unlockIndexNode();
             return EC_SUCCESS;
         }
 
@@ -71,7 +83,7 @@ ErrorCode indexNode ::addEntry(entry *input, QueryID id, unsigned int threshold)
             this->children = new indexList(input, distance, this->MatchingType, id, threshold);
         }
         else if (this->children->getDistanceFromParent() > distance)
-        { 
+        {
             // Children list exists, first child has bigger distance
             indexList *oldFirstChild = this->children;
             this->children = new indexList(input, distance, this->MatchingType, id, threshold, oldFirstChild);
@@ -80,6 +92,8 @@ ErrorCode indexNode ::addEntry(entry *input, QueryID id, unsigned int threshold)
         { // Children list exists, new entry has equal or greater distance than first child
             try
             { // Give the entry to the list to handle
+                this->children->lockIndexList();
+                this->unlockIndexNode();
                 this->children->addToList(input, distance, id, threshold);
             }
             catch (const std::exception &_)
@@ -89,7 +103,7 @@ ErrorCode indexNode ::addEntry(entry *input, QueryID id, unsigned int threshold)
             }
         }
     }
-
+    this->unlockIndexNode();
     return EC_SUCCESS;
 }
 
@@ -101,7 +115,8 @@ int indexNode ::printTree(int depth)
         std::cout << "EMPTY\n";
         return 0;
     }
-    std::cout << "Word: " << this->content->getWord() << "  Payload: "<< "\n";
+    std::cout << "Word: " << this->content->getWord() << "  Payload: "
+              << "\n";
     this->content->printPayload();
 
     if (this->children)
@@ -159,7 +174,6 @@ ErrorCode lookup_entry_index(const word w, entry_list *result, MatchType queryMa
     indexNode *toadd;
     indexNode *currNode = NULL;
 
-
     // Select the index to search in
     if (queryMatchingType == MT_EDIT_DIST)
     {
@@ -179,7 +193,6 @@ ErrorCode lookup_entry_index(const word w, entry_list *result, MatchType queryMa
     {
         return EC_SUCCESS;
     }
-
 
     // Main loop
     while (currNode)
@@ -243,7 +256,6 @@ ErrorCode lookup_entry_index(const word w, entry_list *result, MatchType queryMa
             }
             currChild = currChild->getNext();
         }
-
         // Get the next item to be examined
         currNode = stack.pop();
     }
@@ -262,15 +274,13 @@ ErrorCode addToIndex(entry *toAdd, QueryID queryId, MatchType queryMatchingType,
         // Add to appropriate index // protect each index
         if (queryMatchingType == MT_EDIT_DIST)
         {
-            pthread_mutex_lock(&editLock);
+            editIndex->lockIndexNode();
             editIndex->addEntry(toAdd, queryId, threshold);
-            pthread_mutex_unlock(&editLock);
         }
         else if (queryMatchingType == MT_HAMMING_DIST)
         {
-            pthread_mutex_lock(&hammingLock[strlen(toAdd->getWord()) - 4]);
+            hammingIndexes[strlen(toAdd->getWord()) - 4]->lockIndexNode();
             hammingIndexes[strlen(toAdd->getWord()) - 4]->addEntry(toAdd, queryId, threshold);
-            pthread_mutex_unlock(&hammingLock[strlen(toAdd->getWord()) - 4]);
         }
         else if (queryMatchingType == MT_EXACT_MATCH)
         {
@@ -319,8 +329,7 @@ ErrorCode removeFromIndex(const word givenWord, const QueryID queryId, const Mat
             ET->deleteQueryId(givenWord, queryId);
             return EC_SUCCESS;
         }
-
-
+        ix->lockIndexNode();
         // Store the children of current node, if any
         indexList *currChild;
 
@@ -348,11 +357,19 @@ ErrorCode removeFromIndex(const word givenWord, const QueryID queryId, const Mat
                 return EC_FAIL;
             }
 
-
             // Delete payload entry if found
             if (currNode->getEntry()->emptyPayload() == false && distance == 0)
             {
                 currNode->getEntry()->deletePayloadNode(queryId);
+                if (givenType == MT_EDIT_DIST)
+                {
+                    ix = editIndex;
+                }
+                else
+                {
+                    ix = hammingIndexes[strlen(givenWord) - 4];
+                }
+                ix->unlockIndexNode();
                 return EC_SUCCESS;
             }
             // Add any applicable children to examine later
@@ -375,6 +392,15 @@ ErrorCode removeFromIndex(const word givenWord, const QueryID queryId, const Mat
             // Get the next item to be examined
             currNode = stack.pop();
         }
+        if (givenType == MT_EDIT_DIST)
+        {
+            ix = editIndex;
+        }
+        else
+        {
+            ix = hammingIndexes[strlen(givenWord) - 4];
+        }
+        ix->unlockIndexNode();
         return EC_SUCCESS;
     }
     catch (const std::exception &_)
@@ -466,6 +492,7 @@ int Stack ::getSize()
 indexList ::indexList(entry *content, unsigned int distance, MatchType matchingMetric, QueryID id, unsigned int threshold, indexList *next)
 {
     // Check input
+    this->indexListLock = PTHREAD_MUTEX_INITIALIZER;
     if (matchingMetric != MT_HAMMING_DIST && matchingMetric != MT_EDIT_DIST)
     {
         throw std::invalid_argument("Invalid Distance Metric");
@@ -490,10 +517,21 @@ unsigned int indexList ::getDistanceFromParent() const
     return this->distanceFromParent;
 }
 
+void indexList::lockIndexList()
+{
+    pthread_mutex_lock(&this->indexListLock);
+}
+
+void indexList::unlockIndexList()
+{
+    pthread_mutex_unlock(&this->indexListLock);
+}
+
 int indexList ::addToList(entry *content, unsigned int distance, QueryID id, unsigned int threshold)
 {
     if (content == NULL)
     {
+        this->unlockIndexList();
         throw std::invalid_argument("Got NULL pointer");
     }
 
@@ -501,6 +539,8 @@ int indexList ::addToList(entry *content, unsigned int distance, QueryID id, uns
 
     if (distance == this->distanceFromParent)
     { // If we have the same distance as this node, push lower in the tree
+        this->node->lockIndexNode();
+        this->unlockIndexList();
         this->node->addEntry(content, id, threshold);
         return 0;
     }
@@ -508,16 +548,20 @@ int indexList ::addToList(entry *content, unsigned int distance, QueryID id, uns
     { // If we are not in the last node
         if (distance >= this->next->distanceFromParent)
         { // If the next node has distance lower than the input, pass input along
+            this->next->lockIndexList();
+            this->unlockIndexList();
             this->next->addToList(content, distance, id, threshold);
         }
         else if (this->node->getMatchingType() == MT_EDIT_DIST)
         { // Else if the next node has higher distance, create a new list node between this one and the next
             this->next = new indexList(content, distance, this->node->getMatchingType(), id, threshold, next);
+            this->unlockIndexList();
         }
         return 0;
     }
     // If there is no next node, create a new node after this
     this->next = new indexList(content, distance, this->node->getMatchingType(), id, threshold, next);
+    this->unlockIndexList();
     return 0;
 }
 

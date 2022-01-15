@@ -6,18 +6,17 @@
 
 // initialize mutexes, condition variables
 pthread_mutex_t queueLock = PTHREAD_MUTEX_INITIALIZER;
-pthread_mutex_t queryTableLock = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t entrylistLock = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t queueEmptyCond = PTHREAD_COND_INITIALIZER;
 pthread_cond_t resEmptyCond = PTHREAD_COND_INITIALIZER;
-pthread_cond_t unfinishedQueriesCond = PTHREAD_COND_INITIALIZER;  
+pthread_cond_t unfinishedQueriesCond = PTHREAD_COND_INITIALIZER;
 
 ///////////////////////////////// Match Document Job /////////////////////////////////
 
 MatchDocumentArgs ::MatchDocumentArgs(DocID doc_id, const char *doc_str)
 {
     this->doc_id = doc_id;
-    memcpy(this->doc_str, doc_str,MAX_DOC_LENGTH);
+    memcpy(this->doc_str, doc_str, MAX_DOC_LENGTH);
 }
 
 const DocID MatchDocumentArgs ::getDocId() const
@@ -57,7 +56,7 @@ const QueryID StartQueryArgs ::getQueryId() const
     return this->query_id;
 }
 
-const char* StartQueryArgs ::getQueryStr() const
+const char *StartQueryArgs ::getQueryStr() const
 {
     return this->query_str;
 }
@@ -74,10 +73,9 @@ const unsigned int StartQueryArgs ::getMatchDistance() const
 
 ErrorCode StartQueryJob(void *args)
 {
+
     Query *q = new Query(((StartQueryArgs *)args)->getQueryId(), (char *)(((StartQueryArgs *)args)->getQueryStr()), ((StartQueryArgs *)args)->getMatchType(), ((StartQueryArgs *)args)->getMatchDistance()); // create query
-    pthread_mutex_lock(&queryTableLock); // protect query table, which is a global class
-    QT->addToBucket(hashFunctionById(((StartQueryArgs *)args)->getQueryId()), q);                       // store it in hash table
-    pthread_mutex_unlock(&queryTableLock);
+    QT->addToBucket(hashFunctionById(((StartQueryArgs *)args)->getQueryId()), q); // store it in hash table
     int i = 0;
     entry *tempEntry;
     word w = q->getWord(0); // get every entry of query
@@ -104,13 +102,11 @@ ErrorCode StartQueryJob(void *args)
         pthread_cond_signal(&unfinishedQueriesCond); // all queries are done and we can move on
     }
     pthread_mutex_unlock(&unfinishedQueriesLock);
-
     delete (StartQueryArgs *)args;
     return EC_SUCCESS;
 }
 
 ///////////////////////////////// Thread Main /////////////////////////////////
-        
 
 void *threadMain(void *arg)
 {
@@ -118,9 +114,9 @@ void *threadMain(void *arg)
     while (!globalExit)
     {
         pthread_mutex_lock(&queueLock);
-        while (scheduler->getQueue()->isEmpty())            // Wait while JobQueue is empty
+        while (scheduler->getQueue()->isEmpty()) // Wait while JobQueue is empty
         {
-            if (globalExit)                                 // If program exited while this thread was waiting, exit
+            if (globalExit) // If program exited while this thread was waiting, exit
             {
                 pthread_mutex_unlock(&queueLock);
                 //std::cout << "Thread Done\n";
@@ -128,10 +124,10 @@ void *threadMain(void *arg)
             }
             pthread_cond_wait(&queueEmptyCond, &queueLock);
         }
-        job = scheduler->getQueue()->pop();     // Execute Job
+        job = scheduler->getQueue()->pop(); // Execute Job
         pthread_mutex_unlock(&queueLock);
         job->getJob()->getFunc()(job->getJob()->getArgs());
-        
+
         delete job;
     }
     //std::cout << "Thread Done\n";
@@ -278,8 +274,10 @@ JobScheduler ::JobScheduler(int execution_threads)
     this->q = new JobQueue(); // create queue
     this->execution_threads = execution_threads;
     this->tids = new pthread_t[execution_threads];
+    this->localQT = new QueryTable *[this->execution_threads];
     for (int i = 0; i < this->execution_threads; i++) // create threads
     {
+        this->localQT[i] = NULL;
         pthread_create(&this->tids[i], NULL, &threadMain, NULL);
     }
 }
@@ -308,12 +306,40 @@ pthread_t *JobScheduler ::getThreadIds()
     return this->tids;
 }
 
+QueryTable *JobScheduler::getQueryTable(int id)
+{
+    return this->localQT[id];
+}
+
+int JobScheduler::convertId(pthread_t givenID)
+{
+    for (int i = 0; i < this->execution_threads; i++)
+    {
+        if (this->tids[i] == givenID)
+        {
+            return i;
+        }
+    }
+    return -1;
+}
+
+void JobScheduler::cloneLocalQT()
+{
+    for (int i = 0; i < this->execution_threads; i++)
+    {
+        delete this->localQT[i];
+        this->localQT[i] = QT->cloneQueryTable();
+    }
+}
+
 JobScheduler ::~JobScheduler()
 {
     for (int i = 0; i < this->execution_threads; i++)
     {
         pthread_join(this->tids[i], NULL);
+        delete this->localQT[i];
     }
     delete this->q;
     delete[] this->tids;
+    delete[] this->localQT;
 }

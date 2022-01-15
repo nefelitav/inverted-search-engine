@@ -77,6 +77,7 @@ class QueryTable     // hash table where all queries are stored, so that i can a
     private:
         Query*** buckets;
         int queriesPerBucket[MAX_QUERY_BUCKETS];
+        pthread_mutex_t bucketLock[MAX_QUERY_BUCKETS];
 
     public:
         QueryTable();
