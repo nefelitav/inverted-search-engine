@@ -13,10 +13,12 @@ jobs:
       run: make clean
     - name: compile
       run: make
-    - name: check memory
+    - name: check memory & detect data races
       run: |
         sudo apt-get install -y valgrind
         make valgrind
+        make helgrind
+        make drd
     - name: run
       run: make run
     - name: compile test

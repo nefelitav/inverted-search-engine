@@ -4,13 +4,6 @@
 #include <sys/types.h>
 #include <cstring>
 
-// initialize mutexes, condition variables
-pthread_mutex_t queueLock = PTHREAD_MUTEX_INITIALIZER;
-pthread_mutex_t entrylistLock = PTHREAD_MUTEX_INITIALIZER;
-pthread_cond_t queueEmptyCond = PTHREAD_COND_INITIALIZER;
-pthread_cond_t resEmptyCond = PTHREAD_COND_INITIALIZER;
-pthread_cond_t unfinishedQueriesCond = PTHREAD_COND_INITIALIZER;
-
 ///////////////////////////////// Match Document Job /////////////////////////////////
 
 MatchDocumentArgs ::MatchDocumentArgs(DocID doc_id, const char *doc_str)
@@ -106,9 +99,34 @@ ErrorCode StartQueryJob(void *args)
     return EC_SUCCESS;
 }
 
-///////////////////////////////// Thread Main /////////////////////////////////
+///////////////////////////////// End Query Job /////////////////////////////////
 
-void *threadMain(void *arg)
+EndQueryArgs ::EndQueryArgs(QueryID query_id)
+{
+    this->query_id = query_id;
+}
+
+const QueryID EndQueryArgs ::getQueryId() const
+{
+    return this->query_id;
+}
+
+ErrorCode EndQueryJob(void *args)
+{
+    QT->deleteQuery(((EndQueryArgs *)args)->getQueryId());                  // delete query from hash table and its entries from index
+    pthread_mutex_lock(&queriesToDeleteLock);
+    queriesToDelete--;
+    if (queriesToDelete == 0)
+    {
+        pthread_cond_signal(&queriesToDeleteCond); // all queries are done and we can move on
+    }
+    pthread_mutex_unlock(&queriesToDeleteLock);
+    delete (EndQueryArgs *)args;
+    return EC_SUCCESS;
+}
+///////////////////////////////// Execute all jobs /////////////////////////////////
+        
+void *execute_all_jobs(void *arg)
 {
     jobNode *job = NULL;
     while (!globalExit)
@@ -122,7 +140,7 @@ void *threadMain(void *arg)
                 //std::cout << "Thread Done\n";
                 return NULL;
             }
-            pthread_cond_wait(&queueEmptyCond, &queueLock);
+            pthread_cond_wait(&queueEmptyCond, &queueLock); // wait until queue is no more empty to pop
         }
         job = scheduler->getQueue()->pop(); // Execute Job
         pthread_mutex_unlock(&queueLock);
@@ -278,7 +296,7 @@ JobScheduler ::JobScheduler(int execution_threads)
     for (int i = 0; i < this->execution_threads; i++) // create threads
     {
         this->localQT[i] = NULL;
-        pthread_create(&this->tids[i], NULL, &threadMain, NULL);
+        pthread_create(&this->tids[i], NULL, &execute_all_jobs, NULL);
     }
 }
 
@@ -288,6 +306,38 @@ int JobScheduler ::submit_job(Job *job)
     this->q->push(job);
     pthread_cond_signal(&queueEmptyCond); // no more empty -> can continue executing jobs
     pthread_mutex_unlock(&queueLock);
+    return 0;
+}
+
+int JobScheduler ::wait_all_tasks_finish(WaitTask task)
+{
+    if (task == MATCH_DOCS)
+    {
+        pthread_mutex_lock(&resultLock);
+        if (unfinishedDocs != 0) // wait until all match document jobs are done and the result list is not empty
+        {
+            pthread_cond_wait(&resEmptyCond, &resultLock);
+        }
+        pthread_mutex_unlock(&resultLock);
+    }
+    else if (task == QUERIES_CREATION)
+    {
+        pthread_mutex_lock(&unfinishedQueriesLock);  // wait until all start query jobs are done -> otherwise we might delete something that is not allocated yet
+        if (unfinishedQueries != 0)
+        {
+            pthread_cond_wait(&unfinishedQueriesCond, &unfinishedQueriesLock);
+        }
+        pthread_mutex_unlock(&unfinishedQueriesLock);
+    }
+    else if (task == QUERIES_DELETION)
+    {
+        pthread_mutex_lock(&queriesToDeleteLock);  // wait until all start query jobs are done -> otherwise we might delete something that is not allocated yet
+        if (queriesToDelete != 0)
+        {
+            pthread_cond_wait(&queriesToDeleteCond, &queriesToDeleteLock);
+        }
+        pthread_mutex_unlock(&queriesToDeleteLock);
+    }
     return 0;
 }
 
@@ -306,12 +356,12 @@ pthread_t *JobScheduler ::getThreadIds()
     return this->tids;
 }
 
-QueryTable *JobScheduler::getQueryTable(int id)
+QueryTable *JobScheduler ::getQueryTable(int threadId)
 {
-    return this->localQT[id];
+    return this->localQT[threadId];
 }
 
-int JobScheduler::convertId(pthread_t givenID)
+int JobScheduler ::convertId(pthread_t givenID)
 {
     for (int i = 0; i < this->execution_threads; i++)
     {
@@ -323,7 +373,7 @@ int JobScheduler::convertId(pthread_t givenID)
     return -1;
 }
 
-void JobScheduler::cloneLocalQT()
+void JobScheduler ::cloneLocalQT()
 {
     for (int i = 0; i < this->execution_threads; i++)
     {

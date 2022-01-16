@@ -16,11 +16,20 @@ bool globalExit;
 JobScheduler *scheduler;
 int unfinishedDocs = 0;
 int unfinishedQueries = 0;
+int queriesToDelete = 0;
 OperationType previousOperation;
 
+// initialize mutexes, condition variables
+pthread_mutex_t queueLock = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t entrylistLock = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t resultLock = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t unfinishedQueriesLock = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t previousOperationLock = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t queriesToDeleteLock = PTHREAD_MUTEX_INITIALIZER;
+pthread_cond_t queueEmptyCond = PTHREAD_COND_INITIALIZER;
+pthread_cond_t resEmptyCond = PTHREAD_COND_INITIALIZER;
+pthread_cond_t unfinishedQueriesCond = PTHREAD_COND_INITIALIZER;
+pthread_cond_t queriesToDeleteCond = PTHREAD_COND_INITIALIZER;
 
 
 ErrorCode InitializeIndex()
@@ -80,22 +89,20 @@ ErrorCode MatchDocument(DocID doc_id, const char *doc_str)
 {
     try
     {
+        //std::cout << "doc " << doc_id << std::endl;
+        scheduler->wait_all_tasks_finish(QUERIES_CREATION); // wait for all queries to be created
+
         pthread_mutex_lock(&resultLock);
         unfinishedDocs++;
         pthread_mutex_unlock(&resultLock);
-        pthread_mutex_lock(&unfinishedQueriesLock);
-        if (unfinishedQueries != 0)
-        {
-            pthread_cond_wait(&unfinishedQueriesCond, &unfinishedQueriesLock);
-        }
 
         pthread_mutex_lock(&previousOperationLock);
-        if(previousOperation!=MATCH_DOCUMENT){
+        if (previousOperation != MATCH_DOCUMENT) 
+        {
             scheduler->cloneLocalQT();
         }
         pthread_mutex_unlock(&previousOperationLock);
 
-        pthread_mutex_unlock(&unfinishedQueriesLock);
         MatchDocumentArgs *args = new MatchDocumentArgs(doc_id, doc_str); // create a class with the job args
         ErrorCode (*job)(void *) = MatchDocumentJob;
         Job *jobToAdd = new Job(job, (void *)args); // create job
@@ -114,12 +121,7 @@ ErrorCode MatchDocument(DocID doc_id, const char *doc_str)
 
 ErrorCode GetNextAvailRes(DocID *p_doc_id, unsigned int *p_num_res, QueryID **p_query_ids)
 {
-    pthread_mutex_lock(&resultLock);
-    if (unfinishedDocs != 0) // wait until all match document jobs are done and the result list is not empty
-    {
-        pthread_cond_wait(&resEmptyCond, &resultLock);
-    }
-    pthread_mutex_unlock(&resultLock);
+    scheduler->wait_all_tasks_finish(MATCH_DOCS); // wait for all documents to be matched
     result *temp = NULL;
     if (resultList == NULL)
     {
@@ -138,14 +140,14 @@ ErrorCode EndQuery(QueryID query_id)
 {
     try
     {
-        pthread_mutex_lock(&unfinishedQueriesLock); // wait until all start query jobs are done -> otherwise we might delete something that is not allocated yet
-        if (unfinishedQueries != 0)
-        {
-            pthread_cond_wait(&unfinishedQueriesCond, &unfinishedQueriesLock);
-        }
-        pthread_mutex_unlock(&unfinishedQueriesLock);
-
-        QT->deleteQuery(query_id); // delete query from hash table and its entries from index
+        scheduler->wait_all_tasks_finish(QUERIES_CREATION); // wait for all queries to be created before deleted
+        pthread_mutex_lock(&queriesToDeleteLock);
+        queriesToDelete++;
+        pthread_mutex_unlock(&queriesToDeleteLock);
+        EndQueryArgs *args = new EndQueryArgs(query_id); // create a class with the job args
+        ErrorCode (*job)(void *) = EndQueryJob;
+        Job *jobToAdd = new Job(job, (void *)args); // create job
+        scheduler->submit_job(jobToAdd); // push job to queue
         pthread_mutex_lock(&previousOperationLock);
         previousOperation = END_QUERY;
         pthread_mutex_unlock(&previousOperationLock);
@@ -162,12 +164,12 @@ ErrorCode DestroyIndex()
 {
     try
     {
+        scheduler->wait_all_tasks_finish(QUERIES_DELETION); // wait for all queries to be deleted, before all structs are deleted
         pthread_mutex_lock(&queueLock);
         globalExit = true;
         //unblock all threads blocked on the condition variable
         pthread_cond_broadcast(&queueEmptyCond);
         pthread_mutex_unlock(&queueLock);
-
         delete editIndex;
         for (int i = 0; i < 27; i++)
         {

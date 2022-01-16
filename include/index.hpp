@@ -16,7 +16,7 @@ private:
     MatchType MatchingType;
     entry *content;
     indexList *children;
-    pthread_mutex_t indexNodeLock;
+    pthread_mutex_t indexNodeLock; // mutex per indexNode
 
 public:
     indexNode(entry *input, QueryID id = 1, unsigned int threshold = 0, MatchType matchingMetric = MT_EDIT_DIST);
@@ -34,7 +34,7 @@ class indexList
 {
 private:
     unsigned int distanceFromParent;
-    pthread_mutex_t indexListLock;
+    pthread_mutex_t indexListLock; // mutex per indexList
     indexNode *node;
     indexList *next;
 

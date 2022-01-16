@@ -1407,51 +1407,36 @@ void test_StartQuery_EndQuery(void)
     // create queries and delete them and check if they are well inserted in structs
     memcpy(q_words, "blue purple green black yellow", MAX_QUERY_LENGTH);
     StartQuery(0, q_words, MT_EXACT_MATCH, 0);
-    pthread_mutex_lock(&unfinishedQueriesLock);
-    if (unfinishedQueries != 0)
-    {
-        pthread_cond_wait(&unfinishedQueriesCond, &unfinishedQueriesLock);
-    }
-    pthread_mutex_unlock(&unfinishedQueriesLock);
+    scheduler->wait_all_tasks_finish(QUERIES_CREATION);
     TEST_CHECK((QT->getQueriesPerBucket(hashFunctionById(0)) == 1));
     TEST_CHECK((EntryList->getEntryNum() == 5));
     TEST_CHECK((ET->getEntriesPerBucket(hashFunction((char *)"blue")) == 1)); // well inserted in entry table
     TEST_CHECK(((ET->getBucket(hashFunction((char *)"blue"))[0])->getPayload()->getId() == 0));
     EndQuery(0);
+    scheduler->wait_all_tasks_finish(QUERIES_DELETION);
     TEST_CHECK(((ET->getBucket(hashFunction((char *)"blue"))[0])->getPayload() == NULL));
     TEST_CHECK((ET->getEntriesPerBucket(hashFunction((char *)"blue")) == 1)); // still in there but with NULL payload
 
-    memcpy(q_words, "blue purple green black yellow", MAX_QUERY_LENGTH);
     StartQuery(1, q_words, MT_EDIT_DIST, 1);
-    pthread_mutex_lock(&unfinishedQueriesLock);
-    if (unfinishedQueries != 0)
-    {
-        pthread_cond_wait(&unfinishedQueriesCond, &unfinishedQueriesLock);
-    }
-    pthread_mutex_unlock(&unfinishedQueriesLock);
+    scheduler->wait_all_tasks_finish(QUERIES_CREATION);
     TEST_CHECK((QT->getQueriesPerBucket(hashFunctionById(1)) == 1));
     TEST_CHECK((EntryList->getEntryNum() == 10));
     TEST_CHECK((strcmp(editIndex->getEntry()->getWord(), "blue") == 0)); // well inserted in index
 
-    memcpy(q_words, "blue purple green black yellow", MAX_QUERY_LENGTH);
     StartQuery(2, q_words, MT_HAMMING_DIST, 2);
-    pthread_mutex_lock(&unfinishedQueriesLock);
-    if (unfinishedQueries != 0)
-    {
-        pthread_cond_wait(&unfinishedQueriesCond, &unfinishedQueriesLock);
-    }
-    pthread_mutex_unlock(&unfinishedQueriesLock);
+    scheduler->wait_all_tasks_finish(QUERIES_CREATION);
     TEST_CHECK((QT->getQueriesPerBucket(hashFunctionById(1)) == 1));
     TEST_CHECK((EntryList->getEntryNum() == 15));
     TEST_CHECK((strcmp(hammingIndexes[0]->getEntry()->getWord(), "blue") == 0)); // well inserted in index
 
     EndQuery(2);
+    scheduler->wait_all_tasks_finish(QUERIES_DELETION);
     TEST_CHECK((hammingIndexes[0]->getEntry()->getPayload() == NULL)); // well deleted
     EndQuery(1);
+    scheduler->wait_all_tasks_finish(QUERIES_DELETION);
     TEST_CHECK((editIndex->getEntry()->getPayload() == NULL)); // well deleted
-
-    delete[] q_words;
     DestroyIndex();
+    delete[] q_words;
 }
 
 void test_ExactMatch_WordLookup(void)
@@ -1461,12 +1446,7 @@ void test_ExactMatch_WordLookup(void)
     memcpy(q_words, "blue purple green black yellow", MAX_QUERY_LENGTH);
     // create query
     StartQuery(0, q_words, MT_EXACT_MATCH, 0);
-    pthread_mutex_lock(&unfinishedQueriesLock);
-    if (unfinishedQueries != 0)
-    {
-        pthread_cond_wait(&unfinishedQueriesCond, &unfinishedQueriesLock);
-    }
-    pthread_mutex_unlock(&unfinishedQueriesLock);
+    scheduler->wait_all_tasks_finish(QUERIES_CREATION);
     // create document
     char *d_words = new char[MAX_DOC_LENGTH]();
     strcpy(d_words, "blue purple green black yellow blue purple green black yellow");
@@ -1588,6 +1568,13 @@ void test_JobScheduler_create_destroy_get(void)
     scheduler = new JobScheduler(10);
     pthread_mutex_unlock(&queueLock);
 
+    pthread_mutex_lock(&queueLock);
+    pthread_t* threadIds = scheduler->getThreadIds();
+    TEST_CHECK(scheduler->convertId(threadIds[0]) == 0);
+    TEST_CHECK(scheduler->convertId(threadIds[5]) == 5);
+    TEST_CHECK(scheduler->convertId(threadIds[9]) == 9);
+    pthread_mutex_unlock(&queueLock);
+
     TEST_CHECK(scheduler != NULL);
 
     pthread_mutex_lock(&queueLock);
@@ -1597,13 +1584,11 @@ void test_JobScheduler_create_destroy_get(void)
     TEST_CHECK(scheduler->getThreads() == 10);
     globalExit = true;
     pthread_cond_broadcast(&queueEmptyCond);
-    pthread_cond_broadcast(&resEmptyCond);
-    pthread_cond_broadcast(&unfinishedQueriesCond);
     delete scheduler;
     scheduler = NULL;
 }
 
-void test_JobScheduler_submitJob(void)
+void test_JobScheduler_submitJob_waitAll(void)
 {
     InitializeIndex();
     pthread_mutex_lock(&queueLock);
@@ -1616,14 +1601,12 @@ void test_JobScheduler_submitJob(void)
     EndQuery(0);
     EndQuery(1);
     EndQuery(2);
-    pthread_mutex_lock(&unfinishedQueriesLock);
-    if (unfinishedQueries != 0)
-    {
-        pthread_cond_wait(&unfinishedQueriesCond, &unfinishedQueriesLock);
-    }
+
+    scheduler->wait_all_tasks_finish(QUERIES_DELETION);
+    pthread_mutex_lock(&queueLock);
     TEST_CHECK(scheduler->getQueue()->isEmpty());
+    pthread_mutex_unlock(&queueLock);
     DestroyIndex();
-    pthread_mutex_unlock(&unfinishedQueriesLock);
 }
 
 void test_clone_querytable(void)
@@ -1664,9 +1647,27 @@ void test_args(void)
     TEST_CHECK(args_sq->getMatchType() == MT_EDIT_DIST);
     TEST_CHECK(args_sq->getMatchDistance() == 3);
 
+    EndQueryArgs *args_eq = new EndQueryArgs(0);
+    TEST_CHECK(args_eq->getQueryId() == 0);
+
+    delete args_eq;
     delete args_sq;
     delete args_md;
     delete[] d_words;
+}
+
+void test_cloneLocalQT(void)
+{
+    InitializeIndex();
+    StartQuery(0, "WORD", MT_EDIT_DIST, 1);
+    pthread_mutex_lock(&queueLock);
+    scheduler->cloneLocalQT();
+    scheduler->getQueryTable(0);
+    pthread_mutex_unlock(&queueLock);
+
+    EndQuery(0);
+    scheduler->wait_all_tasks_finish(QUERIES_DELETION);
+    DestroyIndex();
 }
 
 TEST_LIST = {
@@ -1723,7 +1724,9 @@ TEST_LIST = {
     {"matchedQueryList constructor addToList getHead", test_matchedQueryList_constructor_addToList_getHead},
     {"job", test_job},
     {"JobScheduler constructor, destructor and get functions", test_JobScheduler_create_destroy_get},
-    {"JobScheduler submitJob", test_JobScheduler_submitJob},
+    {"JobScheduler submitJob, waitAll", test_JobScheduler_submitJob_waitAll},
     {"cloneQueryTable", test_clone_querytable},
     {"args classes", test_args},
-    {NULL, NULL}};
+    {"cloneLocalQT", test_cloneLocalQT},
+    {NULL, NULL}
+};

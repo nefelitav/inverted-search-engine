@@ -2,10 +2,6 @@
 #include "../include/utilities.hpp"
 #include "../include/structs.hpp"
 
-pthread_mutex_t hammingLock[27];
-pthread_mutex_t editLock = PTHREAD_MUTEX_INITIALIZER;
-pthread_mutex_t exactLock = PTHREAD_MUTEX_INITIALIZER;
-
 indexNode ::indexNode(entry *input, QueryID id, unsigned int threshold, MatchType matchingMetric)
 {
     this->MatchingType = matchingMetric;
@@ -19,12 +15,12 @@ MatchType indexNode ::getMatchingType()
     return this->MatchingType;
 }
 
-void indexNode::lockIndexNode()
+void indexNode ::lockIndexNode()
 {
     pthread_mutex_lock(&this->indexNodeLock);
 }
 
-void indexNode::unlockIndexNode()
+void indexNode ::unlockIndexNode()
 {
     pthread_mutex_unlock(&this->indexNodeLock);
 }
@@ -43,6 +39,7 @@ ErrorCode indexNode ::addEntry(entry *input, QueryID id, unsigned int threshold)
     {
         this->content = input;
         this->unlockIndexNode();
+        return EC_SUCCESS;
     }
     else
     {
@@ -95,6 +92,7 @@ ErrorCode indexNode ::addEntry(entry *input, QueryID id, unsigned int threshold)
                 this->children->lockIndexList();
                 this->unlockIndexNode();
                 this->children->addToList(input, distance, id, threshold);
+                return EC_SUCCESS;
             }
             catch (const std::exception &_)
             {
@@ -284,9 +282,7 @@ ErrorCode addToIndex(entry *toAdd, QueryID queryId, MatchType queryMatchingType,
         }
         else if (queryMatchingType == MT_EXACT_MATCH)
         {
-            pthread_mutex_lock(&exactLock);
             ET->addToBucket(hashFunction(toAdd->getWord()), toAdd);
-            pthread_mutex_unlock(&exactLock);
         }
 
         return EC_SUCCESS;

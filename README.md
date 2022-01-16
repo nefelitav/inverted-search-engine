@@ -18,9 +18,13 @@ $ make && make run
 ```
 $ make valgrind
 ```
-### Detect data races
+### Detect data races with helgrind
 ```
 $ make helgrind
+```
+### Detect data races with drd
+```
+$ make drd
 ```
 ### Clean
 ```
@@ -31,10 +35,6 @@ $ make clean
 $ make test && make run_test
 ```
 ### Memcheck on Tests
-```
-$ make valgrind_test
-```
-### Detect data races on Tests
 ```
 $ make valgrind_test
 ```

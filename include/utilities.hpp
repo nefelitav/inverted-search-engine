@@ -77,8 +77,7 @@ class QueryTable     // hash table where all queries are stored, so that i can a
     private:
         Query*** buckets;
         int queriesPerBucket[MAX_QUERY_BUCKETS];
-        pthread_mutex_t bucketLock[MAX_QUERY_BUCKETS];
-
+        pthread_mutex_t bucketLock[MAX_QUERY_BUCKETS]; // mutex per bucket
     public:
         QueryTable();
         QueryTable* cloneQueryTable();
@@ -99,6 +98,7 @@ class EntryTable {      // hash table where entries are stored, used for exact m
     private:
         entry*** buckets;
         int entriesPerBucket[MAX_BUCKETS];
+        pthread_mutex_t bucketLock[MAX_BUCKETS]; // mutex per bucket
     public:
         EntryTable();
         unsigned long addToBucket(unsigned long hash, entry* e);

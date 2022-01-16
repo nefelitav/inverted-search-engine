@@ -8,6 +8,22 @@
 #define NUM_THREADS 6
 
 class QueryTable;
+
+typedef enum {
+    MATCH_DOCS,
+    QUERIES_CREATION,
+    QUERIES_DELETION
+}
+WaitTask;
+
+typedef enum
+{
+    START_QUERY,
+    END_QUERY,
+    MATCH_DOCUMENT,
+    INITIALIZE_INDEX
+} OperationType;
+
 typedef ErrorCode (*fptr)(void *param);
 
 // these classes help represent the arguments of each job as a pointer to void
@@ -37,6 +53,15 @@ public:
     const char *getQueryStr() const;
     const MatchType getMatchType() const;
     const unsigned int getMatchDistance() const;
+};
+
+class EndQueryArgs
+{
+    private:
+        QueryID query_id;
+    public:
+        EndQueryArgs(QueryID query_id);
+        const QueryID getQueryId() const;
 };
 
 class Job
@@ -93,48 +118,42 @@ private:
     QueryTable** localQT;
 
 public:
-    JobScheduler(int execution_threads);
+    JobScheduler(int execution_threads); // initialize_scheduler
     int submit_job(Job *job);
+    int wait_all_tasks_finish(WaitTask task);
     const int getThreads() const;
     JobQueue *getQueue();
     pthread_t *getThreadIds();
     int convertId(pthread_t givenID);
-    QueryTable* getQueryTable(int id);
+    QueryTable* getQueryTable(int threadId);
     void cloneLocalQT();
     ~JobScheduler();
 };
 
-typedef enum
-{
-    START_QUERY,
-    END_QUERY,
-    MATCH_DOCUMENT,
-    INITIALIZE_INDEX
-} OperationType;
-
 ErrorCode MatchDocumentJob(void *args);
 ErrorCode StartQueryJob(void *args);
-void *threadMain(void *arg);
+ErrorCode EndQueryJob(void *args);
+void *execute_all_jobs(void *arg);
 
 extern JobScheduler *scheduler;
 extern bool globalExit;
 extern int unfinishedDocs;
 extern int unfinishedQueries;
+extern int queriesToDelete;
 extern OperationType previousOperation;
 
 // parallelization of match document
-extern pthread_mutex_t resultLock;            // Mutex protecting resultList
-extern pthread_mutex_t queueLock;             // Mutex protecting JobQueue
-extern pthread_mutex_t previousOperationLock; // Mutex protecting edit index
-extern pthread_cond_t queueEmptyCond;         // Condition Variable for empty JobQueue
-extern pthread_cond_t resEmptyCond;           // Condition Variable for empty resultList
+extern pthread_mutex_t resultLock;            // protecting resultList
+extern pthread_mutex_t queueLock;             // protecting JobQueue
+extern pthread_mutex_t previousOperationLock; // protecting previousOperation global var
+extern pthread_cond_t queueEmptyCond;         // condition of empty JobQueue
+extern pthread_cond_t resEmptyCond;           // condition of empty resultList
 
-// parallelization of start query
-extern pthread_mutex_t editLock;              // Mutex protecting edit index
-extern pthread_mutex_t exactLock;             // Mutex protecting exact table
-extern pthread_mutex_t hammingLock[27];       // Mutex protecting hamming indices
-extern pthread_mutex_t entrylistLock;         // Mutex protecting entylist
-extern pthread_mutex_t unfinishedQueriesLock; // Mutex protecting unfinishedQueries
-extern pthread_cond_t unfinishedQueriesCond;  // Condition Variable for unfinished queries
+// parallelization of start/end query
+extern pthread_mutex_t entrylistLock;          // protecting entylist
+extern pthread_mutex_t unfinishedQueriesLock;  // protecting unfinishedQueries global var
+extern pthread_cond_t unfinishedQueriesCond;   // condition of not yet inititialized queries
+extern pthread_mutex_t queriesToDeleteLock;    // protecting queriesToDelete global var
+extern pthread_cond_t queriesToDeleteCond;     // condition of not yet deleted queries 
 
 #endif // THREAD

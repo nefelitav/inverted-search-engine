@@ -52,3 +52,6 @@ valgrind_test: test
 
 helgrind: $(OUT)
 	valgrind --tool=helgrind ./$(OUT)
+
+drd: $(OUT)
+	valgrind --tool=drd ./$(OUT)
