@@ -66,9 +66,9 @@ const unsigned int StartQueryArgs ::getMatchDistance() const
 
 ErrorCode StartQueryJob(void *args)
 {
-
+    entry *tempStorage[5];
     Query *q = new Query(((StartQueryArgs *)args)->getQueryId(), (char *)(((StartQueryArgs *)args)->getQueryStr()), ((StartQueryArgs *)args)->getMatchType(), ((StartQueryArgs *)args)->getMatchDistance()); // create query
-    QT->addToBucket(hashFunctionById(((StartQueryArgs *)args)->getQueryId()), q); // store it in hash table
+    QT->addToBucket(hashFunctionById(((StartQueryArgs *)args)->getQueryId()), q);                                                                                                                            // store it in hash table
     int i = 0;
     entry *tempEntry;
     word w = q->getWord(0); // get every entry of query
@@ -76,18 +76,21 @@ ErrorCode StartQueryJob(void *args)
     {
         return EC_FAIL;
     }
+    pthread_mutex_lock(&entrylistLock); // protect entry list which is a global class
     while (w != NULL)
     {
         create_entry(&w, &tempEntry);
-        pthread_mutex_lock(&entrylistLock); // protect entry list which is a global class
+        tempStorage[i] = tempEntry;
         EntryList->addEntry(tempEntry);
-        pthread_mutex_unlock(&entrylistLock);
-        tempEntry->addToPayload(((StartQueryArgs *)args)->getQueryId(), ((StartQueryArgs *)args)->getMatchDistance());
-        addToIndex(tempEntry, ((StartQueryArgs *)args)->getQueryId(), ((StartQueryArgs *)args)->getMatchType(), ((StartQueryArgs *)args)->getMatchDistance()); // add entry to the appropriate index
+        tempStorage[i]->addToPayload(((StartQueryArgs *)args)->getQueryId(), ((StartQueryArgs *)args)->getMatchDistance());
         i++;
         w = q->getWord(i);
     }
-
+    pthread_mutex_unlock(&entrylistLock);
+    for (int j = 0; j < i; j++)
+    {
+        addToIndex(tempStorage[j], ((StartQueryArgs *)args)->getQueryId(), ((StartQueryArgs *)args)->getMatchType(), ((StartQueryArgs *)args)->getMatchDistance()); // add entry to the appropriate index
+    }
     pthread_mutex_lock(&unfinishedQueriesLock);
     unfinishedQueries--; // start query procedure is done for this query and we can move on to MatchDocument or EndQuery
     if (unfinishedQueries == 0)
@@ -113,7 +116,7 @@ const QueryID EndQueryArgs ::getQueryId() const
 
 ErrorCode EndQueryJob(void *args)
 {
-    QT->deleteQuery(((EndQueryArgs *)args)->getQueryId());                  // delete query from hash table and its entries from index
+    QT->deleteQuery(((EndQueryArgs *)args)->getQueryId()); // delete query from hash table and its entries from index
     pthread_mutex_lock(&queriesToDeleteLock);
     queriesToDelete--;
     if (queriesToDelete == 0)
@@ -125,11 +128,11 @@ ErrorCode EndQueryJob(void *args)
     return EC_SUCCESS;
 }
 ///////////////////////////////// Execute all jobs /////////////////////////////////
-        
+
 void *execute_all_jobs(void *arg)
 {
     jobNode *job = NULL;
-    while (!globalExit)
+    while (1)
     {
         pthread_mutex_lock(&queueLock);
         while (scheduler->getQueue()->isEmpty()) // Wait while JobQueue is empty
@@ -137,7 +140,6 @@ void *execute_all_jobs(void *arg)
             if (globalExit) // If program exited while this thread was waiting, exit
             {
                 pthread_mutex_unlock(&queueLock);
-                //std::cout << "Thread Done\n";
                 return NULL;
             }
             pthread_cond_wait(&queueEmptyCond, &queueLock); // wait until queue is no more empty to pop
@@ -148,7 +150,6 @@ void *execute_all_jobs(void *arg)
 
         delete job;
     }
-    //std::cout << "Thread Done\n";
     return NULL;
 }
 
@@ -322,7 +323,7 @@ int JobScheduler ::wait_all_tasks_finish(WaitTask task)
     }
     else if (task == QUERIES_CREATION)
     {
-        pthread_mutex_lock(&unfinishedQueriesLock);  // wait until all start query jobs are done -> otherwise we might delete something that is not allocated yet
+        pthread_mutex_lock(&unfinishedQueriesLock); // wait until all start query jobs are done -> otherwise we might delete something that is not allocated yet
         if (unfinishedQueries != 0)
         {
             pthread_cond_wait(&unfinishedQueriesCond, &unfinishedQueriesLock);
@@ -331,7 +332,7 @@ int JobScheduler ::wait_all_tasks_finish(WaitTask task)
     }
     else if (task == QUERIES_DELETION)
     {
-        pthread_mutex_lock(&queriesToDeleteLock);  // wait until all start query jobs are done -> otherwise we might delete something that is not allocated yet
+        pthread_mutex_lock(&queriesToDeleteLock); // wait until all start query jobs are done -> otherwise we might delete something that is not allocated yet
         if (queriesToDelete != 0)
         {
             pthread_cond_wait(&queriesToDeleteCond, &queriesToDeleteLock);

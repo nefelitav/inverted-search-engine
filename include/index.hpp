@@ -16,8 +16,6 @@ private:
     MatchType MatchingType;
     entry *content;
     indexList *children;
-    pthread_mutex_t indexNodeLock; // mutex per indexNode
-
 public:
     indexNode(entry *input, QueryID id = 1, unsigned int threshold = 0, MatchType matchingMetric = MT_EDIT_DIST);
     ErrorCode addEntry(entry *input, QueryID id, unsigned int threshold);
@@ -25,8 +23,6 @@ public:
     entry *getEntry();
     indexList *getChildren();
     MatchType getMatchingType();
-    void lockIndexNode();
-    void unlockIndexNode();
     ~indexNode();
 };
 
@@ -34,7 +30,6 @@ class indexList
 {
 private:
     unsigned int distanceFromParent;
-    pthread_mutex_t indexListLock; // mutex per indexList
     indexNode *node;
     indexList *next;
 
@@ -45,8 +40,6 @@ public:
     void printList(int depth = 0);
     indexNode *getNode() const;
     indexList *getNext() const;
-    void lockIndexList();
-    void unlockIndexList();
     ~indexList();
 };
 

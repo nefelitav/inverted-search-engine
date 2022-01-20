@@ -1403,6 +1403,8 @@ void test_StartQuery_EndQuery(void)
 {
     InitializeIndex();
     char *q_words = new char[MAX_QUERY_LENGTH]();
+    char *q_words2 = new char[MAX_QUERY_LENGTH]();
+    char *q_words3 = new char[MAX_QUERY_LENGTH]();
 
     // create queries and delete them and check if they are well inserted in structs
     memcpy(q_words, "blue purple green black yellow", MAX_QUERY_LENGTH);
@@ -1417,13 +1419,15 @@ void test_StartQuery_EndQuery(void)
     TEST_CHECK(((ET->getBucket(hashFunction((char *)"blue"))[0])->getPayload() == NULL));
     TEST_CHECK((ET->getEntriesPerBucket(hashFunction((char *)"blue")) == 1)); // still in there but with NULL payload
 
-    StartQuery(1, q_words, MT_EDIT_DIST, 1);
+    memcpy(q_words2, "blue purple green black yellow", MAX_QUERY_LENGTH);
+    StartQuery(1, q_words2, MT_EDIT_DIST, 1);
     scheduler->wait_all_tasks_finish(QUERIES_CREATION);
     TEST_CHECK((QT->getQueriesPerBucket(hashFunctionById(1)) == 1));
     TEST_CHECK((EntryList->getEntryNum() == 10));
     TEST_CHECK((strcmp(editIndex->getEntry()->getWord(), "blue") == 0)); // well inserted in index
 
-    StartQuery(2, q_words, MT_HAMMING_DIST, 2);
+    memcpy(q_words3, "blue purple green black yellow", MAX_QUERY_LENGTH);
+    StartQuery(2, q_words3, MT_HAMMING_DIST, 2);
     scheduler->wait_all_tasks_finish(QUERIES_CREATION);
     TEST_CHECK((QT->getQueriesPerBucket(hashFunctionById(1)) == 1));
     TEST_CHECK((EntryList->getEntryNum() == 15));
@@ -1437,6 +1441,8 @@ void test_StartQuery_EndQuery(void)
     TEST_CHECK((editIndex->getEntry()->getPayload() == NULL)); // well deleted
     DestroyIndex();
     delete[] q_words;
+    delete[] q_words2;
+    delete[] q_words3;
 }
 
 void test_ExactMatch_WordLookup(void)

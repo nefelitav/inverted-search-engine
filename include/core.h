@@ -53,6 +53,18 @@ extern "C" {
     #define QUERIES_PER_BUCKET 20
     #define ENTRIES_PER_BUCKET  10 
 
+    
+    // 0 -> sequential, 
+    // 1 -> StartQuery multithreading, 
+    // 2 -> MatchDocument multithreading,
+    // 3 -> EndQuery multithreading,
+    // 4 -> StartQuery & MatchDocument multithreading, 
+    // 5 -> EndQuery & MatchDocument multithreading, 
+    // 6 -> StartQuery & EndQuery multithreading, 
+    // 7 -> everything
+
+    #define PARALLEL 2
+
     typedef unsigned int QueryID;
     typedef unsigned int DocID;
     

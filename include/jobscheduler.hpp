@@ -5,7 +5,8 @@
 #include <pthread.h>
 #include "utilities.hpp"
 #include "core.h"
-#define NUM_THREADS 6
+
+#define NUM_THREADS 3
 
 class QueryTable;
 
@@ -13,8 +14,7 @@ typedef enum {
     MATCH_DOCS,
     QUERIES_CREATION,
     QUERIES_DELETION
-}
-WaitTask;
+} WaitTask;
 
 typedef enum
 {
@@ -154,6 +154,9 @@ extern pthread_mutex_t entrylistLock;          // protecting entylist
 extern pthread_mutex_t unfinishedQueriesLock;  // protecting unfinishedQueries global var
 extern pthread_cond_t unfinishedQueriesCond;   // condition of not yet inititialized queries
 extern pthread_mutex_t queriesToDeleteLock;    // protecting queriesToDelete global var
-extern pthread_cond_t queriesToDeleteCond;     // condition of not yet deleted queries 
+extern pthread_cond_t queriesToDeleteCond;     // condition of not yet deleted queries
+extern pthread_mutex_t editLock;               // protecting edit index
+extern pthread_mutex_t exactLock;              // protecting entry hash table
+extern pthread_mutex_t hammingLock[27];        // protecting hamming indices
 
 #endif // THREAD

@@ -98,7 +98,6 @@ class EntryTable {      // hash table where entries are stored, used for exact m
     private:
         entry*** buckets;
         int entriesPerBucket[MAX_BUCKETS];
-        pthread_mutex_t bucketLock[MAX_BUCKETS]; // mutex per bucket
     public:
         EntryTable();
         unsigned long addToBucket(unsigned long hash, entry* e);

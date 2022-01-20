@@ -67,7 +67,7 @@ The metrics:
 The techniques:
 \begin{itemize}
     \item Hashing of the entry words for exact matching
-    \item BK Tree for edit and hamming distance
+    \item BK Trees for edit and hamming distance
 \end{itemize}
 The goal is to minimize the system response time. \\ \\
 The program is implemented in C++ language, using Object-Oriented Programming, taking advantage of Encapsulation, Abstraction, Data Security and organization.
@@ -75,7 +75,7 @@ The program is implemented in C++ language, using Object-Oriented Programming, t
 \section{Methodology}
 \subsection{Version Control}
 The code we implemented can be found in
-\href{https://github.com/NefeliTav/Software-Development-for-Information-Systems}{Github}. \\
+\href{https://github.com/nefelitav/Software-Development-for-Information-Systems}{Github}. \\
 We used Version Control to keep track of our changes, make sure that our code is safe and most of all, to be able to collaborate as a team.
 In our repository we have included a Makefile, to automate the build and testing stage of the program.  \\ 
 Communication with the application is accomplished using the following CLI commands:
@@ -83,6 +83,8 @@ Communication with the application is accomplished using the following CLI comma
   \item \textbf{make} (compile)
   \item \textbf{make run} (run)
   \item \textbf{make valgrind} (check memory)
+  \item \textbf{make helgrind} (detect data races)
+  \item \textbf{make drd} (detect data races)
   \item \textbf{make clean} (clean)
   \item \textbf{make test} (compile tests)
   \item \textbf{make run\_test} (run tests)
@@ -205,15 +207,147 @@ The main functions we implemented:
 Some design choices we made in order to improve the time results are the following:
 \begin{itemize}
     \item Allocating continuous blocks of memory, using 1d arrays, instead of 2d, for example to store the query and the document strings. In this way the arrays are kept in cache.
-    \item Using memcpy and strcpy to copy strings/bytes and avoiding redundant iterations.
+    \item Using memcpy and strcpy to copy strings/bytes and avoiding redundant iterations. Also, statically allocating data structures, when the size was predefined.
     \item Using hash tables for deduplication (e.g. DocTable, ResultTable) or to achieve faster lookup (e.g. QueryTable, EntryTable). Lookup, insertion and deletion in a hash table without collisions has a complexity of O(1), which is very fast, in comparison with other methods.
+    \item Keeping the payload nodes sorted in descending order based on the matching distance, so that during lookup, we can stop the process, the moment the first payload node does not meet the threshold.
+    \item Using Merge Sort to  sort the results for GetNextAvailRes, which is one of the most efficient algorithms for such a task.
+    \item In order to obtain correct results, each thread needs to have exclusive access to the Query Table, because this is where we store the information of whether an entry has matched. That is why we need a local query table, which is cloned using the cloneQueryTable function. After every batch of query insertions and deletions, the global query table is cloned once for every thread.
 \end{itemize}
 \section{Parallelization}
+By changing the value of a macro in core.h we, can change the multithreading mode, that means the parts of the program to be parallelized.
 The parallelized parts of the execution are the following:
 \begin{itemize}
-\item MatchDocument
-\item StartQuery
+\item MatchDocument : Parallelization of the entry lookup using a thread for each document.
+\item StartQuery : Parallelization of the entry insertion to the 29 indices.
+\item EndQuery : Parallelization of the entry deletion in the 29 indices.
 \end{itemize}
+For this process, we created the following classes and functions:
+\begin{itemize}
+\item JobScheduler, Job, JobNode, JobQueue : A job is composed of a pointer to a function and the corresponding arguments. A jobNode is a job and a pointer to the next job inside the JobQueue. The JobQueue is a FIFO list and the JobScheduler is a class consisting of the JobQueue and the threads.
+\item MatchDocumentArgs, StartQueryArgs, EndQueryArgs : the arguments for each job. In this way, we can pass arguments as a pointer to void into the job constructor.
+\item MatchDocumentJob, StartQueryJob, EndQueryJob :
+the jobs that are parallelized.
+\item execute\_all\_jobs : the main thread functionality. It executes jobs, popping them from the JobQueue, until the JobQueue is empty.
+\end{itemize}
+Also, we used mutexes, condition variables and also some global variables, that helped us synchronize the threads.
+\begin{itemize}
+\item queueLock mutex : protecting the scheduler's jobQueue.
+\item previousOperationLock mutex : protecting the previousOperation global variable, used to determine whether we should perform local cloning of the QueryTable or not.
+\item queueEmptyCond condition variable : checks that jobQueue is no more empty.
+\end{itemize}
+MatchDocument Multithreading:
+\begin{itemize}
+\item resultLock mutex : protecting the resultList global struct, where the results used in GetNextAvailRes are stored.
+\item resEmptyCond condition variable : checks if resultList is empty. If it empty, then GetNextAvailRes should wait, until all tasks are executed.
+\item unfinishedDocs global variable : It is incremented when a MatchDocumentJob is assigned to a thread and it is decremented when the job finishes. In this way, we check that no MatchDocumentJob is left unfinished and so, the GetNextAvailRes function can begin. 
+\end{itemize}
+StartQuery/EndQuery Multithreading:
+\begin{itemize}
+\item entrylistLock mutex : protecting the entrylist global struct.
+\item unfinishedQueriesLock mutex : protecting the unfinishedQueries global variable.
+\item unfinishedQueriesCond condition variable : checks if unfinishedQueries is equal to zero, which means that all StartQueryJobs have been executed and so, MatchDocument or EndQuery can begin.
+\item queriesToDeleteLock mutex : protecting the queriesToDelete global variable.
+\item queriesToDeleteCond condition variable : checks if queriesToDelete is equal to zero, which means that all EndQueryJobs have been executed and so, DestroyIndex can begin.
+\item exactLock mutex : protecting the global entry hash table used for exact match.
+\item editLock mutex : protecting the edit index.
+\item hammingLock 27 mutexes : protecting all hamming indices.
+\item bucketLock mutexes : a mutex per Query Table bucket, in order to lock only the specific bucket each time and not the whole hash table.
+\item unfinishedQueries global variable : It is incremented when a StartQueryJob is assigned to a thread and it is decremented when the job finishes. In this way, we check that no StartQueryJob is left unfinished and so, the MatchDocument and EndQuery functions can begin.
+\item queriesToDelete global variable : It is incremented when an EndQueryJob is assigned to a thread and it is decremented when the job finishes. In this way, we check that no EndQueryJob is left unfinished and so, DestroyIndex can begin.
+\end{itemize}
+In order to test that our program works well always and not by chance, but also in order to present more accurate time results, we built a bash script that runs the program 100 times, checks that it runs as expected and finds the average time for a run. \\
+These are the average time results taken from running the program 100 times for each multithreading mode on a University machine (Intel(R) Core(TM) i5-6500 CPU @ 3.20GHz with 4 cores): \\ \\
+Locking the corresponding bucket when adding to the Entry Table and using 5 threads:
+\begin{center}
+\begin{tabular}{||c c||} 
+ \hline
+ mode & milliseconds \\ 
+ \hline\hline
+ Sequential & 1226 \\
+ \hline
+ \textbf{MatchDoc} & \textbf{882} \\
+ \hline
+ StartQuery & 1374 \\
+ \hline
+ EndQuery & 1304 \\
+ \hline
+  MatchDoc-StartQuery & 895 \\
+ \hline
+ StartQuery-EndQuery & 1320 \\
+ \hline
+ MatchDoc-EndQuery & 892 \\
+ \hline
+ multithreading all & 899 \\
+ \hline
+\end{tabular}
+\end{center}
+Locking the whole Entry Table and using 5 threads:
+\begin{center}
+\begin{tabular}{||c c||} 
+ \hline
+ mode & milliseconds \\ 
+ \hline\hline
+Sequential & 1216 \\
+ \hline
+ \textbf{MatchDoc} & \textbf{874} \\
+ \hline
+ StartQuery & 1367 \\
+ \hline
+ EndQuery & 1298 \\
+ \hline
+  MatchDoc-StartQuery & 896 \\
+ \hline
+ StartQuery-EndQuery & 1316 \\
+ \hline
+ MatchDoc-EndQuery & 892 \\
+ \hline
+ multithreading all & 902 \\
+ \hline
+\end{tabular}
+\end{center}
+Paradoxically, we get slightly better results having a mutex for the whole entry table instead for each bucket. Now, using diffent numbers of threads: \\
+\begin{center}
+\begin{tabular}{||c c c c c c c||} 
+ \hline
+ mode & 2 & 3 & 4 & 5 & 8 & 16 \\ 
+ \hline
+ \hline
+ \textbf{MatchDoc} & 926 & \textbf{809} & 849 & 874 & 893  & 913\\
+ \hline
+ StartQuery  & 1351 & 1379 & 1376 & 1367 & 1369 & 1369\\
+ \hline
+ EndQuery  & 1286 & 1307 & 1305 & 1298 &  1293 & 1306\\
+ \hline
+  MatchDoc-StartQuery  & 903 & 843 & 858 & 896 & 915 & 934\\
+ \hline
+ StartQuery-EndQuery & 1300 & 1327 & 1320 & 1316 & 1313 & 1323 \\
+ \hline
+ MatchDoc-EndQuery & 928 & 833 & 861 & 892 & 912 & 925\\
+ \hline
+ multithreading in all & 909 & 846 & 864 & 902 & 909 & 923\\
+ \hline
+\end{tabular}
+\end{center}
+It seems that the parallelization of only the MatchDocument gives us the best results. That is probably due to the fact that this was the most time-consuming task in the first place.
+All in all, we observe that after parallelization the execution time has decreased from around 1.200 milliseconds to around 800 milliseconds, which is a reduction of 33.3\%.
+\\ \\
+Furthermore, using the time command we got the following results, concerning the cpu usage, using 4 threads and parallelizing only the MatchDocument part:
+\begin{center}
+\begin{tabular}{||c c||} 
+ \hline
+ user time & 1.878\\ 
+ \hline
+system time & 0.444\\
+ \hline
+real time & 0:00.86\\
+ \hline
+ total CPU time & 2.322\\
+ \hline
+ CPU percentage &  268.6\%\\
+ \hline
+\end{tabular}
+\end{center}
+Finally, we experimented with the helgrind and drd tools and fixed any issues that occured, in order to ensure that there are no data races whatsoever, and the program functions well.
 \section{Conclusion}
-During this assignment, we had the opportunity to do research on plenty of concepts and technologies. We familiarized with Unit Testing, Version Control, Multithreading, which all helped us build quality software, efficient and maintainable and realize the importance of creating solutions to everyday problems building Information Systems.
+During this assignment, we had the opportunity to do research on plenty of concepts and technologies. We familiarized with Unit Testing, Version Control, Multithreading, which all helped us build quality software, efficient and maintainable and realize the importance of creating solutions to everyday problems through Information Systems.
 \end{document}

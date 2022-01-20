@@ -7,7 +7,6 @@ CC	 = g++
 FLAGS = -g -c -pthread -Wall -O3 -fPIC -std=c++11 
 TEST_FLAGS = -g -c -pthread -Wall -fPIC -std=c++11 
 
-
 all: $(OBJS) $(FILES)main.cpp 
 	$(CC) -g -Wall -fPIC -I. -O3 -pthread -std=c++11 -o main $(FILES)main.cpp ./libcore.so
 
@@ -55,3 +54,9 @@ helgrind: $(OUT)
 
 drd: $(OUT)
 	valgrind --tool=drd ./$(OUT)
+
+cpu: $(OUT)
+	time -v ./$(OUT)
+
+# valgrind --tool=massif ./main
+# ms_print massif.out.12345
