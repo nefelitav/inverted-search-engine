@@ -64,17 +64,17 @@ unsigned long DocTable ::addToBucket(unsigned long hash, const word w)
 
 ErrorCode DocTable ::wordLookup() // search for every word of this doc, if they match with any query entries
 {
-    
+
     int size = 0;
     QueryID *matchedQueries;
     matchedQuery *curr;
     entry_list *result = NULL;
     create_entry_list(&result);
-    #if PARALLEL == 2 || PARALLEL == 4 || PARALLEL == 5 || PARALLEL == 7
-        QueryTable* localTable = scheduler->getQueryTable(scheduler->convertId(pthread_self()));
-    #else 
-        QueryTable* localTable = QT;
-    #endif
+#if PARALLEL == 2 || PARALLEL == 4 || PARALLEL == 5 || PARALLEL == 7
+    QueryTable *localTable = scheduler->getQueryTable(scheduler->convertId(pthread_self()));
+#else
+    QueryTable *localTable = QT;
+#endif
     for (int bucket = 0; bucket < MAX_BUCKETS; ++bucket) // each bucket
     {
         if (this->wordsPerBucket[bucket])
@@ -91,20 +91,20 @@ ErrorCode DocTable ::wordLookup() // search for every word of this doc, if they 
     entry *curr_entry = result->getHead();
     payloadNode *curr_payloadnode = NULL;
     ResultTable *RT = new ResultTable();
-    
+
     while (curr_entry) // get every entry of result list
     {
         curr_payloadnode = curr_entry->getPayload(); // get payload of every entry
         while (curr_payloadnode)
         {
-            localTable->getQuery(curr_payloadnode->getId())->setTrue(curr_entry->getWord());                 // get every query corresponding to queryid of payload and set to true
+            localTable->getQuery(curr_payloadnode->getId())->setTrue(curr_entry->getWord());         // get every query corresponding to queryid of payload and set to true
             RT->addToBucket(hashFunctionById(curr_payloadnode->getId()), curr_payloadnode->getId()); // add queryid to bucket -> deduplicate
             curr_payloadnode = curr_payloadnode->getNext();
         }
         curr_entry = curr_entry->getNext();
     }
     matchedQueryList *results = RT->checkMatch(localTable); // check which queries had all their entries matched, otherwise set to false, to continue process
-    
+
     curr = results->getHead();
     while (curr)
     {
@@ -122,19 +122,19 @@ ErrorCode DocTable ::wordLookup() // search for every word of this doc, if they 
     }
 
     mergeSort(matchedQueries, 0, size - 1);
-    #if PARALLEL == 2 || PARALLEL == 4 || PARALLEL == 5 || PARALLEL == 7
-        pthread_mutex_lock(&resultLock); // protect resultList, which is a global variable
-        storeResult(size, this->tableID, matchedQueries);
-        pthread_cond_signal(&resEmptyCond); // resultList is not empty and we can move on to getNextAvailRes
-        pthread_mutex_unlock(&resultLock);
-    #else
-        storeResult(size, this->tableID, matchedQueries);
-    #endif
-    
+#if PARALLEL == 2 || PARALLEL == 4 || PARALLEL == 5 || PARALLEL == 7
+    pthread_mutex_lock(&resultLock); // protect resultList, which is a global variable
+    storeResult(size, this->tableID, matchedQueries);
+    pthread_cond_signal(&resEmptyCond); // resultList is not empty and we can move on to getNextAvailRes
+    pthread_mutex_unlock(&resultLock);
+#else
+    storeResult(size, this->tableID, matchedQueries);
+#endif
+
     delete results;
     delete RT;
     destroy_entry_list(result);
-   
+
     return EC_SUCCESS;
 }
 const int DocTable ::getWordsPerBucket(unsigned long hash) const
@@ -198,21 +198,19 @@ DocTable ::~DocTable()
 
 DocTable *DocumentDeduplication(Document *d, DocTable *HT)
 {
-    int i;
     if (d == NULL)
     {
         throw std::invalid_argument("Got NULL pointer");
     }
-    for (i = 0; i < MAX_DOC_WORDS; ++i) // push each word to hash table
-    {
-        const word w = d->getWord(i);
-        if (w == NULL)
-        {
-            break;
-        }
+    word w = d->getWord(0);
+    int i = 0;
+    while (w != NULL) // push each word to hash table
+    {                 //std::cout << w << std::endl;
         HT->addToBucket(hashFunction(w), w);
+        i++;
+        w = d->getWord(i);
     }
-    return HT;
+    return HT; //HT.printTable();
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -221,7 +219,8 @@ QueryTable ::QueryTable()
 {
     this->buckets = new Query **[MAX_QUERY_BUCKETS](); // pointers to buckets / arrays of query pointers -> ***
     memset(this->queriesPerBucket, 0, MAX_QUERY_BUCKETS * (sizeof(int)));
-    for (int i = 0; i < MAX_QUERY_BUCKETS; i++) {
+    for (int i = 0; i < MAX_QUERY_BUCKETS; i++)
+    {
         this->bucketLock[i] = PTHREAD_MUTEX_INITIALIZER;
     }
 }
@@ -255,9 +254,10 @@ unsigned long QueryTable ::addToBucket(unsigned long hash, Query *q)
     pthread_mutex_lock(&(this->bucketLock[hash])); // lock bucket
     if (this->buckets[hash] == NULL)
     {
-        
+
         this->buckets[hash] = new Query *[QUERIES_PER_BUCKET](); // create bucket
-        this->buckets[hash][0] = q;                              // first query in bucket
+        memset(this->buckets[hash], 0, QUERIES_PER_BUCKET);
+        this->buckets[hash][0] = q; // first query in bucket
         this->queriesPerBucket[hash]++;
         pthread_mutex_unlock(&(this->bucketLock[hash]));
         return hash;
@@ -279,13 +279,16 @@ unsigned long QueryTable ::addToBucket(unsigned long hash, Query *q)
         pthread_mutex_unlock(&(this->bucketLock[hash]));
         return hash;
     }
-    if (this->queriesPerBucket[hash] >= pos) // in the middle of the array
+
+    if (this->queriesPerBucket[hash] > pos) // in the middle of the array
     {
         for (i = this->queriesPerBucket[hash]; i > pos; i--)
         {
             this->buckets[hash][i] = this->buckets[hash][i - 1];
+            this->buckets[hash][i - 1] = NULL;
         }
     }
+
     this->buckets[hash][pos] = q; // new node in array
     this->queriesPerBucket[hash]++;
     pthread_mutex_unlock(&(this->bucketLock[hash]));
@@ -314,9 +317,9 @@ Query *QueryTable ::getQuery(QueryID id)
 void QueryTable ::deleteQuery(QueryID id)
 {
     unsigned long hash = hashFunctionById(id);
-    pthread_mutex_lock(&(this->bucketLock[hash])); // lock bucket
+    pthread_mutex_lock(&(this->bucketLock[hash]));                                     // lock bucket
     int pos = findQuery(this->buckets[hash], 0, this->queriesPerBucket[hash] - 1, id); // find query position
-    for (int i = 0; i < MAX_QUERY_WORDS; ++i) // remove every entry of this query from index
+    for (int i = 0; i < MAX_QUERY_WORDS; ++i)                                          // remove every entry of this query from index
     {
         if (this->buckets[hash][pos]->getWord(i))
         {
@@ -337,15 +340,17 @@ void QueryTable ::deleteQuery(QueryID id)
                 pthread_mutex_lock(&exactLock);
                 removeFromIndex(this->buckets[hash][pos]->getWord(i), id, this->buckets[hash][pos]->getMatchingType());
                 pthread_mutex_unlock(&exactLock);
-            }  
+            }
         }
     }
     delete this->buckets[hash][pos];
-    if (this->queriesPerBucket[hash] >= pos) // in the middle of the array
+    this->buckets[hash][pos] = NULL;
+    if (this->queriesPerBucket[hash] > pos) // in the middle of the array
     {
-        for (int i = pos; i < this->queriesPerBucket[hash]; ++i)
+        for (int i = pos; i < this->queriesPerBucket[hash] - 1; ++i)
         {
             this->buckets[hash][i] = this->buckets[hash][i + 1]; // shift
+            this->buckets[hash][i + 1] = NULL;
         }
     }
     this->queriesPerBucket[hash]--;
@@ -467,7 +472,8 @@ unsigned long EntryTable ::addToBucket(unsigned long hash, entry *e)
     if (this->buckets[hash] == NULL)
     {
         this->buckets[hash] = new entry *[ENTRIES_PER_BUCKET](); // create bucket
-        this->buckets[hash][0] = e;                              // first entry in bucket
+        memset(this->buckets[hash], 0, ENTRIES_PER_BUCKET);
+        this->buckets[hash][0] = e; // first entry in bucket
         this->entriesPerBucket[hash]++;
         return hash;
     }
@@ -490,17 +496,22 @@ unsigned long EntryTable ::addToBucket(unsigned long hash, entry *e)
         return hash;
     }
 
-    if (strcmp(this->buckets[hash][pos]->getWord(), e->getWord()) == 0) // already exists, add to payload
+    if (this->buckets[hash][pos] != NULL)
     {
-        this->buckets[hash][pos]->addToPayload(e->getPayload()->getId(), e->getPayload()->getThreshold());
-        return hash;
+
+        if (strcmp(this->buckets[hash][pos]->getWord(), e->getWord()) == 0) // already exists, add to payload
+        {
+            this->buckets[hash][pos]->addToPayload(e->getPayload()->getId(), e->getPayload()->getThreshold());
+            return hash;
+        }
     }
 
-    if (this->entriesPerBucket[hash] >= pos) // in the middle of the array
+    if (this->entriesPerBucket[hash] > pos) // in the middle of the array
     {
         for (i = this->entriesPerBucket[hash]; i > pos; i--)
         {
             this->buckets[hash][i] = this->buckets[hash][i - 1];
+            this->buckets[hash][i - 1] = NULL;
         }
     }
     this->buckets[hash][pos] = e; // new node in array
@@ -530,7 +541,6 @@ void EntryTable ::wordLookup(const word w, entry_list *result) // exact match lo
         }
         result->addEntry(tempEntry);
     }
-
 }
 const int EntryTable ::getEntriesPerBucket(unsigned long hash) const
 {
@@ -580,7 +590,10 @@ void EntryTable ::deleteQueryId(word givenWord, const QueryID queryId) // delete
 {
     unsigned long hash = hashFunction(givenWord);                                             // find bucket
     int pos = findEntry(this->buckets[hash], 0, this->entriesPerBucket[hash] - 1, givenWord); // find record
-    this->buckets[hash][pos]->deletePayloadNode(queryId);
+    if(pos !=-1){
+        this->buckets[hash][pos]->deletePayloadNode(queryId);
+    }
+    
 }
 EntryTable ::~EntryTable()
 {
@@ -676,7 +689,7 @@ void ResultTable ::printTable() const
     }
 }
 
-matchedQueryList *ResultTable ::checkMatch(QueryTable* tempTable)
+matchedQueryList *ResultTable ::checkMatch(QueryTable *tempTable)
 {
     int bucket, q;
     matchedQueryList *results = new matchedQueryList();

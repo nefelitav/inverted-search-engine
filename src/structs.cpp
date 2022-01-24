@@ -64,7 +64,6 @@ void Query ::setTrue(const word entry_word) // entry matched with a doc word
         if (!strcmp(entry_word, this->getWord(i)))
         {
             this->matchedEntries[i] = 1;
-            break;
         }
     }
 }
@@ -143,7 +142,7 @@ Document ::Document(DocID id, char *words)
 
 const word Document ::getWord(int word_num) const // array[i][j] --> arrary[i*(MAX_WORD_LENGTH + 1)]
 {
-    if (word_num >= this->wordCount) // out of range
+    if (word_num > this->wordCount) // out of range
     {
         //cout << "Sorry, index out of range." << endl;
         return NULL;
