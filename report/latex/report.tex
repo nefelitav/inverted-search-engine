@@ -331,6 +331,53 @@ Paradoxically, we get slightly better results having a mutex for the whole entry
 It seems that the parallelization of only the MatchDocument gives us the best results. That is probably due to the fact that this was the most time-consuming task in the first place.
 All in all, we observe that after parallelization the execution time has decreased from around 1.200 milliseconds to around 800 milliseconds, which is a reduction of 33.3\%.
 \\ \\
+Now, experimenting with the "input30m" dataset and using 3 threads:
+\begin{center}
+\begin{tabular}{||c c||} 
+ \hline
+ mode & time\\ 
+ \hline
+ \hline
+ \textbf{MatchDoc} & \textbf{7 min and 5 sec} \\
+ \hline
+ StartQuery  & 17 min and 1 sec\\
+ \hline
+ EndQuery  &  17 min and 23 sec \\
+ \hline
+  MatchDoc-StartQuery  &  8 min and 5 sec \\
+ \hline
+ StartQuery-EndQuery &  18 min and 8 sec \\
+ \hline
+ MatchDoc-EndQuery &  8 min and 4 sec \\
+ \hline
+ multithreading in all & 8 min and 2 sec \\
+ \hline
+\end{tabular}
+\end{center}
+Here, using multithreading we reduced the time from 16 minutes and 4 seconds to 7 minutes and 5 seconds, which is a reduction of around 55\%. And using more threads:
+\begin{center}
+\begin{tabular}{||c c c c||} 
+ \hline
+ mode & 3\ threads & 4\ threads & 5\ threads\\ 
+ \hline
+ \hline
+ MatchDoc & 7 min and 5 sec & \textbf{6 min and 7 sec} & 6 min and 13 sec\\
+ \hline
+\end{tabular}
+\end{center}
+Finally, experimenting with the "input100m" dataset:
+\begin{center}
+\begin{tabular}{||c c||} 
+ \hline
+ mode & time\\ 
+ \hline
+ \hline
+ MatchDoc\ -\ 4\ threads & 47m:14s \\
+ sequential &  4h:02m:37s\\
+ \hline
+\end{tabular}
+\end{center}
+Here, using multithreading we reduced the time from around 4 hours to around 47 minutes, which is a reduction of around  80\%, a very impressive outcome. \\ \\
 Furthermore, using the time command we got the following results, concerning the cpu usage, using 4 threads and parallelizing only the MatchDocument part:
 \begin{center}
 \begin{tabular}{||c c||} 

@@ -46,13 +46,18 @@ extern "C" {
     #define MAX_QUERY_LENGTH ((MAX_WORD_LENGTH+1)*MAX_QUERY_WORDS)
     #define MAX_DOC_WORDS (MAX_DOC_LENGTH /(MIN_WORD_LENGTH + 1))
 
-    #define MAX_BUCKETS  5000
-    #define MAX_QUERY_BUCKETS  100 
+    // For larger datasets use more and bigger buckets
+    #define MAX_BUCKETS 6250 
+    #define MAX_QUERY_BUCKETS 2500 
+    #define WORDS_PER_BUCKET 10 
+    #define QUERIES_PER_BUCKET 400 
+    #define ENTRIES_PER_BUCKET 400
 
+    /*#define MAX_BUCKETS  5000
+    #define MAX_QUERY_BUCKETS  100 
     #define WORDS_PER_BUCKET 10
     #define QUERIES_PER_BUCKET 20
-    #define ENTRIES_PER_BUCKET  10 
-
+    #define ENTRIES_PER_BUCKET  10*/
     
     // 0 -> sequential, 
     // 1 -> StartQuery multithreading, 

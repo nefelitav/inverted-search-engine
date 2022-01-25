@@ -516,7 +516,7 @@ int indexList ::addToList(entry *content, unsigned int distance, QueryID id, uns
         { // If the next node has distance lower than the input, pass input along
             this->next->addToList(content, distance, id, threshold);
         }
-        else if (this->node->getMatchingType() == MT_EDIT_DIST)
+        else
         { // Else if the next node has higher distance, create a new list node between this one and the next
             this->next = new indexList(content, distance, this->node->getMatchingType(), id, threshold, next);
         }

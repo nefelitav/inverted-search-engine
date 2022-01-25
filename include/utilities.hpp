@@ -284,6 +284,9 @@ inline int queryBinarySearch(Query **queries, int left, int right, const QueryID
             right = mid - 1;
         }
     }
+    if(queries[left] == NULL){
+        return 0;
+    }
     cmp = id - queries[left]->getId();
     if (cmp > 0)
     {
@@ -387,7 +390,7 @@ inline int findEntry(entry **entries, int left, int right, const word w)
         {
             return mid;
         }
-        if (cmp > 0)
+        if (cmp < 0)
         {
             return findEntry(entries, left, mid - 1, w);
         }

@@ -164,8 +164,9 @@ ErrorCode MatchDocument(DocID doc_id, const char *doc_str)
 ErrorCode GetNextAvailRes(DocID *p_doc_id, unsigned int *p_num_res, QueryID **p_query_ids)
 {
     // multithreading MatchDocument
-    scheduler->wait_all_tasks_finish(MATCH_DOCS); // wait for all documents to be matched
-
+    #if PARALLEL != 0 && PARALLEL !=1 && PARALLEL !=3 && PARALLEL !=6
+        scheduler->wait_all_tasks_finish(MATCH_DOCS); // wait for all documents to be matched
+    #endif
     result *temp = NULL;
     if (resultList == NULL)
     {

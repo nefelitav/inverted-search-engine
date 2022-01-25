@@ -1,7 +1,6 @@
 #include "../include/structs.hpp"
 #include "../include/core.h"
 #include "../include/jobscheduler.hpp"
-
 Query ::Query(QueryID id, char *words, MatchType match_type, unsigned int match_dist)
 {
     int i = 0, length = 0;
@@ -64,7 +63,6 @@ void Query ::setTrue(const word entry_word) // entry matched with a doc word
         if (!strcmp(entry_word, this->getWord(i)))
         {
             this->matchedEntries[i] = 1;
-            break;
         }
     }
 }
@@ -130,14 +128,15 @@ Document ::Document(DocID id, char *words)
         if (*words == '\0')         // no more words in input
         {
             memcpy(this->text + (MAX_WORD_LENGTH + 1) * i, token, length);
+            ++i;
             break;
         }
         memcpy(this->text + (MAX_WORD_LENGTH + 1) * i, token, length);
         ++i;
         token = strtok_r(NULL, " ", &strTokSavePtr);
-        this->wordCount++;
     }
     this->id = id;
+    this->wordCount = i;
     //std::cout << "Document with id = " << this->id << " is created!" << std::endl;
 }
 

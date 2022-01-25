@@ -333,15 +333,15 @@ void test_find_entry(void)
 {
     entry **entries = new entry *[5]();
     int entries_until_now = 0;
-    entries[0] = new entry((char *)"z");
-    entries[1] = new entry((char *)"d");
+    entries[4] = new entry((char *)"z");
+    entries[3] = new entry((char *)"d");
     entries[2] = new entry((char *)"c");
-    entries[3] = new entry((char *)"b");
-    entries[4] = new entry((char *)"a");
+    entries[1] = new entry((char *)"b");
+    entries[0] = new entry((char *)"a");
 
     entries_until_now += 5;
-    TEST_CHECK(findEntry(entries, 0, entries_until_now - 1, (char *)"a") == 4);
-    TEST_CHECK(findEntry(entries, 0, entries_until_now - 1, (char *)"d") == 1);
+    TEST_CHECK(findEntry(entries, 0, entries_until_now - 1, (char *)"a") == 0);
+    TEST_CHECK(findEntry(entries, 0, entries_until_now - 1, (char *)"d") == 3);
     TEST_CHECK(findEntry(entries, 0, entries_until_now - 1, (char *)"c") == 2);
     TEST_CHECK(findEntry(entries, 0, entries_until_now - 1, (char *)"k") == -1); // not found
 
