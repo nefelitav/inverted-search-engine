@@ -1,7 +1,6 @@
 #include "../include/structs.hpp"
 #include "../include/core.h"
 #include "../include/jobscheduler.hpp"
-
 Query ::Query(QueryID id, char *words, MatchType match_type, unsigned int match_dist)
 {
     int i = 0, length = 0;
@@ -129,20 +128,21 @@ Document ::Document(DocID id, char *words)
         if (*words == '\0')         // no more words in input
         {
             memcpy(this->text + (MAX_WORD_LENGTH + 1) * i, token, length);
+            ++i;
             break;
         }
         memcpy(this->text + (MAX_WORD_LENGTH + 1) * i, token, length);
         ++i;
         token = strtok_r(NULL, " ", &strTokSavePtr);
-        this->wordCount++;
     }
     this->id = id;
+    this->wordCount = i;
     //std::cout << "Document with id = " << this->id << " is created!" << std::endl;
 }
 
 const word Document ::getWord(int word_num) const // array[i][j] --> arrary[i*(MAX_WORD_LENGTH + 1)]
 {
-    if (word_num > this->wordCount) // out of range
+    if (word_num >= this->wordCount) // out of range
     {
         //cout << "Sorry, index out of range." << endl;
         return NULL;

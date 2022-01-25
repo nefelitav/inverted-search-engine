@@ -6,7 +6,7 @@
 #include "utilities.hpp"
 #include "core.h"
 
-#define NUM_THREADS 3
+#define NUM_THREADS 5
 
 class QueryTable;
 

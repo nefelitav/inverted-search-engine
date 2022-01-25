@@ -284,6 +284,9 @@ inline int queryBinarySearch(Query **queries, int left, int right, const QueryID
             right = mid - 1;
         }
     }
+    if(queries[left] == NULL){
+        return 0;
+    }
     cmp = id - queries[left]->getId();
     if (cmp > 0)
     {
