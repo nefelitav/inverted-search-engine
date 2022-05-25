@@ -1,6 +1,6 @@
 # Inverted Search Engine
 
-[![C/C++ CI Actions Status](https://github.com/NefeliTav/Software-Development-for-Information-Systems/workflows/C/C++%20CI/badge.svg)](https://github.com/NefeliTav/Software-Development-for-Information-Systems/actions)
+[![C/C++ CI Actions Status](https://github.com/nefelitav/inverted-search-engine/workflows/C/C++%20CI/badge.svg)](https://github.com/nefelitav/inverted-search-engine/actions)
 
 ### Authors
 - [Georgios Nikolaou - sdi1800134](https://github.com/GiorgosNik)
@@ -14,31 +14,15 @@ The application tackles the task of receiving a stream of documents and queries 
 ```
 $ make && make run
 ```
-### Memcheck
+### Check for memory leaks
 ```
 $ make valgrind
 ```
-### Detect data races with helgrind
+### Detect data races
 ```
 $ make helgrind
-```
-### Detect data races with drd
-```
-$ make drd
-```
-### Clean
-```
-$ make clean
 ```
 ### Test
 ```
 $ make test && make run_test
-```
-### Memcheck on Tests
-```
-$ make valgrind_test
-```
-### Run 100 times to test threads
-```
-$ ./run_100_times.sh
 ```
