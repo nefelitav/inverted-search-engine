@@ -3,8 +3,8 @@
 [![C/C++ CI Actions Status](https://github.com/nefelitav/inverted-search-engine/workflows/C/C++%20CI/badge.svg)](https://github.com/nefelitav/inverted-search-engine/actions)
 
 ### Authors
-- [Georgios Nikolaou - sdi1800134](https://github.com/GiorgosNik)
-- [Nefeli Tavoulari - sdi1800190](https://github.com/NefeliTav)
+- [Georgios Nikolaou](https://github.com/GiorgosNik)
+- [Nefeli Tavoulari](https://github.com/nefelitav)
 
 ## Introduction
 The current project is a modified version of The SIGMOD 2013 Programming Contest.
