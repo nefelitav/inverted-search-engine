@@ -11,18 +11,18 @@ The current project is a modified version of The SIGMOD 2013 Programming Contest
 The application tackles the task of receiving a stream of documents and queries and matching them up, utilizing different metrics. The goal is to minimize the system response time, using multithreading, as well as the appropriate structs and in general good programming practices.
 
 ### Compile & Run
-```
+`
 $ make && make run
-```
+`
 ### Check for memory leaks
-```
+`
 $ make valgrind
-```
+`
 ### Detect data races
-```
+`
 $ make helgrind
-```
+`
 ### Test
-```
+`
 $ make test && make run_test
-```
+`
